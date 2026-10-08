@@ -1,0 +1,223 @@
+import { useTranslation } from 'react-i18next';
+import { useRef, useEffect, useState, useCallback } from 'react';
+import { X, RotateCcw } from 'lucide-react';
+
+interface CameraCaptureProps {
+  onCapture: (dataUrl: string) => void;
+  onClose?: () => void;
+  facingMode?: 'environment' | 'user';
+  maxWidth?: number;
+  maxHeight?: number;
+  imageQuality?: number;
+}
+
+export function CameraCapture({
+  onCapture,
+  onClose,
+  facingMode = 'environment',
+  maxWidth = 1280,
+  maxHeight = 720,
+  imageQuality = 0.8,
+}: CameraCaptureProps) {
+  const { t } = useTranslation();
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [hasPermission, setHasPermission] = useState(false);
+  const [isCapturing, setIsCapturing] = useState(false);
+
+  const startCamera = useCallback(async () => {
+    try {
+      setError(null);
+      const mediaStream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: { ideal: facingMode },
+          width: { ideal: maxWidth },
+          height: { ideal: maxHeight },
+        },
+      });
+      streamRef.current = mediaStream;
+      setHasPermission(true);
+      if (videoRef.current) {
+        videoRef.current.srcObject = mediaStream;
+      }
+    } catch (err) {
+      console.error('Camera error:', err);
+      setError(t('camera.error', { defaultValue: 'Unable to access camera. Please check permissions.' }));
+      setHasPermission(false);
+    }
+  }, [facingMode, maxWidth, maxHeight, t]);
+
+  const stopCamera = useCallback(() => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+      setHasPermission(false);
+    }
+  }, []);
+
+  const capturePhoto = useCallback(() => {
+    if (!videoRef.current || !canvasRef.current || isCapturing) return;
+
+    setIsCapturing(true);
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+
+    if (!ctx) {
+      setIsCapturing(false);
+      return;
+    }
+
+    // Set canvas size to video size
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    // Draw video frame to canvas
+    ctx.drawImage(video, 0, 0);
+
+    // Convert to data URL
+    const dataUrl = canvas.toDataURL('image/jpeg', imageQuality);
+    onCapture(dataUrl);
+    setIsCapturing(false);
+  }, [onCapture, imageQuality, isCapturing]);
+
+  const switchCamera = useCallback(() => {
+    stopCamera();
+    startCamera();
+  }, [startCamera, stopCamera]);
+
+  useEffect(() => {
+    startCamera();
+    return () => stopCamera();
+  }, [startCamera, stopCamera]);
+
+  if (!hasPermission) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full min-h-[400px] bg-gray-100 dark:bg-gray-800 rounded-xl">
+        {error ? (
+          <div className="text-center p-8">
+            <div className="text-6xl mb-4">📷</div>
+            <p className="text-red-600 dark:text-red-400 mb-4">{error}</p>
+            <button
+              onClick={startCamera}
+              className="px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+            >
+              {t('camera.retry', { defaultValue: 'Retry' })}
+            </button>
+            {onClose && (
+              <button
+                onClick={onClose}
+                className="mt-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              >
+                {t('common.cancel', { defaultValue: 'Cancel' })}
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="text-center">
+            <div className="animate-spin text-4xl text-orange-600 mb-4">📷</div>
+            <p className="text-gray-600 dark:text-gray-400">{t('camera.loading', { defaultValue: 'Starting camera...' })}</p>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative w-full">
+      <div className="relative bg-black rounded-xl overflow-hidden">
+        <video
+          ref={videoRef}
+          autoPlay
+          playsInline
+          className="w-full h-auto max-h-[500px] object-cover"
+          aria-label={t('camera.preview', { defaultValue: 'Camera preview' })}
+        />
+        <canvas ref={canvasRef} className="hidden" />
+
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="absolute top-3 right-3 z-10 p-2 bg-black/50 text-white rounded-full hover:bg-black/70 transition-colors"
+            aria-label={t('common.close', { defaultValue: 'Close' })}
+          >
+            <X className="w-5 h-5" />
+          </button>
+        )}
+
+        <button
+          onClick={switchCamera}
+          className="absolute top-3 left-3 z-10 p-2 bg-black/50 text-white rounded-full hover:bg-black/70 transition-colors"
+          aria-label={t('camera.switch', { defaultValue: 'Switch camera' })}
+        >
+          <RotateCcw className="w-5 h-5" />
+        </button>
+      </div>
+
+      <div className="flex items-center justify-center gap-6 mt-6 p-4">
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="px-6 py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors font-medium"
+          >
+            {t('common.cancel', { defaultValue: 'Cancel' })}
+          </button>
+        )}
+        <button
+          onClick={capturePhoto}
+          disabled={isCapturing}
+          className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-full border-4 border-white bg-orange-500 hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center"
+          aria-label={t('camera.capture', { defaultValue: 'Capture photo' })}
+        >
+          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white" />
+          {isCapturing && (
+            <div className="absolute inset-0 rounded-full border-4 border-white/50 animate-pulse" />
+          )}
+        </button>
+        <div className="w-16 h-16 sm:w-20 sm:h-20" /> {/* spacer for alignment */}
+      </div>
+
+      <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-2">
+        {t('camera.instruction', { defaultValue: 'Position the item in the frame and tap the button to capture' })}
+      </p>
+    </div>
+  );
+}
+
+interface PhotoPreviewProps {
+  dataUrl: string;
+  onRetake: () => void;
+  onConfirm: () => void;
+}
+
+export function PhotoPreview({ dataUrl, onRetake, onConfirm }: PhotoPreviewProps) {
+  const { t } = useTranslation();
+
+  return (
+    <div className="flex flex-col items-center gap-4">
+      <div className="relative w-full max-w-md">
+        <img
+          src={dataUrl}
+          alt={t('camera.captured', { defaultValue: 'Captured photo' })}
+          className="w-full rounded-xl shadow-lg"
+        />
+      </div>
+      <div className="flex gap-4 w-full max-w-md">
+        <button
+          onClick={onRetake}
+          className="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 dark:border-gray-600 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors font-medium"
+        >
+          {t('camera.retake', { defaultValue: 'Retake' })}
+        </button>
+        <button
+          onClick={onConfirm}
+          className="flex-1 px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors font-medium"
+        >
+          {t('common.next', { defaultValue: 'Next' })}
+        </button>
+      </div>
+    </div>
+  );
+}
