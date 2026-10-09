@@ -12,6 +12,10 @@ interface AdminLot {
   id: string; category: string; weightKg: number; status: string; collectorName?: string; collectorPhone?: string;
   recyclerName?: string; quotedTotal?: number; finalTotal?: number; createdAt: string;
 }
+interface AdminCollector {
+  id: string; name?: string; email?: string; phone?: string; area: string; language: string;
+  createdAt: string; lotCount: number; handedOver: number; totalEarned: number; lastActiveAt?: string;
+}
 
 async function adminFetch<T>(key: string, method: string, path: string): Promise<T> {
   const r = await fetch(BASE + path, { method, headers: { 'x-admin-key': key } });
@@ -31,22 +35,28 @@ export function AdminPanel() {
   const [key, setKey] = useState(() => sessionStorage.getItem(KEY_STORE) || '');
   const [input, setInput] = useState('');
   const [error, setError] = useState('');
-  const [tab, setTab] = useState<'recyclers' | 'lots'>('recyclers');
+  // Opening /admin?tab=collectors (or ?tab=lots) jumps straight to that tab.
+  const [tab, setTab] = useState<'recyclers' | 'collectors' | 'lots'>(() => {
+    const q = new URLSearchParams(window.location.search).get('tab');
+    return q === 'collectors' || q === 'lots' ? q : 'recyclers';
+  });
   const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
   const [recyclers, setRecyclers] = useState<AdminRecycler[]>([]);
+  const [collectors, setCollectors] = useState<AdminCollector[]>([]);
   const [lots, setLots] = useState<AdminLot[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const logout = () => { sessionStorage.removeItem(KEY_STORE); setKey(''); setRecyclers([]); setLots([]); };
+  const logout = () => { sessionStorage.removeItem(KEY_STORE); setKey(''); setRecyclers([]); setCollectors([]); setLots([]); };
 
   const load = useCallback(async (k: string) => {
     setLoading(true);
     try {
-      const [r, l] = await Promise.all([
+      const [r, c, l] = await Promise.all([
         adminFetch<AdminRecycler[]>(k, 'GET', '/admin/recyclers'),
+        adminFetch<AdminCollector[]>(k, 'GET', '/admin/collectors'),
         adminFetch<AdminLot[]>(k, 'GET', '/admin/lots'),
       ]);
-      setRecyclers(r); setLots(l); setError('');
+      setRecyclers(r); setCollectors(c); setLots(l); setError('');
     } catch (e) {
       if ((e as { status?: number }).status === 403) {
         sessionStorage.removeItem(KEY_STORE); setKey('');
@@ -67,6 +77,24 @@ export function AdminPanel() {
   const act = async (id: string, action: 'approve' | 'reject') => {
     try {
       await adminFetch(key, 'POST', `/admin/recyclers/${id}/${action}`);
+      await load(key);
+    } catch (e) { setError((e as Error).message); }
+  };
+
+  // Delete a recycler: no lots -> removed fully; with lots -> deactivated (kept as Rejected).
+  const removeRecycler = async (r: AdminRecycler) => {
+    const msg = r.lotCount > 0 ? t('admin.deactivateConfirm', { name: r.facilityName }) : t('admin.deleteConfirm', { name: r.facilityName });
+    if (!window.confirm(msg)) return;
+    try {
+      await adminFetch(key, 'DELETE', `/admin/recyclers/${r.id}`);
+      await load(key);
+    } catch (e) { setError((e as Error).message); }
+  };
+
+  const removeCollector = async (c: AdminCollector) => {
+    if (!window.confirm(t('admin.deleteConfirm', { name: c.name || c.id }))) return;
+    try {
+      await adminFetch(key, 'DELETE', `/admin/collectors/${c.id}`);
       await load(key);
     } catch (e) { setError((e as Error).message); }
   };
@@ -116,6 +144,10 @@ export function AdminPanel() {
             className={`px-4 py-2 rounded ${tab === 'recyclers' ? 'bg-orange-600 text-white' : 'bg-white border'}`}>
             {t('admin.recyclers')} ({recyclers.length}){pending > 0 && ` · ${pending} ${t('admin.pendingShort')}`}
           </button>
+          <button onClick={() => setTab('collectors')} data-testid="tab-collectors"
+            className={`px-4 py-2 rounded ${tab === 'collectors' ? 'bg-orange-600 text-white' : 'bg-white border'}`}>
+            {t('admin.collectors')} ({collectors.length})
+          </button>
           <button onClick={() => setTab('lots')} data-testid="tab-lots"
             className={`px-4 py-2 rounded ${tab === 'lots' ? 'bg-orange-600 text-white' : 'bg-white border'}`}>
             {t('admin.lots')} ({lots.length})
@@ -152,11 +184,49 @@ export function AdminPanel() {
                       <button onClick={() => void act(r.id, 'reject')} data-testid={`reject-${r.id}`}
                         className="px-3 py-1 rounded bg-red-600 text-white text-sm">{t('admin.reject')}</button>
                     )}
+                    <button onClick={() => void removeRecycler(r)} data-testid={`delete-${r.id}`}
+                      className="px-3 py-1 rounded border border-red-300 text-red-700 text-sm">{t('admin.delete')}</button>
                   </div>
                 </div>
               ))}
             </div>
           </>
+        )}
+
+        {tab === 'collectors' && (
+          <div className="bg-white rounded-lg shadow-sm overflow-x-auto">
+            <table className="w-full text-sm text-left">
+              <thead className="bg-gray-100 text-gray-700">
+                <tr>
+                  <th className="p-3">{t('admin.collector')}</th><th className="p-3">{t('admin.area')}</th>
+                  <th className="p-3">{t('admin.lots')}</th><th className="p-3">{t('admin.handedOver')}</th>
+                  <th className="p-3">{t('admin.earned')}</th><th className="p-3">{t('admin.lastActive')}</th>
+                  <th className="p-3">{t('admin.joined')}</th><th className="p-3"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {collectors.length === 0 && <tr><td className="p-3 text-gray-500" colSpan={8}>{t('admin.noCollectors')}</td></tr>}
+                {collectors.map((c) => (
+                  <tr key={c.id} className="border-t" data-testid={`collector-${c.id}`}>
+                    <td className="p-3">
+                      <p className="font-semibold text-gray-900">{c.name || c.id}</p>
+                      <p className="text-xs text-gray-500">{c.phone || c.email || '-'}</p>
+                    </td>
+                    <td className="p-3">{c.area}</td>
+                    <td className="p-3">{c.lotCount}</td>
+                    <td className="p-3">{c.handedOver}</td>
+                    <td className="p-3">{c.totalEarned ? `₹${c.totalEarned}` : '-'}</td>
+                    <td className="p-3 text-xs">{c.lastActiveAt ? new Date(c.lastActiveAt).toLocaleString() : '-'}</td>
+                    <td className="p-3 text-xs">{new Date(c.createdAt).toLocaleDateString()}</td>
+                    <td className="p-3">
+                      <button onClick={() => void removeCollector(c)} data-testid={`delete-collector-${c.id}`}
+                        className="px-3 py-1 rounded border border-red-300 text-red-700 text-xs">{t('admin.delete')}</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
 
         {tab === 'lots' && (

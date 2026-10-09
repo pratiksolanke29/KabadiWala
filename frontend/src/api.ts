@@ -16,9 +16,10 @@ async function authHeader(): Promise<Record<string, string>> {
   return token ? { authorization: `Bearer ${token}` } : {};
 }
 
-export async function api<T = any>(method: string, path: string, body?: unknown): Promise<T> {
+export async function api<T = any>(method: string, path: string, body?: unknown, signal?: AbortSignal): Promise<T> {
   const r = await fetch(BASE + path, {
     method,
+    signal,
     headers: { 'content-type': 'application/json', ...(await authHeader()) },
     body: body === undefined ? undefined : JSON.stringify(body),
   });

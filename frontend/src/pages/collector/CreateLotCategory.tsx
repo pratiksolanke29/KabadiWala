@@ -4,15 +4,30 @@ import { useLotStore } from '../../hooks/useLotStore';
 import { CategoryGrid, CategoryIcon } from '../../components/shared/CategoryIcon';
 import { Button } from '../../components/shared/Button';
 import { CATEGORIES, type Category } from '../../types';
-import { useState } from 'react';
-import { ArrowLeft, Sparkles } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { identifyPhoto, type Identification } from '../../identify';
+import { IdentificationResult } from '../../components/collector/IdentificationResult';
+import { ArrowLeft } from 'lucide-react';
 
 export function CreateLotCategory() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const { draft, setCategory, isDraftComplete } = useLotStore();
+  const { draft, setCategory } = useLotStore();
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(draft.category);
-  const [aiSuggestion] = useState<Category>('PCB'); // Mock AI suggestion
+  const [result, setResult] = useState<Identification | null>(null);
+  const [loading, setLoading] = useState(false);
+  const language = i18n.resolvedLanguage === 'hi' ? 'hi' : i18n.resolvedLanguage === 'mr' ? 'mr' : 'en';
+  useEffect(() => {
+    if (!draft.photoUrl) return;
+    let active = true;
+    setResult(null);
+    setLoading(true);
+    identifyPhoto(draft.photoUrl, language).then((response) => {
+      if (active) { setResult(response); setLoading(false); }
+    });
+    return () => { active = false; };
+  }, [draft.photoUrl, language]);
+  const aiSuggestion = result?.available ? result.lotCategory ?? undefined : undefined;
 
   const handleCategorySelect = (category: Category) => {
     setSelectedCategory(category);
@@ -90,6 +105,8 @@ export function CreateLotCategory() {
             </p>
           </div>
 
+          <IdentificationResult result={result} loading={loading} onConfirm={handleCategorySelect} />
+
           <CategoryGrid
             categories={CATEGORIES.map(c => c.id)}
             selected={selectedCategory ?? undefined}
@@ -113,14 +130,7 @@ export function CreateLotCategory() {
             </div>
           )}
 
-          {aiSuggestion && selectedCategory !== aiSuggestion && (
-            <div className="mt-4 p-3 bg-green-50 dark:bg-green-900/20 rounded-xl border border-green-200 dark:border-green-800 flex items-center gap-3">
-              <Sparkles className="w-5 h-5 text-green-600 dark:text-green-400" />
-              <p className="text-sm text-green-700 dark:text-green-300">
-                {t('createLot.aiSuggestion', { defaultValue: 'AI suggests' })} <strong>{aiSuggestion}</strong> {t('createLot.basedOnPhoto', { defaultValue: 'based on the photo' })}
-              </p>
-            </div>
-          )}
+
         </div>
       </main>
 

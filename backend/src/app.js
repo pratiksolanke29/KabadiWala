@@ -1,12 +1,15 @@
 import express from 'express';
 import cors from 'cors';
+import { createIdentifier } from './identify.js';
 import { verifyToken as clerkVerifyToken, createClerkClient } from '@clerk/backend';
 import QRCode from 'qrcode';
 import { randomBytes } from 'node:crypto';
 import { openDb, uuid, CATEGORIES, AREAS } from './db.js';
 
 const ADMIN_KEY = process.env.ADMIN_KEY || 'admin-dev-key';
-const AUTO_APPROVE = (process.env.AUTO_APPROVE_RECYCLERS ?? '1') === '1'; // prototype convenience
+// New recycler accounts start PENDING and need admin approval (that's the demo flow).
+// Set AUTO_APPROVE_RECYCLERS=1 in backend/.env to auto-approve every new recycler (skips the admin step).
+const autoApprove = () => (process.env.AUTO_APPROVE_RECYCLERS ?? '0') === '1';
 const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 
 class HttpError extends Error { constructor(status, message) { super(message); this.status = status; } }
@@ -39,7 +42,7 @@ function clerkVerifier() {
   };
 }
 
-export function createApp(db = openDb(), { verifyToken = clerkVerifier() } = {}) {
+export function createApp(db = openDb(), { verifyToken = clerkVerifier(), identifyPhoto = createIdentifier() } = {}) {
   const app = express();
   app.use(cors());
   app.use(express.json({ limit: '10mb' }));
@@ -136,7 +139,7 @@ export function createApp(db = openDb(), { verifyToken = clerkVerifier() } = {})
     db.prepare(`INSERT INTO recyclers (id,facility_name,email,city,address,auth_number,contact,authorized,pickup_enabled,service_areas,lat,lon,created_at)
       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`)
       .run(id, b.facilityName, cu.email ?? null, b.city ?? null, b.address ?? b.location ?? null, b.authNumber, b.contact,
-        AUTO_APPROVE ? 1 : 0, 1, JSON.stringify(areas), lat, lon, iso());
+        autoApprove() ? 1 : 0, 1, JSON.stringify(areas), lat, lon, iso());
     const ins = db.prepare('INSERT INTO recycler_rates VALUES (?,?,?,?)');
     for (const m of CATEGORIES) ins.run(id, m, 1, marketRow(m).rate);
     db.prepare('INSERT INTO users VALUES (?,?,?,?,?)').run(cu.userId, 'recycler', id, cu.email ?? null, iso());
@@ -173,6 +176,54 @@ export function createApp(db = openDb(), { verifyToken = clerkVerifier() } = {})
     res.json({ success: true });
   }));
 
+  // Remove a recycler account. No linked lots -> hard delete (row, rates, role mapping; the Clerk user can sign up again).
+  // Has linked lots -> deactivate instead (rejected), so lot history and receipts stay intact. Either way it leaves Nearby Recyclers.
+  app.delete('/admin/recyclers/:id', wrap((req, res) => {
+    adminOnly(req);
+    const r = db.prepare('SELECT id FROM recyclers WHERE id = ?').get(req.params.id);
+    if (!r) throw new HttpError(404, 'Recycler not found');
+    const lotCount = db.prepare('SELECT COUNT(*) AS n FROM lots WHERE recycler_id = ?').get(r.id).n;
+    if (lotCount > 0) {
+      db.prepare('UPDATE recyclers SET authorized = 0, rejected = 1 WHERE id = ?').run(r.id);
+      return res.json({ success: true, mode: 'deactivated', lotCount });
+    }
+    db.prepare('DELETE FROM recycler_rates WHERE recycler_id = ?').run(r.id);
+    db.prepare('DELETE FROM declines WHERE recycler_id = ?').run(r.id);
+    db.prepare("DELETE FROM users WHERE role = 'recycler' AND profile_id = ?").run(r.id);
+    db.prepare('DELETE FROM recyclers WHERE id = ?').run(r.id);
+    res.json({ success: true, mode: 'deleted' });
+  }));
+
+  // Remove a collector account. Only possible with no lots - lot history is never deleted.
+  app.delete('/admin/collectors/:id', wrap((req, res) => {
+    adminOnly(req);
+    const c = db.prepare('SELECT id FROM collectors WHERE id = ?').get(req.params.id);
+    if (!c) throw new HttpError(404, 'Collector not found');
+    const lotCount = db.prepare('SELECT COUNT(*) AS n FROM lots WHERE collector_id = ?').get(c.id).n;
+    if (lotCount > 0) throw new HttpError(409, `Collector has ${lotCount} lot(s); lot history cannot be deleted`);
+    db.prepare("DELETE FROM users WHERE role = 'collector' AND profile_id = ?").run(c.id);
+    db.prepare('DELETE FROM collectors WHERE id = ?').run(c.id);
+    res.json({ success: true, mode: 'deleted' });
+  }));
+
+  app.get('/admin/collectors', wrap((req, res) => {
+    adminOnly(req);
+    const rows = db.prepare('SELECT * FROM collectors ORDER BY created_at DESC').all();
+    res.json(rows.map((c) => {
+      const st = db.prepare(`SELECT COUNT(*) AS n,
+        SUM(CASE WHEN status IN ('HandedOver','Paid') THEN 1 ELSE 0 END) AS done,
+        SUM(CASE WHEN status = 'Paid' THEN final_total ELSE 0 END) AS earned,
+        MAX(updated_at) AS last_active
+        FROM lots WHERE collector_id = ?`).get(c.id);
+      return {
+        id: c.id, name: c.name ?? null, email: c.email ?? null, phone: c.phone ?? null,
+        area: c.area, language: c.language, createdAt: c.created_at,
+        lotCount: st.n, handedOver: st.done ?? 0, totalEarned: Math.round(st.earned ?? 0),
+        lastActiveAt: st.last_active ?? null,
+      };
+    }));
+  }));
+
   app.get('/admin/lots', wrap((req, res) => {
     adminOnly(req);
     const rows = db.prepare(`SELECT l.*, r.facility_name AS recycler_name, c.name AS collector_name, COALESCE(c.phone, c.email) AS collector_phone
@@ -184,6 +235,21 @@ export function createApp(db = openDb(), { verifyToken = clerkVerifier() } = {})
 
   // ================= COLLECTOR API =================
   const C = auth('collector');
+
+  // Limit paid vision requests per collector. Manual category selection stays available.
+  const identifyWindows = new Map();
+  app.post('/identify', C, wrap(async (req, res) => {
+    const { photoUrl, language = 'en' } = req.body ?? {};
+    if (!['en', 'hi', 'mr'].includes(language)) throw bad('Bad language');
+    const now = Date.now();
+    for (const [id, window] of identifyWindows) if (window.until < now) identifyWindows.delete(id);
+    const window = identifyWindows.get(req.userId) ?? { until: now + 60_000, count: 0 };
+    if (window.count >= 5) return res.json({ available: false, code: 'rate_limited' });
+    window.count += 1;
+    identifyWindows.set(req.userId, window);
+    try { res.json(await identifyPhoto(photoUrl, language)); }
+    catch (e) { if (e.status === 400) throw e; res.json({ available: false, code: 'unavailable' }); }
+  }));
 
   app.get('/price-board', wrap((_req, res) => {
     const rows = db.prepare('SELECT * FROM market').all();

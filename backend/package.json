@@ -13,6 +13,7 @@
     "node": ">=22.9"
   },
   "dependencies": {
+    "@aws-sdk/client-bedrock-runtime": "^3.1148.0",
     "@clerk/backend": "^3.23.1",
     "cors": "^2.8.5",
     "express": "^5.0.0",
