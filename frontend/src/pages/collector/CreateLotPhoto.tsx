@@ -36,18 +36,18 @@ export function CreateLotPhoto() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-amber-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
+    <div className="min-h-screen bg-[var(--color-surface)] copper-accent">
       {/* Header */}
-      <header className="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-40">
-        <div className="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
+      <header className="bg-[var(--color-surface-elevated)] border-b border-[var(--color-border)] sticky top-0 z-40">
+        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
           <button
             onClick={handleBack}
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            className="p-2 rounded-lg hover:bg-[var(--color-surface-alt)] transition-colors focus-ring-collector"
             aria-label={t('common.back', { defaultValue: 'Back' })}
           >
-            <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+            <ArrowLeft className="w-5 h-5 text-[var(--color-text)]" />
           </button>
-          <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
+          <h1 className="text-lg font-semibold text-[var(--color-text)] font-display">
             {t('createLot.title', { defaultValue: 'Create Lot' })}
           </h1>
           <div className="w-10" />
@@ -55,7 +55,7 @@ export function CreateLotPhoto() {
       </header>
 
       {/* Progress Indicator */}
-      <div className="max-w-2xl mx-auto px-4 py-4">
+      <div className="max-w-6xl mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           <ProgressStep step={1} total={4} label={t('createLot.step1', { defaultValue: 'Photo' })} active />
           <ProgressStep step={2} total={4} label={t('createLot.step2', { defaultValue: 'Category' })} />
@@ -65,7 +65,7 @@ export function CreateLotPhoto() {
       </div>
 
       {/* Main Content */}
-      <main className="max-w-2xl mx-auto px-4 pb-20">
+      <main className="max-w-6xl mx-auto px-4 pb-24">
         {showPreview && capturedPhoto ? (
           <PhotoPreview
             dataUrl={capturedPhoto}
@@ -84,30 +84,27 @@ export function CreateLotPhoto() {
   );
 }
 
-function ProgressStep({ step, total, label, active }: { step: number; total: number; label: string; active?: boolean }) {
+function ProgressStep({ step, total, label, active, completed }: { step: number; total: number; label: string; active?: boolean; completed?: boolean }) {
+  const lineColor = completed ? 'bg-[var(--color-verdigris)]' : active ? 'bg-[var(--color-copper)]' : 'bg-[var(--color-border)]';
+  const circleBg = completed ? 'bg-[var(--color-verdigris)] border-[var(--color-verdigris)]' : active ? 'bg-[var(--color-copper)] border-[var(--color-copper)]' : 'bg-[var(--color-surface-elevated)] border-[var(--color-border)]';
+  const circleText = completed || active ? 'text-white' : 'text-[var(--color-text-muted)]';
+  const labelColor = completed ? 'text-[var(--color-verdigris)]' : active ? 'text-[var(--color-copper)]' : 'text-[var(--color-text-muted)]';
+
   return (
     <div className="flex flex-col items-center flex-1 relative">
       {step < total && (
-        <div className="absolute top-3 left-1/2 w-full h-1.5 -translate-x-1/2 z-0" />
+        <div className={`absolute top-3 left-1/2 w-full h-1.5 -translate-x-1/2 z-0 ${lineColor}`} />
       )}
-      <div className={`
-        relative z-10 w-6 h-6 rounded-full border-2 flex items-center justify-center
-        ${active ? 'bg-orange-500 border-orange-500 text-white' : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-400'}
-      `}>
-        {active ? (
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-          </svg>
+      <div className={`relative z-10 w-6 h-6 rounded-full border-2 flex items-center justify-center ${circleBg} ${circleText}`}>
+        {completed ? (
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+        ) : active ? (
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
         ) : (
           <span className="text-sm font-bold">{step}</span>
         )}
       </div>
-      <p className={`
-        mt-2 text-xs text-center font-medium
-        ${active ? 'text-orange-600 dark:text-orange-400' : 'text-gray-500 dark:text-gray-400'}
-      `}>
-        {label}
-      </p>
+      <p className={`mt-2 text-xs text-center font-medium ${labelColor}`}>{label}</p>
     </div>
   );
 }
@@ -116,7 +113,7 @@ function PhotoPreview({ dataUrl, onRetake, onConfirm }: { dataUrl: string; onRet
   const { t } = useTranslation();
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden">
+    <div className="bg-[var(--color-surface-elevated)] rounded-2xl shadow-xl overflow-hidden border border-[var(--color-border)]">
       <div className="relative">
         <img
           src={dataUrl}
@@ -125,16 +122,10 @@ function PhotoPreview({ dataUrl, onRetake, onConfirm }: { dataUrl: string; onRet
         />
       </div>
       <div className="p-6 space-y-4">
-        <p className="text-center text-gray-600 dark:text-gray-400">
-          {t('camera.confirmPhoto', { defaultValue: 'Does this look good?' })}
-        </p>
+        <p className="text-center text-[var(--color-text-muted)]">{t('camera.confirmPhoto', { defaultValue: 'Does this look good?' })}</p>
         <div className="flex gap-4">
-          <Button variant="outline" fullWidth onClick={onRetake}>
-            {t('camera.retake', { defaultValue: 'Retake' })}
-          </Button>
-          <Button fullWidth onClick={onConfirm} size="lg">
-            {t('common.next', { defaultValue: 'Next' })}
-          </Button>
+          <Button variant="outline" fullWidth onClick={onRetake}>{t('camera.retake', { defaultValue: 'Retake' })}</Button>
+          <Button fullWidth onClick={onConfirm} size="lg">{t('common.next', { defaultValue: 'Next' })}</Button>
         </div>
       </div>
     </div>

@@ -1,0 +1,542 @@
+/* KabadiWala Design Tokens
+ * Import in globals.css BEFORE @import "tailwindcss"
+ */
+
+@layer base {
+  :root {
+    /* === CORE PALETTE (from domain materials) === */
+
+    /* Copper — Collector primary, PCB traces, wire */
+    --color-copper: #B87333;
+    --color-copper-dark: #965E2A;
+    --color-copper-light: #D4A574;
+    --color-copper-muted: #E8D5C4;
+
+    /* Circuit — Recycler primary, PCB solder mask, trust */
+    --color-circuit: #0D4F8B;
+    --color-circuit-dark: #093D6E;
+    --color-circuit-light: #1A6FC6;
+    --color-circuit-muted: #C8DBF0;
+
+    /* Verdigris — Success, paid, confirmed, patina */
+    --color-verdigris: #2D7D6B;
+    --color-verdigris-dark: #226354;
+    --color-verdigris-light: #4FA891;
+    --color-verdigris-muted: #D1E5E0;
+
+    /* Warning — Burn hazard, acid, danger, exposed wire */
+    --color-warning: #D45C2E;
+    --color-warning-dark: #A84622;
+    --color-warning-light: #E88D7A;
+    --color-warning-muted: #F5D0C4;
+
+    /* Cable — High-contrast text, charcoal sheath */
+    --color-cable: #1C1C1E;
+    --color-cable-muted: #6B6B6F;
+
+    /* Insulation — Light surface, aged sheath, paper */
+    --color-insulation: #F5F0E8;
+    --color-insulation-alt: #EDE5D8;
+    --color-insulation-elevated: #FFFFFF;
+    --color-insulation-dark: #141416;
+    --color-insulation-dark-alt: #1E1E20;
+    --color-insulation-dark-elevated: #1C1C1E;
+
+    /* Trust — Brass hallmark, verified, authorization */
+    --color-trust: #C8A040;
+    --color-trust-dark: #A68533;
+    --color-trust-light: #E8D4A0;
+    --color-trust-muted: #F5EDD8;
+
+    /* === SEMANTIC COLOR ALIASES === */
+
+    /* Light mode surfaces */
+    --color-surface: var(--color-insulation);
+    --color-surface-alt: var(--color-insulation-alt);
+    --color-surface-elevated: var(--color-insulation-elevated);
+    --color-surface-sunken: var(--color-insulation-alt);
+
+    /* Light mode text */
+    --color-text: var(--color-cable);
+    --color-text-muted: var(--color-cable-muted);
+    --color-text-subtle: #9B9B9F;
+    --color-text-inverse: var(--color-insulation);
+
+    /* Light mode borders */
+    --color-border: var(--color-copper-muted);
+    --color-border-strong: var(--color-copper);
+    --color-border-focus: var(--color-copper-light);
+
+    /* Focus rings (contextual) */
+    --focus-ring-collector: var(--color-copper-light);
+    --focus-ring-recycler: var(--color-circuit-light);
+    --focus-ring-success: var(--color-verdigris-light);
+    --focus-ring-warning: var(--color-warning-light);
+
+    /* === TYPOGRAPHY === */
+    --font-display: "Ek Mukta", system-ui, sans-serif;
+    --font-ui: "IBM Plex Sans", system-ui, sans-serif;
+    --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+    /* Fluid type scale (clamp-based) */
+    --text-step--1: clamp(0.75rem, 0.73rem + 0.12vw, 0.8125rem);  /* caption */
+    --text-step-0:  clamp(0.875rem, 0.85rem + 0.14vw, 1rem);        /* body */
+    --text-step-1:  clamp(1rem, 0.96rem + 0.2vw, 1.125rem);         /* subhead */
+    --text-step-2:  clamp(1.125rem, 1.06rem + 0.32vw, 1.375rem);   /* h3 */
+    --text-step-3:  clamp(1.375rem, 1.25rem + 0.62vw, 1.75rem);    /* h2 */
+    --text-step-4:  clamp(1.75rem, 1.5rem + 1.25vw, 2.5rem);       /* h1 */
+    --text-step-5:  clamp(2.25rem, 1.8rem + 2.25vw, 3.5rem);       /* display */
+
+    --leading-tight: 1.15;
+    --leading-snug: 1.25;
+    --leading-normal: 1.5;
+    --leading-relaxed: 1.6;  /* Devanagari body */
+
+    --tracking-tight: -0.02em;
+    --tracking-normal: 0;
+    --tracking-wide: 0.02em;
+    --tracking-wider: 0.04em;
+
+    /* === SPACING === */
+    --space-1: 0.25rem;
+    --space-2: 0.5rem;
+    --space-3: 0.75rem;
+    --space-4: 1rem;
+    --space-5: 1.25rem;
+    --space-6: 1.5rem;
+    --space-8: 2rem;
+    --space-10: 2.5rem;
+    --space-12: 3rem;
+    --space-16: 4rem;
+
+    /* === RADII (varied by hierarchy) === */
+    --radius-xs: 0.25rem;    /* chips, badges */
+    --radius-sm: 0.375rem;   /* inputs, buttons */
+    --radius-md: 0.5rem;     /* cards, modals */
+    --radius-lg: 0.75rem;    /* elevated cards */
+    --radius-xl: 1rem;       /* primary tiles, hero */
+    --radius-2xl: 1.5rem;    /* action tiles (home) */
+    --radius-full: 9999px;   /* pills, avatar */
+
+    /* === SHADOWS (layered, not uniform) === */
+    --shadow-xs: 0 1px 2px rgba(28, 28, 30, 0.04);
+    --shadow-sm: 0 1px 3px rgba(28, 28, 30, 0.06), 0 1px 2px rgba(28, 28, 30, 0.04);
+    --shadow-md: 0 4px 12px rgba(28, 28, 30, 0.07), 0 2px 4px rgba(28, 28, 30, 0.04);
+    --shadow-lg: 0 8px 24px rgba(28, 28, 30, 0.08), 0 4px 8px rgba(28, 28, 30, 0.05);
+    --shadow-xl: 0 16px 40px rgba(28, 28, 30, 0.1), 0 8px 16px rgba(28, 28, 30, 0.06);
+    --shadow-copper: 0 4px 16px rgba(184, 115, 51, 0.25);
+    --shadow-circuit: 0 4px 16px rgba(13, 79, 139, 0.25);
+
+    /* === TRANSITIONS === */
+    --transition-fast: 120ms ease-out;
+    --transition-normal: 200ms ease-out;
+    --transition-slow: 300ms ease-out;
+
+    /* === Z-INDEX === */
+    --z-dropdown: 100;
+    --z-sticky: 200;
+    --z-modal-backdrop: 300;
+    --z-modal: 400;
+    --z-toast: 500;
+
+    /* === CONTAINER === */
+    --container-mobile: 100%;
+    --container-tablet: 48rem;
+    --container-desktop: 64rem;
+    --container-wide: 80rem;
+
+    /* === COLLECTOR SEMANTIC ALIASES === */
+    --color-collector-primary: var(--color-copper);
+    --color-collector-primary-hover: var(--color-copper-dark);
+    --color-collector-primary-light: var(--color-copper-light);
+    --color-collector-primary-muted: var(--color-copper-muted);
+    --color-collector-primary-text: var(--color-insulation);
+    --color-collector-primary-on: var(--color-insulation);
+
+    --color-collector-success: var(--color-verdigris);
+    --color-collector-success-hover: var(--color-verdigris-dark);
+    --color-collector-success-light: var(--color-verdigris-light);
+    --color-collector-success-muted: var(--color-verdigris-muted);
+    --color-collector-success-on: var(--color-insulation);
+
+    --color-collector-danger: var(--color-warning);
+    --color-collector-danger-hover: var(--color-warning-dark);
+    --color-collector-danger-light: var(--color-warning-light);
+    --color-collector-danger-muted: var(--color-warning-muted);
+    --color-collector-danger-on: var(--color-insulation);
+
+    --color-collector-trust: var(--color-trust);
+    --color-collector-trust-on: var(--color-cable);
+
+    /* === RECYCLER SEMANTIC ALIASES === */
+    --color-recycler-primary: var(--color-circuit);
+    --color-recycler-primary-hover: var(--color-circuit-dark);
+    --color-recycler-primary-light: var(--color-circuit-light);
+    --color-recycler-primary-muted: var(--color-circuit-muted);
+    --color-recycler-primary-on: var(--color-insulation);
+
+    --color-recycler-success: var(--color-verdigris);
+    --color-recycler-success-hover: var(--color-verdigris-dark);
+    --color-recycler-success-light: var(--color-verdigris-light);
+    --color-recycler-success-muted: var(--color-verdigris-muted);
+    --color-recycler-success-on: var(--color-insulation);
+
+    --color-recycler-danger: var(--color-warning);
+    --color-recycler-danger-hover: var(--color-warning-dark);
+    --color-recycler-danger-light: var(--color-warning-light);
+    --color-recycler-danger-muted: var(--color-warning-muted);
+    --color-recycler-danger-on: var(--color-insulation);
+
+    --color-recycler-trust: var(--color-trust);
+    --color-recycler-trust-on: var(--color-cable);
+  }
+
+  /* === DARK MODE OVERRIDES === */
+  @media (prefers-color-scheme: dark) {
+    :root {
+      /* Surfaces */
+      --color-surface: var(--color-insulation-dark);
+      --color-surface-alt: var(--color-insulation-dark-alt);
+      --color-surface-elevated: var(--color-insulation-dark-elevated);
+      --color-surface-sunken: var(--color-insulation-dark-alt);
+
+      /* Text */
+      --color-text: var(--color-insulation);
+      --color-text-muted: #9B9B9F;
+      --color-text-subtle: #6B6B6F;
+      --color-text-inverse: var(--color-insulation-dark);
+
+      /* Borders */
+      --color-border: #3A3A3C;
+      --color-border-strong: var(--color-copper-light);
+      --color-border-focus: var(--color-copper-light);
+
+      /* Focus rings (dark mode offset) */
+      --focus-ring-collector: var(--color-copper-light);
+      --focus-ring-recycler: var(--color-circuit-light);
+      --focus-ring-success: var(--color-verdigris-light);
+      --focus-ring-warning: var(--color-warning-light);
+
+      /* Collector aliases (dark) */
+      --color-collector-primary-text: var(--color-insulation-dark);
+      --color-collector-primary-on: var(--color-insulation);
+      --color-collector-success-on: var(--color-insulation-dark);
+      --color-collector-danger-on: var(--color-insulation);
+      --color-collector-trust-on: var(--color-insulation);
+
+      /* Recycler aliases (dark) */
+      --color-recycler-primary-on: var(--color-insulation);
+      --color-recycler-success-on: var(--color-insulation-dark);
+      --color-recycler-danger-on: var(--color-insulation);
+      --color-recycler-trust-on: var(--color-insulation);
+    }
+  }
+
+  /* === REDUCED MOTION === */
+  @media (prefers-reduced-motion: reduce) {
+    :root {
+      --transition-fast: 0ms;
+      --transition-normal: 0ms;
+      --transition-slow: 0ms;
+    }
+  }
+
+  /* === BASE RESET === */
+  * {
+    border-color: var(--color-border);
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--color-surface);
+    color: var(--color-text);
+    font-family: var(--font-ui);
+    font-size: var(--text-step-0);
+    line-height: var(--leading-normal);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  #root {
+    min-height: 100vh;
+  }
+
+  /* Devanagari line-height adjustment */
+  :lang(mr), :lang(hi) {
+    line-height: var(--leading-relaxed);
+  }
+
+  /* Selection colors */
+  ::selection {
+    background-color: var(--color-copper-light);
+    color: var(--color-insulation-dark);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    ::selection {
+      background-color: var(--color-copper);
+      color: var(--color-insulation);
+    }
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-border);
+    border-radius: var(--radius-full);
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-border-strong);
+  }
+
+  /* Number inputs */
+  input[type=number]::-webkit-inner-spin-button,
+  input[type=number]::-webkit-outer-spin-button {
+    appearance: none;
+    margin: 0;
+  }
+
+  input[type=number] {
+    appearance: none;
+  }
+
+  /* Print */
+  @media print {
+    .no-print {
+      display: none !important;
+    }
+  }
+}
+
+@layer utilities {
+  /* Text color roles */
+  .text-primary { color: var(--color-copper); }
+  .text-primary-hover { color: var(--color-copper-dark); }
+  .text-circuit { color: var(--color-circuit); }
+  .text-verdigris { color: var(--color-verdigris); }
+  .text-warning { color: var(--color-warning); }
+  .text-trust { color: var(--color-trust); }
+  .text-muted { color: var(--color-text-muted); }
+  .text-subtle { color: var(--color-text-subtle); }
+  .text-inverse { color: var(--color-text-inverse); }
+
+  .text-collector-primary { color: var(--color-collector-primary); }
+  .text-recycler-primary { color: var(--color-recycler-primary); }
+  .text-success { color: var(--color-verdigris); }
+  .text-danger { color: var(--color-warning); }
+
+  /* Background roles */
+  .bg-primary { background-color: var(--color-copper); }
+  .bg-primary-hover:hover { background-color: var(--color-copper-dark); }
+  .bg-primary-light { background-color: var(--color-copper-light); }
+  .bg-primary-muted { background-color: var(--color-copper-muted); }
+
+  .bg-circuit { background-color: var(--color-circuit); }
+  .bg-circuit-hover:hover { background-color: var(--color-circuit-dark); }
+  .bg-circuit-light { background-color: var(--color-circuit-light); }
+  .bg-circuit-muted { background-color: var(--color-circuit-muted); }
+
+  .bg-verdigris { background-color: var(--color-verdigris); }
+  .bg-verdigris-hover:hover { background-color: var(--color-verdigris-dark); }
+  .bg-verdigris-light { background-color: var(--color-verdigris-light); }
+  .bg-verdigris-muted { background-color: var(--color-verdigris-muted); }
+
+  .bg-warning { background-color: var(--color-warning); }
+  .bg-warning-hover:hover { background-color: var(--color-warning-dark); }
+  .bg-warning-light { background-color: var(--color-warning-light); }
+  .bg-warning-muted { background-color: var(--color-warning-muted); }
+
+  .bg-trust { background-color: var(--color-trust); }
+  .bg-trust-light { background-color: var(--color-trust-light); }
+  .bg-trust-muted { background-color: var(--color-trust-muted); }
+
+  .bg-elevated { background-color: var(--color-surface-elevated); }
+  .bg-surface { background-color: var(--color-surface); }
+  .bg-surface-alt { background-color: var(--color-surface-alt); }
+  .bg-sunken { background-color: var(--color-surface-sunken); }
+
+  /* Border roles */
+  .border-primary { border-color: var(--color-copper); }
+  .border-circuit { border-color: var(--color-circuit); }
+  .border-verdigris { border-color: var(--color-verdigris); }
+  .border-warning { border-color: var(--color-warning); }
+  .border-trust { border-color: var(--color-trust); }
+  .border-recycler-primary { border-color: var(--color-circuit); }
+
+  /* Focus rings (contextual) */
+  .focus-ring-collector:focus-visible {
+    outline: none;
+    ring: 2px;
+    ring-color: var(--focus-ring-collector);
+    ring-offset: 2px;
+    ring-offset-color: var(--color-surface-elevated);
+  }
+
+  .focus-ring-recycler:focus-visible {
+    outline: none;
+    ring: 2px;
+    ring-color: var(--focus-ring-recycler);
+    ring-offset: 2px;
+    ring-offset-color: var(--color-surface-elevated);
+  }
+
+  .focus-ring-success:focus-visible {
+    outline: none;
+    ring: 2px;
+    ring-color: var(--focus-ring-success);
+    ring-offset: 2px;
+    ring-offset-color: var(--color-surface-elevated);
+  }
+
+  .focus-ring-warning:focus-visible {
+    outline: none;
+    ring: 2px;
+    ring-color: var(--focus-ring-warning);
+    ring-offset: 2px;
+    ring-offset-color: var(--color-surface-elevated);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .focus-ring-collector:focus-visible,
+    .focus-ring-recycler:focus-visible,
+    .focus-ring-success:focus-visible,
+    .focus-ring-warning:focus-visible {
+      ring-offset-color: var(--color-surface-dark-elevated);
+    }
+  }
+
+  /* Container utilities */
+  .container-mobile { max-width: var(--container-mobile); margin-inline: auto; padding-inline: var(--space-4); }
+  .container-tablet { max-width: var(--container-tablet); margin-inline: auto; padding-inline: var(--space-4); }
+  .container-desktop { max-width: var(--container-desktop); margin-inline: auto; padding-inline: var(--space-4); }
+  .container-wide { max-width: var(--container-wide); margin-inline: auto; padding-inline: var(--space-4); }
+
+  /* Typography utilities */
+  .font-display { font-family: var(--font-display); }
+  .font-ui { font-family: var(--font-ui); }
+  .font-mono { font-family: var(--font-mono); }
+
+  .text-step--1 { font-size: var(--text-step--1); }
+  .text-step-0 { font-size: var(--text-step-0); }
+  .text-step-1 { font-size: var(--text-step-1); }
+  .text-step-2 { font-size: var(--text-step-2); }
+  .text-step-3 { font-size: var(--text-step-3); }
+  .text-step-4 { font-size: var(--text-step-4); }
+  .text-step-5 { font-size: var(--text-step-5); }
+
+  .leading-tight { line-height: var(--leading-tight); }
+  .leading-snug { line-height: var(--leading-snug); }
+  .leading-normal { line-height: var(--leading-normal); }
+  .leading-relaxed { line-height: var(--leading-relaxed); }
+
+  .tracking-tight { letter-spacing: var(--tracking-tight); }
+  .tracking-normal { letter-spacing: var(--tracking-normal); }
+  .tracking-wide { letter-spacing: var(--tracking-wide); }
+  .tracking-wider { letter-spacing: var(--tracking-wider); }
+
+  /* Tabular figures for numbers */
+  .tabular-nums { font-variant-numeric: tabular-nums; }
+  .diagonal-fractions { font-variant-numeric: diagonal-fractions; }
+
+  /* Language-specific font weights */
+  :lang(mr) .font-display,
+  :lang(hi) .font-display {
+    font-family: var(--font-display);
+    font-weight: 500;
+  }
+
+  :lang(en) .font-display {
+    font-family: var(--font-ui);
+    font-weight: 500;
+  }
+
+  :lang(mr) .font-ui,
+  :lang(hi) .font-ui {
+    font-family: var(--font-ui);
+    font-weight: 400;
+  }
+
+  :lang(en) .font-ui {
+    font-family: var(--font-ui);
+    font-weight: 400;
+  }
+}
+
+@layer components {
+  /* Minimal animations — only for meaningful moments */
+  .animate-in { animation: animateIn var(--transition-normal); }
+  .fade-in { animation: fadeIn var(--transition-fast); }
+  .zoom-in-95 { animation: zoomIn var(--transition-fast); }
+  .slide-in-from-bottom-4 { animation: slideInFromBottom var(--transition-normal); }
+
+  @keyframes animateIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes zoomIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+  @keyframes slideInFromBottom { from { opacity: 0; transform: translateY(1rem); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+  .animate-spin { animation: spin 1s linear infinite; }
+  .animate-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+
+  /* Handover code generation — the ONE orchestrated moment */
+  @keyframes codeReveal {
+    0% { opacity: 0; transform: scale(0.9) translateY(0.5rem); }
+    50% { opacity: 0.5; transform: scale(1.02) translateY(-0.1rem); }
+    100% { opacity: 1; transform: scale(1) translateY(0); }
+  }
+  .animate-code-reveal { animation: codeReveal 400ms ease-out; }
+
+  /* Copper accent line — collector identity */
+  .copper-accent {
+    position: relative;
+  }
+  .copper-accent::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--color-copper), var(--color-copper-light));
+    border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+  }
+
+  /* Circuit accent line — recycler identity */
+  .circuit-accent {
+    position: relative;
+  }
+  .circuit-accent::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--color-circuit), var(--color-circuit-light));
+    border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-in,
+  .fade-in,
+  .zoom-in-95,
+  .slide-in-from-bottom-4,
+  .animate-spin,
+  .animate-pulse,
+  .animate-code-reveal { animation: none !important; }
+}

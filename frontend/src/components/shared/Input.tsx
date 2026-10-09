@@ -1,4 +1,3 @@
-import { useTranslation } from 'react-i18next';
 import { forwardRef } from 'react';
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
@@ -12,19 +11,18 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
   ({ label, error, helperText, leftIcon, rightIcon, fullWidth = true, className = '', id, ...props }, ref) => {
-    const { t } = useTranslation();
     const inputId = id || props.name;
 
     return (
       <div className={fullWidth ? 'w-full' : ''}>
         {label && (
-          <label htmlFor={inputId} className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+          <label htmlFor={inputId} className="block text-sm font-medium text-[var(--color-text-muted)] mb-1.5">
             {label}
           </label>
         )}
         <div className="relative">
           {leftIcon && (
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[var(--color-text-subtle)]">
               {leftIcon}
             </div>
           )}
@@ -34,29 +32,31 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             className={`
               w-full rounded-lg border transition-colors duration-200
               ${leftIcon ? 'pl-10' : 'pl-4'} ${rightIcon ? 'pr-10' : 'pr-4'} py-3
+              bg-[var(--color-surface-elevated)] text-[var(--color-text)]
               ${error
-                ? 'border-red-500 focus:ring-red-500 focus:border-red-500'
-                : 'border-gray-300 focus:ring-orange-500 focus:border-orange-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white'
+                ? 'border-[var(--color-warning)] focus:ring-[var(--focus-ring-warning)] focus:border-[var(--color-warning)]'
+                : 'border-[var(--color-border)] focus:ring-[var(--color-border-focus)] focus:border-[var(--color-border-focus)]'
               }
-              disabled:bg-gray-100 dark:disabled:bg-gray-800
+              disabled:bg-[var(--color-surface-alt)] disabled:text-[var(--color-text-muted)]
+              ${className}
             `}
             aria-invalid={error ? 'true' : 'false'}
             aria-describedby={error ? `${inputId}-error` : helperText ? `${inputId}-helper` : undefined}
             {...props}
           />
           {rightIcon && (
-            <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-gray-400">
+            <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-[var(--color-text-subtle)]">
               {rightIcon}
             </div>
           )}
         </div>
         {error && (
-          <p id={`${inputId}-error`} className="mt-1.5 text-sm text-red-600 dark:text-red-400" role="alert">
+          <p id={`${inputId}-error`} className="mt-1.5 text-sm text-[var(--color-warning)]" role="alert">
             {error}
           </p>
         )}
         {helperText && !error && (
-          <p id={`${inputId}-helper`} className="mt-1.5 text-sm text-gray-500 dark:text-gray-400">
+          <p id={`${inputId}-helper`} className="mt-1.5 text-sm text-[var(--color-text-muted)]">
             {helperText}
           </p>
         )}
@@ -83,7 +83,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
     return (
       <div className={fullWidth ? 'w-full' : ''}>
         {label && (
-          <label htmlFor={selectId} className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+          <label htmlFor={selectId} className="block text-sm font-medium text-[var(--color-text-muted)] mb-1.5">
             {label}
           </label>
         )}
@@ -92,11 +92,13 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
           id={selectId}
           className={`
             w-full rounded-lg border py-3 px-4 transition-colors duration-200 appearance-none
+            bg-[var(--color-surface-elevated)] text-[var(--color-text)]
             ${error
-              ? 'border-red-500 focus:ring-red-500 focus:border-red-500'
-              : 'border-gray-300 focus:ring-orange-500 focus:border-orange-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white'
+              ? 'border-[var(--color-warning)] focus:ring-[var(--focus-ring-warning)] focus:border-[var(--color-warning)]'
+              : 'border-[var(--color-border)] focus:ring-[var(--color-border-focus)] focus:border-[var(--color-border-focus)]'
             }
-            disabled:bg-gray-100 dark:disabled:bg-gray-800
+            disabled:bg-[var(--color-surface-alt)] disabled:text-[var(--color-text-muted)]
+            ${className}
           `}
           aria-invalid={error ? 'true' : 'false'}
           aria-describedby={error ? `${selectId}-error` : helperText ? `${selectId}-helper` : undefined}
@@ -114,12 +116,12 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
           ))}
         </select>
         {error && (
-          <p id={`${selectId}-error`} className="mt-1.5 text-sm text-red-600 dark:text-red-400" role="alert">
+          <p id={`${selectId}-error`} className="mt-1.5 text-sm text-[var(--color-warning)]" role="alert">
             {error}
           </p>
         )}
         {helperText && !error && (
-          <p id={`${selectId}-helper`} className="mt-1.5 text-sm text-gray-500 dark:text-gray-400">
+          <p id={`${selectId}-helper`} className="mt-1.5 text-sm text-[var(--color-text-muted)]">
             {helperText}
           </p>
         )}

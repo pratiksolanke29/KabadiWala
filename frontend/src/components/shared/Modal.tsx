@@ -1,5 +1,3 @@
-import { useTranslation } from 'react-i18next';
-import { forwardRef } from 'react';
 import { X } from 'lucide-react';
 
 interface ModalProps {
@@ -12,8 +10,6 @@ interface ModalProps {
 }
 
 export function Modal({ isOpen, onClose, title, children, size = 'md', showCloseButton = true }: ModalProps) {
-  const { t } = useTranslation();
-
   if (!isOpen) return null;
 
   const sizeStyles = {
@@ -34,22 +30,22 @@ export function Modal({ isOpen, onClose, title, children, size = 'md', showClose
         />
         <div
           className={`
-            relative w-full ${sizeStyles[size]} bg-white dark:bg-gray-800 rounded-xl shadow-xl
-            transform transition-all animate-in fade-in zoom-in-95
+            relative w-full ${sizeStyles[size]} bg-[var(--color-surface-elevated)] rounded-xl shadow-xl
+            animate-in fade-in zoom-in-95
           `}
         >
           {(title || showCloseButton) && (
-            <div className="flex items-center justify-between p-4 border-b dark:border-gray-700">
+            <div className="flex items-center justify-between p-4 border-b border-[var(--color-border)]">
               {title && (
-                <h2 id="modal-title" className="text-lg font-semibold text-gray-900 dark:text-white">
+                <h2 id="modal-title" className="text-lg font-semibold text-[var(--color-text)]">
                   {title}
                 </h2>
               )}
               {showCloseButton && (
                 <button
                   onClick={onClose}
-                  className="p-1 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                  aria-label={t('common.close', { defaultValue: 'Close' })}
+                  className="p-1 rounded-lg text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-alt)] transition-colors focus-ring-collector"
+                  aria-label="Close"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -70,20 +66,18 @@ interface ToastProps {
 }
 
 export function Toast({ message, type = 'info', onClose }: ToastProps) {
-  const { t } = useTranslation();
-
   const typeStyles = {
-    success: 'bg-green-500 text-white',
-    error: 'bg-red-500 text-white',
-    warning: 'bg-yellow-500 text-white',
-    info: 'bg-blue-500 text-white',
+    success: 'bg-[var(--color-verdigris)] text-[var(--color-verdigris-on)]',
+    error: 'bg-[var(--color-warning)] text-white',
+    warning: 'bg-[var(--color-warning)] text-white',
+    info: 'bg-[var(--color-circuit)] text-[var(--color-circuit-on)]',
   };
 
   const icons = {
-    success: '✓',
-    error: '✕',
-    warning: '⚠',
-    info: 'ℹ',
+    success: <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>,
+    error: <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>,
+    warning: <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>,
+    info: <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="16" x2="12" y2="12" /><line x1="12" y1="8" x2="12.01" y2="8" /></svg>,
   };
 
   return (
@@ -95,12 +89,12 @@ export function Toast({ message, type = 'info', onClose }: ToastProps) {
       role="alert"
       aria-live="polite"
     >
-      <span className="flex-shrink-0 text-lg">{icons[type]}</span>
+      <span className="flex-shrink-0">{icons[type]}</span>
       <p className="text-sm font-medium">{message}</p>
       <button
         onClick={onClose}
         className="ml-2 flex-shrink-0 p-1 rounded hover:bg-white/20 transition-colors"
-        aria-label={t('common.close', { defaultValue: 'Close' })}
+        aria-label="Close"
       >
         <X className="w-4 h-4" />
       </button>

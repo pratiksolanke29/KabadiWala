@@ -20,12 +20,6 @@ async function adminFetch<T>(key: string, method: string, path: string): Promise
   return data as T;
 }
 
-const chip: Record<string, string> = {
-  pending: 'bg-amber-100 text-amber-800',
-  approved: 'bg-green-100 text-green-800',
-  rejected: 'bg-red-100 text-red-800',
-};
-
 export function AdminPanel() {
   const { t, i18n } = useTranslation();
   const [key, setKey] = useState(() => sessionStorage.getItem(KEY_STORE) || '');
@@ -74,29 +68,29 @@ export function AdminPanel() {
   const langs: ('mr' | 'hi' | 'en')[] = ['mr', 'hi', 'en'];
   const header = (
     <div className="flex items-center justify-between mb-4 gap-2 flex-wrap">
-      <h1 className="text-2xl font-bold text-gray-900">♻️ {t('admin.title')}</h1>
+      <h1 className="text-2xl font-bold text-[var(--color-text)] font-display">♻️ {t('admin.title')}</h1>
       <div className="flex items-center gap-2">
         {langs.map((l) => (
           <button key={l} onClick={() => { void i18n.changeLanguage(l); localStorage.setItem('kabadiwala-language', l); }}
-            className={`px-2 py-1 text-sm rounded border ${i18n.language === l ? 'bg-orange-600 text-white' : 'bg-white text-gray-700'}`}>
+            className={`px-2 py-1 text-sm rounded border ${i18n.language === l ? 'bg-[var(--color-circuit)] text-white' : 'bg-[var(--color-surface-elevated)] text-[var(--color-text)] border-[var(--color-border)]'}`}>
             {l.toUpperCase()}
           </button>
         ))}
-        {key && <button onClick={logout} className="px-3 py-1 text-sm rounded border bg-white text-gray-700" data-testid="admin-logout">{t('common.logout')}</button>}
+        {key && <button onClick={logout} className="px-3 py-1 text-sm rounded bg-[var(--color-surface-elevated)] text-[var(--color-text)] border border-[var(--color-border)]" data-testid="admin-logout">{t('common.logout')}</button>}
       </div>
     </div>
   );
 
   if (!key) {
     return (
-      <div className="min-h-screen bg-orange-50 flex items-center justify-center p-4">
-        <form onSubmit={login} className="w-full max-w-sm bg-white rounded-xl shadow p-6 space-y-4">
+      <div className="min-h-screen bg-[var(--color-surface)] flex items-center justify-center p-4">
+        <form onSubmit={login} className="w-full max-w-sm bg-[var(--color-surface-elevated)] rounded-xl shadow-xl p-6 space-y-4 border border-[var(--color-border)]">
           {header}
-          <label className="block text-sm text-gray-700">{t('admin.adminKey')}</label>
+          <label className="block text-sm text-[var(--color-text-muted)]">{t('admin.adminKey')}</label>
           <input type="password" value={input} onChange={(e) => setInput(e.target.value)} data-testid="admin-key-input"
-            className="w-full border rounded px-3 py-2" placeholder={t('admin.keyPlaceholder')} autoFocus />
-          {error && <p className="text-sm text-red-600" data-testid="admin-error">{error}</p>}
-          <button type="submit" className="w-full bg-orange-600 text-white rounded py-2 font-medium" data-testid="admin-login">{t('admin.login')}</button>
+            className="w-full border border-[var(--color-border)] rounded px-3 py-2 bg-[var(--color-surface-elevated)] text-[var(--color-text)] placeholder-[var(--color-text-muted)] focus:ring-[var(--focus-ring-collector)] focus:border-[var(--color-border-focus)]" placeholder={t('admin.keyPlaceholder')} autoFocus />
+          {error && <p className="text-sm text-[var(--color-warning)]" data-testid="admin-error">{error}</p>}
+          <button type="submit" className="w-full bg-[var(--color-circuit)] text-white rounded py-2 font-medium hover:bg-[var(--color-circuit-dark)] transition-colors focus-ring-recycler" data-testid="admin-login">{t('admin.login')}</button>
         </form>
       </div>
     );
@@ -106,21 +100,27 @@ export function AdminPanel() {
   const pending = recyclers.filter((r) => r.status === 'pending').length;
   const statusLabel = (s: string) => t(`admin.status.${s}`, { defaultValue: s });
 
+  const statusConfig = {
+    pending: 'bg-[var(--color-warning-muted)] text-[var(--color-warning)]',
+    approved: 'bg-[var(--color-verdigris-muted)] text-[var(--color-verdigris)]',
+    rejected: 'bg-[var(--color-warning-muted)] text-[var(--color-warning)]',
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50 p-4">
-      <div className="max-w-5xl mx-auto">
+    <div className="min-h-screen bg-[var(--color-surface)] p-4">
+      <div className="max-w-7xl mx-auto">
         {header}
-        {error && <p className="mb-3 text-sm text-red-600" data-testid="admin-error">{error}</p>}
+        {error && <p className="mb-3 text-sm text-[var(--color-warning)]" data-testid="admin-error">{error}</p>}
         <div className="flex gap-2 mb-4">
           <button onClick={() => setTab('recyclers')} data-testid="tab-recyclers"
-            className={`px-4 py-2 rounded ${tab === 'recyclers' ? 'bg-orange-600 text-white' : 'bg-white border'}`}>
+            className={`px-4 py-2 rounded ${tab === 'recyclers' ? 'bg-[var(--color-circuit)] text-white' : 'bg-[var(--color-surface-elevated)] text-[var(--color-text)] border border-[var(--color-border)]'}`}>
             {t('admin.recyclers')} ({recyclers.length}){pending > 0 && ` · ${pending} ${t('admin.pendingShort')}`}
           </button>
           <button onClick={() => setTab('lots')} data-testid="tab-lots"
-            className={`px-4 py-2 rounded ${tab === 'lots' ? 'bg-orange-600 text-white' : 'bg-white border'}`}>
+            className={`px-4 py-2 rounded ${tab === 'lots' ? 'bg-[var(--color-circuit)] text-white' : 'bg-[var(--color-surface-elevated)] text-[var(--color-text)] border border-[var(--color-border)]'}`}>
             {t('admin.lots')} ({lots.length})
           </button>
-          <button onClick={() => void load(key)} className="ml-auto px-3 py-2 rounded bg-white border text-sm">{loading ? t('common.loading') : t('admin.refresh')}</button>
+          <button onClick={() => void load(key)} className="ml-auto px-3 py-2 rounded bg-[var(--color-surface-elevated)] border border-[var(--color-border)] text-sm text-[var(--color-text)] hover:bg-[var(--color-surface-alt)]">{loading ? t('common.loading') : t('admin.refresh')}</button>
         </div>
 
         {tab === 'recyclers' && (
@@ -128,29 +128,29 @@ export function AdminPanel() {
             <div className="flex gap-2 mb-3 text-sm">
               {(['all', 'pending', 'approved', 'rejected'] as const).map((f) => (
                 <button key={f} onClick={() => setFilter(f)} data-testid={`filter-${f}`}
-                  className={`px-3 py-1 rounded-full border ${filter === f ? 'bg-gray-900 text-white' : 'bg-white'}`}>
+                  className={`px-3 py-1 rounded-full border ${filter === f ? 'bg-[var(--color-text)] text-[var(--color-text-inverse)]' : 'bg-[var(--color-surface-elevated)] text-[var(--color-text)] border-[var(--color-border)]'}`}>
                   {f === 'all' ? t('admin.all') : statusLabel(f)}
                 </button>
               ))}
             </div>
             <div className="space-y-3">
-              {shown.length === 0 && <p className="text-gray-500">{t('admin.noRecyclers')}</p>}
+              {shown.length === 0 && <p className="text-[var(--color-text-muted)]">{t('admin.noRecyclers')}</p>}
               {shown.map((r) => (
-                <div key={r.id} className="bg-white rounded-lg shadow-sm p-4 flex items-center justify-between gap-3 flex-wrap" data-testid={`recycler-${r.id}`}>
+                <div key={r.id} className="bg-[var(--color-surface-elevated)] rounded-lg shadow-sm p-4 flex items-center justify-between gap-3 flex-wrap border border-[var(--color-border)]" data-testid={`recycler-${r.id}`}>
                   <div>
-                    <p className="font-semibold text-gray-900">{r.facilityName}</p>
-                    <p className="text-sm text-gray-600">{r.identifier}{r.city ? ` · ${r.city}` : ''}{r.contact ? ` · ${r.contact}` : ''}</p>
-                    <p className="text-xs text-gray-500">{t('admin.authNumber')}: {r.authNumber || '-'} · {t('admin.lots')}: {r.lotCount}</p>
+                    <p className="font-semibold text-[var(--color-text)]">{r.facilityName}</p>
+                    <p className="text-sm text-[var(--color-text-muted)]">{r.identifier}{r.city ? ` · ${r.city}` : ''}{r.contact ? ` · ${r.contact}` : ''}</p>
+                    <p className="text-xs text-[var(--color-text-subtle)]">{t('admin.authNumber')}: {r.authNumber || '-'} · {t('admin.lots')}: {r.lotCount}</p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${chip[r.status]}`} data-testid={`status-${r.id}`}>{statusLabel(r.status)}</span>
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusConfig[r.status]}`} data-testid={`status-${r.id}`}>{statusLabel(r.status)}</span>
                     {r.status !== 'approved' && (
                       <button onClick={() => void act(r.id, 'approve')} data-testid={`approve-${r.id}`}
-                        className="px-3 py-1 rounded bg-green-600 text-white text-sm">{t('admin.approve')}</button>
+                        className="px-3 py-1 rounded bg-[var(--color-verdigris)] text-white text-sm hover:bg-[var(--color-verdigris-dark)]">{t('admin.approve')}</button>
                     )}
                     {r.status !== 'rejected' && (
                       <button onClick={() => void act(r.id, 'reject')} data-testid={`reject-${r.id}`}
-                        className="px-3 py-1 rounded bg-red-600 text-white text-sm">{t('admin.reject')}</button>
+                        className="px-3 py-1 rounded bg-[var(--color-warning)] text-white text-sm hover:bg-[var(--color-warning-dark)]">{t('admin.reject')}</button>
                     )}
                   </div>
                 </div>
@@ -160,9 +160,9 @@ export function AdminPanel() {
         )}
 
         {tab === 'lots' && (
-          <div className="bg-white rounded-lg shadow-sm overflow-x-auto">
+          <div className="bg-[var(--color-surface-elevated)] rounded-lg shadow-sm overflow-x-auto border border-[var(--color-border)]">
             <table className="w-full text-sm text-left">
-              <thead className="bg-gray-100 text-gray-700">
+              <thead className="bg-[var(--color-surface-alt)] text-[var(--color-text-muted)]">
                 <tr>
                   <th className="p-3">{t('admin.lot')}</th><th className="p-3">{t('admin.category')}</th>
                   <th className="p-3">{t('admin.weight')}</th><th className="p-3">{t('admin.collector')}</th>
@@ -171,16 +171,16 @@ export function AdminPanel() {
                 </tr>
               </thead>
               <tbody>
-                {lots.length === 0 && <tr><td className="p-3 text-gray-500" colSpan={7}>{t('admin.noLots')}</td></tr>}
+                {lots.length === 0 && <tr><td className="p-3 text-[var(--color-text-muted)]" colSpan={7}>{t('admin.noLots')}</td></tr>}
                 {lots.map((l) => (
-                  <tr key={l.id} className="border-t" data-testid={`lot-${l.id}`}>
-                    <td className="p-3 font-mono text-xs">{l.id.slice(0, 8)}</td>
-                    <td className="p-3">{l.category}</td>
-                    <td className="p-3">{l.weightKg} kg</td>
-                    <td className="p-3">{l.collectorName || l.collectorPhone || '-'}</td>
-                    <td className="p-3">{l.recyclerName || '-'}</td>
-                    <td className="p-3">{l.finalTotal != null ? `₹${l.finalTotal}` : l.quotedTotal != null ? `₹${l.quotedTotal}` : '-'}</td>
-                    <td className="p-3">{l.status}</td>
+                  <tr key={l.id} className="border-t border-[var(--color-border)]" data-testid={`lot-${l.id}`}>
+                    <td className="p-3 font-mono text-xs tabular-nums">{l.id.slice(0, 8)}</td>
+                    <td className="p-3 text-[var(--color-text)]">{l.category}</td>
+                    <td className="p-3 text-[var(--color-text)] tabular-nums">{l.weightKg} kg</td>
+                    <td className="p-3 text-[var(--color-text)]">{l.collectorName || l.collectorPhone || '-'}</td>
+                    <td className="p-3 text-[var(--color-text)]">{l.recyclerName || '-'}</td>
+                    <td className="p-3 text-[var(--color-text)] tabular-nums font-mono">{l.finalTotal != null ? `₹${l.finalTotal}` : l.quotedTotal != null ? `₹${l.quotedTotal}` : '-'}</td>
+                    <td className="p-3 text-[var(--color-text)]">{l.status}</td>
                   </tr>
                 ))}
               </tbody>

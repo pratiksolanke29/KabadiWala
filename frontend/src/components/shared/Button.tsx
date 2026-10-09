@@ -1,13 +1,15 @@
 import { useTranslation } from 'react-i18next';
+const _useTranslation = useTranslation;
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'outline' | 'danger' | 'ghost';
+  variant?: 'primary' | 'secondary' | 'outline' | 'danger' | 'ghost' | 'trust';
   size?: 'sm' | 'md' | 'lg' | 'xl';
   loading?: boolean;
   fullWidth?: boolean;
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
   children: React.ReactNode;
+  context?: 'collector' | 'recycler';
 }
 
 export function Button({
@@ -20,35 +22,42 @@ export function Button({
   children,
   disabled,
   className = '',
+  context = 'collector',
   ...props
 }: ButtonProps) {
-  const { t } = useTranslation();
-  
   const baseStyles = `
-    inline-flex items-center justify-center font-medium rounded-lg
+    inline-flex items-center justify-center font-medium
     transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2
     disabled:opacity-50 disabled:cursor-not-allowed
     ${fullWidth ? 'w-full' : ''}
   `;
 
+  const isCollector = context === 'collector';
+  const focusRingClass = isCollector ? 'focus-ring-collector' : 'focus-ring-recycler';
+
   const variantStyles = {
-    primary: 'bg-orange-600 text-white hover:bg-orange-700 focus:ring-orange-500',
-    secondary: 'bg-gray-100 text-gray-900 hover:bg-gray-200 focus:ring-gray-500 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600',
-    outline: 'border-2 border-orange-600 text-orange-600 hover:bg-orange-50 focus:ring-orange-500 dark:border-orange-400 dark:text-orange-400 dark:hover:bg-orange-900/20',
-    danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500',
-    ghost: 'text-gray-700 hover:bg-gray-100 focus:ring-gray-500 dark:text-gray-300 dark:hover:bg-gray-800',
+    primary: isCollector
+      ? 'bg-[var(--color-collector-primary)] text-[var(--color-collector-primary-on)] hover:bg-[var(--color-collector-primary-hover)] focus:ring-[var(--focus-ring-collector)]'
+      : 'bg-[var(--color-recycler-primary)] text-[var(--color-recycler-primary-on)] hover:bg-[var(--color-recycler-primary-hover)] focus:ring-[var(--focus-ring-recycler)]',
+    secondary: 'bg-[var(--color-surface-alt)] text-[var(--color-text)] hover:bg-[var(--color-border)] focus:ring-[var(--color-border-focus)]',
+    outline: isCollector
+      ? 'border-2 border-[var(--color-collector-primary)] text-[var(--color-collector-primary)] hover:bg-[var(--color-collector-primary-light)]/10 focus:ring-[var(--focus-ring-collector)]'
+      : 'border-2 border-[var(--color-recycler-primary)] text-[var(--color-recycler-primary)] hover:bg-[var(--color-recycler-primary-light)]/10 focus:ring-[var(--focus-ring-recycler)]',
+    danger: 'bg-[var(--color-warning)] text-white hover:bg-[var(--color-warning-dark)] focus:ring-[var(--focus-ring-warning)]',
+    ghost: 'text-[var(--color-text-muted)] hover:bg-[var(--color-surface-alt)] focus:ring-[var(--color-border-focus)]',
+    trust: 'bg-[var(--color-trust)] text-[var(--color-cable)] hover:bg-[var(--color-trust-dark)] focus:ring-[var(--color-trust-light)]',
   };
 
   const sizeStyles = {
-    sm: 'px-3 py-1.5 text-sm gap-1.5',
-    md: 'px-4 py-2 text-base gap-2',
-    lg: 'px-6 py-3 text-lg gap-2',
-    xl: 'px-8 py-4 text-xl gap-3',
+    sm: 'px-3 py-1.5 text-sm gap-1.5 rounded-md',
+    md: 'px-4 py-2 text-base gap-2 rounded-lg',
+    lg: 'px-6 py-3 text-lg gap-2 rounded-xl',
+    xl: 'px-8 py-4 text-xl gap-3 rounded-2xl',
   };
 
   return (
     <button
-      className={`${baseStyles} ${variantStyles[variant]} ${sizeStyles[size]} ${className}`}
+      className={`${baseStyles} ${variantStyles[variant]} ${sizeStyles[size]} ${focusRingClass} ${className}`}
       disabled={disabled || loading}
       {...props}
     >

@@ -3,23 +3,65 @@ import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { ArrowLeft, Shield, AlertTriangle, Info, ChevronRight } from 'lucide-react';
 import i18n from 'i18next';
+import { Modal } from '../../components/shared/Modal';
+import { Button } from '../../components/shared/Button';
 
 interface SafetyTopic {
   id: string;
   title: { mr: string; hi: string; en: string };
-  icon: string;
+  icon: React.ReactNode;
   color: string;
+  bgColor: string;
   description: { mr: string; hi: string; en: string };
   detailImage: string;
 }
+
+/* SVG icons for safety topics */
+const FireIcon = (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" />
+  </svg>
+);
+
+const MonitorIcon = (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <rect x="2" y="3" width="20" height="14" rx="2" />
+    <path d="M2 9h20" />
+    <path d="M12 17v4" />
+    <path d="M8 21h8" />
+    <circle cx="12" cy="17" r="1" />
+  </svg>
+);
+
+const BatteryIcon = (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <rect x="2" y="6" width="16" height="12" rx="2" />
+    <rect x="18" y="9" width="4" height="6" rx="1" />
+    <path d="M6 10h4" />
+    <path d="M6 14h4" />
+    <path d="M14 10h4" />
+    <path d="M14 14h4" />
+  </svg>
+);
+
+const AcidIcon = (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M12 2L2 7l10 5 10-5-10-5z" />
+    <path d="M2 17l10 5 10-5" />
+    <path d="M2 12l10 5 10-5" />
+    <path d="M12 7v10" />
+    <circle cx="12" cy="12" r="3" />
+  </svg>
+);
 
 const mockSafetyTopics: SafetyTopic[] = [
   {
     id: 'dont-burn-cables',
     title: { mr: 'केबल्स न जलवा', hi: 'केबल्स न जलाएं', en: "Don't Burn Cables" },
-    icon: '🔥',
-    color: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300',
-    description: { 
+    icon: FireIcon,
+    color: 'text-[var(--color-warning)]',
+    bgColor: 'bg-[var(--color-warning-muted)]',
+    description: {
       mr: 'कॉपर मिळवण्यासाठी केबल्स जलवणे वातावरणाला दूषित करते आणि आरोग्यसाठी हानिकारक आहे.',
       hi: 'कॉपर पाने के लिए केबल्स जलाना पर्यावरण को प्रदूषित करता है और स्वास्थ्य के लिए हानिकारक है।',
       en: 'Burning cables to extract copper pollutes the environment and is harmful to health.'
@@ -29,9 +71,10 @@ const mockSafetyTopics: SafetyTopic[] = [
   {
     id: 'crt-handling',
     title: { mr: 'CRT हाताळणी', hi: 'CRT संचालन', en: 'CRT Handling' },
-    icon: '📺',
-    color: 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300',
-    description: { 
+    icon: MonitorIcon,
+    color: 'text-[var(--color-copper)]',
+    bgColor: 'bg-[var(--color-copper-light)]/10',
+    description: {
       mr: 'CRT मॉनिटर्समध्ये लेड असते. त्यांचे चुकीच्या प्रकारचे हाताळणी विषारी असू शकते.',
       hi: 'CRT मॉनिटर्स में लेड होता है। गलत संचालन विषाक्त हो सकता है।',
       en: 'CRT monitors contain lead. Improper handling can be toxic.'
@@ -41,9 +84,10 @@ const mockSafetyTopics: SafetyTopic[] = [
   {
     id: 'batteries',
     title: { mr: 'बॅटरीज', hi: 'बैटरीज', en: 'Batteries' },
-    icon: '🔋',
-    color: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300',
-    description: { 
+    icon: BatteryIcon,
+    color: 'text-[var(--color-trust)]',
+    bgColor: 'bg-[var(--color-trust-muted)]',
+    description: {
       mr: 'लिथियम आयन बॅटरीज दाबल्यास किंवा थेट सूर्यप्रकाशात ठेवल्यास विस्फोटू शकतात.',
       hi: 'लिथियम आयन बैटरीज दबाने पर या सीधी धूप में रखने पर फट सकती हैं।',
       en: 'Lithium-ion batteries can explode if punctured or exposed to direct sunlight.'
@@ -53,9 +97,10 @@ const mockSafetyTopics: SafetyTopic[] = [
   {
     id: 'dont-open-pcbs',
     title: { mr: 'PCB उघडू नका / अॅसिड', hi: 'PCB न खोलें / एसिड', en: "Don't Open PCBs / Acid" },
-    icon: '⚗️',
-    color: 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300',
-    description: { 
+    icon: AcidIcon,
+    color: 'text-[var(--color-circuit)]',
+    bgColor: 'bg-[var(--color-circuit-muted)]',
+    description: {
       mr: 'PCB उघडण्यासाठी अॅसिड वापरणे अत्यंत धोकादायक आहे. व्यावसायिकांचा सहारा घ्या.',
       hi: 'PCB खोलने के लिए एसिड का उपयोग करना बेहद खतरनाक है। पेशेवरों की मदद लें।',
       en: 'Using acid to open PCBs is extremely dangerous. Seek professional help.'
@@ -78,25 +123,24 @@ export function Safety() {
   };
 
   const getCurrentLanguage = () => {
-    // Get current language from i18n
     return i18n.language || 'en';
   };
 
   const lang = getCurrentLanguage();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-amber-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
+    <div className="min-h-screen bg-[var(--color-surface)]">
       {/* Header */}
-      <header className="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-40">
-        <div className="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
+      <header className="bg-[var(--color-surface-elevated)] border-b border-[var(--color-border)] sticky top-0 z-40">
+        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
           <button
             onClick={handleBack}
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            className="p-2 rounded-lg hover:bg-[var(--color-surface-alt)] transition-colors focus-ring-collector"
             aria-label={t('common.back', { defaultValue: 'Back' })}
           >
-            <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+            <ArrowLeft className="w-5 h-5 text-[var(--color-text)]" />
           </button>
-          <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
+          <h1 className="text-lg font-semibold text-[var(--color-text)] font-display">
             {t('common.safety', { defaultValue: 'Safety' })}
           </h1>
           <div className="w-10" />
@@ -104,17 +148,17 @@ export function Safety() {
       </header>
 
       {/* Safety Topics */}
-      <main className="max-w-2xl mx-auto px-4 pb-20">
+      <main className="max-w-6xl mx-auto px-4 pb-24">
         <div className="mb-6">
-          <div className="flex items-center gap-3 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
-            <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-              <Shield className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+          <div className="flex items-center gap-3 p-4 bg-[var(--color-circuit-muted)] border border-[var(--color-circuit-light)] rounded-xl">
+            <div className="w-10 h-10 rounded-lg bg-[var(--color-circuit-light)]/20 flex items-center justify-center">
+              <Shield className="w-5 h-5 text-[var(--color-circuit)]" />
             </div>
             <div>
-              <p className="font-medium text-gray-900 dark:text-white">
+              <p className="font-medium text-[var(--color-text)]">
                 {t('safety.staySafe', { defaultValue: 'Stay Safe While Collecting' })}
               </p>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+              <p className="text-sm text-[var(--color-text-muted)]">
                 {t('safety.followGuidelines', { defaultValue: 'Follow these guidelines to protect yourself and the environment' })}
               </p>
             </div>
@@ -133,12 +177,12 @@ export function Safety() {
         </div>
 
         {/* Emergency Info */}
-        <div className="mt-8 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl border border-red-200 dark:border-red-800">
+        <div className="mt-8 p-4 bg-[var(--color-warning-muted)] border border-[var(--color-warning)] rounded-xl">
           <div className="flex items-start gap-3">
-            <div className="w-8 h-8 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center flex-shrink-0">
-              <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" />
+            <div className="w-8 h-8 rounded-full bg-[var(--color-warning)]/20 flex items-center justify-center flex-shrink-0">
+              <AlertTriangle className="w-5 h-5 text-[var(--color-warning)]" />
             </div>
-            <div className="text-sm text-red-700 dark:text-red-300">
+            <div className="text-sm text-[var(--color-warning)]">
               <p className="font-medium mb-1">{t('safety.emergency', { defaultValue: 'Emergency Contacts' })}</p>
               <p>{t('safety.fire', { defaultValue: 'Fire: 101' })}</p>
               <p>{t('safety.ambulance', { defaultValue: 'Ambulance: 108' })}</p>
@@ -161,25 +205,24 @@ export function Safety() {
 }
 
 function SafetyCard({ topic, lang, onClick }: { topic: SafetyTopic; lang: string; onClick: () => void }) {
-
   return (
     <button
       onClick={onClick}
-      className="w-full bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 hover:shadow-md transition-shadow text-left"
+      className="w-full bg-[var(--color-surface-elevated)] rounded-2xl shadow-sm border border-[var(--color-border)] p-4 hover:shadow-md transition-shadow text-left focus-ring-collector"
     >
       <div className="flex items-center gap-4">
-        <div className={`w-14 h-14 rounded-xl ${topic.color} flex items-center justify-center flex-shrink-0`}>
-          <span className="text-2xl">{topic.icon}</span>
+        <div className={`w-14 h-14 rounded-xl ${topic.bgColor} flex items-center justify-center flex-shrink-0 ${topic.color}`}>
+          {topic.icon}
         </div>
         <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-gray-900 dark:text-white truncate">
+          <h3 className="font-semibold text-[var(--color-text)] truncate">
             {topic.title[lang as keyof typeof topic.title] || topic.title.en}
           </h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
+          <p className="text-sm text-[var(--color-text-muted)] mt-1 line-clamp-2">
             {topic.description[lang as keyof typeof topic.description] || topic.description.en}
           </p>
         </div>
-        <ChevronRight className="w-5 h-5 text-gray-400 flex-shrink-0" />
+        <ChevronRight className="w-5 h-5 text-[var(--color-text-subtle)] flex-shrink-0" />
       </div>
     </button>
   );
@@ -192,7 +235,7 @@ function SafetyDetailModal({ topic, lang, onClose }: { topic: SafetyTopic; lang:
     <div className="fixed inset-0 z-50 overflow-y-auto" role="dialog" aria-modal="true">
       <div className="flex min-h-full items-center justify-center p-4">
         <div className="fixed inset-0 bg-black/50" onClick={onClose} aria-hidden="true" />
-        <div className="relative w-full max-w-lg bg-white dark:bg-gray-800 rounded-xl shadow-xl animate-in fade-in zoom-in-95 max-h-[90vh] overflow-hidden">
+        <div className="relative w-full max-w-lg bg-[var(--color-surface-elevated)] rounded-xl shadow-xl animate-in fade-in zoom-in-95 max-h-[90vh] overflow-hidden">
           <div className="relative h-48">
             <img
               src={topic.detailImage}
@@ -200,13 +243,13 @@ function SafetyDetailModal({ topic, lang, onClose }: { topic: SafetyTopic; lang:
               className="w-full h-full object-cover"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-            <button onClick={onClose} className="absolute top-4 right-4 p-2 bg-white/90 dark:bg-gray-800/90 rounded-full hover:bg-white dark:hover:bg-gray-700 transition-colors" aria-label={t('common.close', { defaultValue: 'Close' })}>
-              <svg className="w-5 h-5 text-gray-700 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+            <button onClick={onClose} className="absolute top-4 right-4 p-2 bg-white/90 dark:bg-[var(--color-surface-elevated)]/90 rounded-full hover:bg-white dark:hover:bg-[var(--color-surface-alt)] transition-colors focus-ring-collector" aria-label={t('common.close', { defaultValue: 'Close' })}>
+              <svg className="w-5 h-5 text-[var(--color-text)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
           </div>
 
           <div className="p-6 space-y-4">
-            <div className={`flex items-center gap-3 ${topic.color} px-4 py-3 rounded-xl`}>
+            <div className={`flex items-center gap-3 ${topic.bgColor} ${topic.color} px-4 py-3 rounded-xl`}>
               <span className="text-3xl">{topic.icon}</span>
               <h2 className="font-bold text-lg">
                 {topic.title[lang as keyof typeof topic.title] || topic.title.en}
@@ -214,17 +257,17 @@ function SafetyDetailModal({ topic, lang, onClose }: { topic: SafetyTopic; lang:
             </div>
 
             <div className="prose dark:prose-invert max-w-none">
-              <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+              <p className="text-[var(--color-text)] leading-relaxed">
                 {topic.description[lang as keyof typeof topic.description] || topic.description.en}
               </p>
             </div>
 
-            <div className="p-4 bg-gray-50 dark:bg-gray-900/50 rounded-xl">
-              <h3 className="font-semibold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
-                <Info className="w-5 h-5" />
+            <div className="p-4 bg-[var(--color-surface-alt)] rounded-xl">
+              <h3 className="font-semibold text-[var(--color-text)] mb-2 flex items-center gap-2">
+                <Info className="w-5 h-5 text-[var(--color-circuit)]" />
                 {t('safety.keyPoints', { defaultValue: 'Key Safety Points' })}
               </h3>
-              <ul className="list-disc list-inside space-y-1 text-sm text-gray-600 dark:text-gray-400">
+              <ul className="list-disc list-inside space-y-1 text-sm text-[var(--color-text-muted)]">
                 <li>{t('safety.point1', { defaultValue: 'Always wear protective gloves and eyewear' })}</li>
                 <li>{t('safety.point2', { defaultValue: 'Work in well-ventilated areas' })}</li>
                 <li>{t('safety.point3', { defaultValue: 'Never burn e-waste to extract metals' })}</li>

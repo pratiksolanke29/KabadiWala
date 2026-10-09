@@ -2,10 +2,11 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useLotStore } from '../../hooks/useLotStore';
 import { Button } from '../../components/shared/Button';
+import { CategoryIcon } from '../../components/shared/CategoryIcon';
 import type { RecyclerMatch, Lot } from '../../types';
 import { api } from '../../api';
 import { useState, useEffect } from 'react';
-import { ArrowLeft, MapPin, Shield, Truck, Star, Phone } from 'lucide-react';
+import { ArrowLeft, MapPin, Shield, Truck } from 'lucide-react';
 
 export function RecyclerList() {
   const { t } = useTranslation();
@@ -22,10 +23,8 @@ export function RecyclerList() {
       .then(setRecyclers)
       .catch((e) => setLoadError(e instanceof Error ? e.message : 'Could not load recyclers'));
   }, [lot?.id]);
-  const [selectedRecycler, setSelectedRecycler] = useState<RecyclerMatch | null>(null);
 
   const handleSelect = (recycler: RecyclerMatch) => {
-    setSelectedRecycler(recycler);
     navigate('/collector/recycler-quote', { state: { recycler, lot } });
   };
 
@@ -34,31 +33,20 @@ export function RecyclerList() {
   };
 
   const cat = lot?.category ?? draft.category;
-  const categoryInfo = cat 
-    ? (() => {
-        const CATS = [
-          { id: 'CRT', label: 'CRT' }, { id: 'LCD', label: 'LCD' },
-          { id: 'PCB', label: 'PCB' }, { id: 'Cables', label: 'Cables' },
-          { id: 'Batteries', label: 'Batteries' }, { id: 'Motors/Magnets', label: 'Motors/Magnets' },
-          { id: 'Mixed Plastics', label: 'Mixed Plastics' }
-        ];
-        return CATS.find(c => c.id === cat)?.label || cat;
-      })()
-    : '';
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-amber-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
+    <div className="min-h-screen bg-[var(--color-surface)] copper-accent">
       {/* Header */}
-      <header className="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-40">
-        <div className="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
+      <header className="bg-[var(--color-surface-elevated)] border-b border-[var(--color-border)] sticky top-0 z-40">
+        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
           <button
             onClick={handleBack}
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            className="p-2 rounded-lg hover:bg-[var(--color-surface-alt)] transition-colors focus-ring-collector"
             aria-label={t('common.back', { defaultValue: 'Back' })}
           >
-            <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+            <ArrowLeft className="w-5 h-5 text-[var(--color-text)]" />
           </button>
-          <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
+          <h1 className="text-lg font-semibold text-[var(--color-text)] font-display">
             {t('recyclerList.title', { defaultValue: 'Find Recycler' })}
           </h1>
           <div className="w-10" />
@@ -66,32 +54,32 @@ export function RecyclerList() {
       </header>
 
       {/* Lot Summary */}
-      <div className="max-w-2xl mx-auto px-4 py-4">
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-4">
+      <div className="max-w-6xl mx-auto px-4 py-4">
+        <div className="bg-[var(--color-surface-elevated)] rounded-2xl shadow-xl p-4 border border-[var(--color-border)]">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
-              <span className="text-2xl">📦</span>
+            <div className="w-12 h-12 rounded-xl bg-[var(--color-copper-light)]/10 flex items-center justify-center">
+              <CategoryIcon category={cat!} size="lg" />
             </div>
             <div className="flex-1">
-              <p className="text-sm text-gray-500 dark:text-gray-400">{t('recyclerList.yourLot', { defaultValue: 'Your Lot' })}</p>
-              <p className="font-semibold text-gray-900 dark:text-white">{categoryInfo} • {lot?.weightKg ?? draft.weightKg} kg</p>
+              <p className="text-sm text-[var(--color-text-muted)]">{t('recyclerList.yourLot', { defaultValue: 'Your Lot' })}</p>
+              <p className="font-semibold text-[var(--color-text)]">{cat} • {lot?.weightKg ?? draft.weightKg} kg</p>
             </div>
             <div className="text-right">
-              <p className="text-sm text-gray-500 dark:text-gray-400">{t('recyclerList.estimate', { defaultValue: 'Estimate' })}</p>
-              <p className="font-semibold text-orange-600 dark:text-orange-400">₹{(lot?.estimateMin ?? draft.estimateMin)?.toLocaleString()} - ₹{(lot?.estimateMax ?? draft.estimateMax)?.toLocaleString()}</p>
+              <p className="text-sm text-[var(--color-text-muted)]">{t('recyclerList.estimate', { defaultValue: 'Estimate' })}</p>
+              <p className="font-semibold text-[var(--color-copper)] tabular-nums font-mono">₹{(lot?.estimateMin ?? draft.estimateMin)?.toLocaleString()} - ₹{(lot?.estimateMax ?? draft.estimateMax)?.toLocaleString()}</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Recycler List */}
-      <main className="max-w-2xl mx-auto px-4 pb-20">
-        {loadError && <p className="text-red-600 text-center py-2">{loadError}</p>}
+      <main className="max-w-6xl mx-auto px-4 pb-24">
+        {loadError && <p className="text-[var(--color-warning)] text-center py-2">{loadError}</p>}
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+          <h2 className="text-lg font-semibold text-[var(--color-text)] font-display">
             {t('recyclerList.nearby', { defaultValue: 'Nearby Recyclers' })}
           </h2>
-          <span className="text-sm text-gray-500 dark:text-gray-400">
+          <span className="text-sm text-[var(--color-text-muted)]">
             {recyclers.length} {t('recyclerList.found', { defaultValue: 'found' })}
           </span>
         </div>
@@ -107,13 +95,9 @@ export function RecyclerList() {
         </div>
 
         {recyclers.length === 0 && (
-          <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-2xl">
-            <p className="text-gray-500 dark:text-gray-400 mb-4">
-              {t('recyclerList.noneFound', { defaultValue: 'No recyclers found in your area' })}
-            </p>
-            <Button variant="outline" onClick={() => {}}>
-              {t('recyclerList.expandSearch', { defaultValue: 'Expand Search Radius' })}
-            </Button>
+          <div className="text-center py-12 bg-[var(--color-surface-elevated)] rounded-2xl border border-[var(--color-border)]">
+            <p className="text-[var(--color-text-muted)] mb-4">{t('recyclerList.noneFound', { defaultValue: 'No recyclers found in your area' })}</p>
+            <Button variant="outline" onClick={() => {}}>{t('recyclerList.expandSearch', { defaultValue: 'Expand Search Radius' })}</Button>
           </div>
         )}
       </main>
@@ -127,43 +111,47 @@ function RecyclerCard({ recycler, onSelect }: { recycler: RecyclerMatch; onSelec
   return (
     <button
       onClick={onSelect}
-      className="w-full bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 hover:shadow-md transition-shadow text-left"
+      className="w-full bg-[var(--color-surface-elevated)] rounded-2xl shadow-sm border border-[var(--color-border)] p-4 hover:shadow-md transition-shadow text-left focus-ring-collector"
     >
       <div className="flex items-start gap-4">
-        <div className="w-14 h-14 rounded-xl bg-green-100 dark:bg-green-900/30 flex items-center justify-center flex-shrink-0">
-          <span className="text-2xl">♻️</span>
+        <div className="w-14 h-14 rounded-xl bg-[var(--color-circuit-muted)] flex items-center justify-center flex-shrink-0">
+          <svg className="w-6 h-6 text-[var(--color-circuit)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="8" />
+            <circle cx="12" cy="12" r="4" />
+            <path d="M12 4v4M12 16v4M4 12h4M16 12h4" />
+            <path d="M6.34 6.34l2.83 2.83M14.83 14.83l2.83 2.83" />
+            <path d="M6.34 17.66l2.83-2.83M14.83 9.17l2.83-2.83" />
+          </svg>
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <h3 className="font-semibold text-gray-900 dark:text-white truncate">{recycler.name}</h3>
+            <h3 className="font-semibold text-[var(--color-text)] truncate">{recycler.name}</h3>
             {recycler.verified && (
-              <span className="flex items-center gap-1 text-green-600 dark:text-green-400" title={t('recyclerList.verified', { defaultValue: 'Verified Recycler' })}>
+              <span className="flex items-center gap-1 text-[var(--color-trust)]" title={t('recyclerList.verified', { defaultValue: 'Verified Recycler' })}>
                 <Shield className="w-4 h-4" />
                 <span className="text-xs font-medium">{t('common.verified', { defaultValue: 'Verified' })}</span>
               </span>
             )}
           </div>
-          <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600 dark:text-gray-400 mb-2">
+          <div className="flex flex-wrap items-center gap-3 text-sm text-[var(--color-text-muted)] mb-2">
             <span className="flex items-center gap-1">
               <MapPin className="w-3.5 h-3.5" />
               {recycler.distanceKm.toFixed(1)} km
             </span>
-            <span className="flex items-center gap-1 font-semibold text-orange-600 dark:text-orange-400">
+            <span className="flex items-center gap-1 font-semibold text-[var(--color-copper)] tabular-nums font-mono">
               ₹{recycler.ratePerKg}/kg
             </span>
             {recycler.pickupAvailable && (
-              <span className="flex items-center gap-1 text-blue-600 dark:text-blue-400">
+              <span className="flex items-center gap-1 text-[var(--color-circuit)]">
                 <Truck className="w-3.5 h-3.5" />
                 {t('common.pickup', { defaultValue: 'Pickup' })}
               </span>
             )}
           </div>
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            {t('recyclerList.tapToView', { defaultValue: 'Tap to view quote and contact' })}
-          </p>
+          <p className="text-xs text-[var(--color-text-subtle)]">{t('recyclerList.tapToView', { defaultValue: 'Tap to view quote and contact' })}</p>
         </div>
         <div className="flex flex-col items-end gap-1">
-          <span className="text-xs px-2 py-1 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 rounded-full">
+          <span className="text-xs px-2 py-1 bg-[var(--color-copper-light)]/10 text-[var(--color-copper)] rounded-full">
             {t('recyclerList.viewQuote', { defaultValue: 'View Quote' })}
           </span>
         </div>

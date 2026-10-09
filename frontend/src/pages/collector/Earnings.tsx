@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '../../components/shared/Button';
 import { StatusChip } from '../../components/shared/StatusChip';
 import { CategoryIcon } from '../../components/shared/CategoryIcon';
-import { CATEGORIES, type Lot, type EarningRow } from '../../types';
+import { CATEGORIES, type EarningRow } from '../../types';
 import { useState, useEffect } from 'react';
 import { api } from '../../api';
 import { ArrowLeft, Calendar, Eye, Download, Clock } from 'lucide-react';
@@ -28,18 +28,18 @@ export function Earnings() {
   const totalPending = totals.totalPending;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-amber-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
+    <div className="min-h-screen bg-[var(--color-surface)] copper-accent">
       {/* Header */}
-      <header className="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-40">
-        <div className="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
+      <header className="bg-[var(--color-surface-elevated)] border-b border-[var(--color-border)] sticky top-0 z-40">
+        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
           <button
             onClick={handleBack}
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            className="p-2 rounded-lg hover:bg-[var(--color-surface-alt)] transition-colors focus-ring-collector"
             aria-label={t('common.back', { defaultValue: 'Back' })}
           >
-            <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+            <ArrowLeft className="w-5 h-5 text-[var(--color-text)]" />
           </button>
-          <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
+          <h1 className="text-lg font-semibold text-[var(--color-text)] font-display">
             {t('common.earnings', { defaultValue: 'Earnings' })}
           </h1>
           <div className="w-10" />
@@ -47,33 +47,33 @@ export function Earnings() {
       </header>
 
       {/* Summary Cards */}
-      <div className="max-w-2xl mx-auto px-4 py-4">
+      <div className="max-w-6xl mx-auto px-4 py-4">
         <div className="grid grid-cols-2 gap-4">
           <SummaryCard
             label={t('earnings.totalEarned', { defaultValue: 'Total Earned' })}
             value={`₹${totalEarned.toLocaleString()}`}
-            icon="💰"
-            color="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300"
+            icon={<svg className="w-6 h-6 text-[var(--color-verdigris)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></svg>}
+            color="bg-[var(--color-verdigris-muted)]"
           />
           <SummaryCard
             label={t('earnings.pending', { defaultValue: 'Pending' })}
             value={`₹${totalPending.toLocaleString()}`}
-            icon="⏳"
-            color="bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300"
+            icon={<svg className="w-6 h-6 text-[var(--color-warning)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>}
+            color="bg-[var(--color-warning-muted)]"
           />
         </div>
       </div>
 
       {/* Earnings List */}
-      <main className="max-w-2xl mx-auto px-4 pb-20">
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden">
-          <div className="p-4 border-b dark:border-gray-700">
-            <h2 className="font-semibold text-gray-900 dark:text-white">
+      <main className="max-w-6xl mx-auto px-4 pb-24">
+        <div className="bg-[var(--color-surface-elevated)] rounded-2xl shadow-xl overflow-hidden border border-[var(--color-border)]">
+          <div className="p-4 border-b border-[var(--color-border)]">
+            <h2 className="font-semibold text-[var(--color-text)] font-display">
               {t('earnings.transactionHistory', { defaultValue: 'Transaction History' })}
             </h2>
           </div>
 
-          <div className="divide-y divide-gray-100 dark:divide-gray-700">
+          <div className="divide-y divide-[var(--color-border)]">
             {earnings.map((earning) => (
               <EarningRowComponent
                 key={earning.lotId}
@@ -87,10 +87,8 @@ export function Earnings() {
 
           {earnings.length === 0 && (
             <div className="p-12 text-center">
-              <p className="text-gray-500 dark:text-gray-400 mb-4">{t('earnings.noTransactions', { defaultValue: 'No transactions yet' })}</p>
-              <Button onClick={() => navigate('/collector/create-lot/photo')}>
-                {t('earnings.createFirstLot', { defaultValue: 'Create Your First Lot' })}
-              </Button>
+              <p className="text-[var(--color-text-muted)] mb-4">{t('earnings.noTransactions', { defaultValue: 'No transactions yet' })}</p>
+              <Button onClick={() => navigate('/collector/create-lot/photo')}>{t('earnings.createFirstLot', { defaultValue: 'Create Your First Lot' })}</Button>
             </div>
           )}
         </div>
@@ -99,48 +97,54 @@ export function Earnings() {
   );
 }
 
-function SummaryCard({ label, value, icon, color }: { label: string; value: string; icon: string; color: string }) {
+function SummaryCard({ label, value, icon, color }: { label: string; value: string; icon: React.ReactNode; color: string }) {
   return (
-    <div className={`rounded-xl p-4 ${color} text-center`}>
-      <span className="text-2xl mb-1 block">{icon}</span>
-      <p className="text-2xl font-bold">{value}</p>
-      <p className="text-sm opacity-90 mt-1">{label}</p>
+    <div className={`rounded-xl p-4 ${color} text-center border border-[var(--color-border)]`}>
+      <span className="mb-1 block">{icon}</span>
+      <p className="text-2xl font-bold text-[var(--color-text)] tabular-nums font-mono">{value}</p>
+      <p className="text-sm text-[var(--color-text-muted)] mt-1">{label}</p>
     </div>
   );
 }
 
-function EarningRowComponent({ earning, isExpanded, onToggle, onViewReceipt }: { 
-  earning: EarningRow; 
-  isExpanded: boolean; 
-  onToggle: () => void; 
+function EarningRowComponent({ earning, isExpanded, onToggle, onViewReceipt }: {
+  earning: EarningRow;
+  isExpanded: boolean;
+  onToggle: () => void;
   onViewReceipt: () => void;
 }) {
   const { t } = useTranslation();
 
   return (
-    <div className="bg-white dark:bg-gray-800">
+    <div className="bg-[var(--color-surface-elevated)]">
       <button
         onClick={onToggle}
-        className="w-full p-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors text-left"
+        className="w-full p-4 flex items-center justify-between hover:bg-[var(--color-surface-alt)] transition-colors text-left"
       >
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-            <span className="text-xl">♻️</span>
+          <div className="w-12 h-12 rounded-xl bg-[var(--color-circuit-muted)] flex items-center justify-center">
+            <svg className="w-6 h-6 text-[var(--color-circuit)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="8" />
+              <circle cx="12" cy="12" r="4" />
+              <path d="M12 4v4M12 16v4M4 12h4M16 12h4" />
+              <path d="M6.34 6.34l2.83 2.83M14.83 14.83l2.83 2.83" />
+              <path d="M6.34 17.66l2.83-2.83M14.83 9.17l2.83-2.83" />
+            </svg>
           </div>
           <div>
-            <p className="font-medium text-gray-900 dark:text-white">{earning.recyclerName}</p>
-            <p className="text-sm text-gray-500 dark:text-gray-400">{formatDate(earning.date)}</p>
+            <p className="font-medium text-[var(--color-text)]">{earning.recyclerName}</p>
+            <p className="text-sm text-[var(--color-text-muted)]">{formatDate(earning.date)}</p>
           </div>
         </div>
         <div className="flex items-center gap-4">
-          <span className="font-bold text-lg text-gray-900 dark:text-white">₹{earning.amount.toLocaleString()}</span>
-          <StatusChip status={earning.status} size="sm" />
-          <span className="text-gray-400">▼</span>
+          <span className="font-bold text-lg text-[var(--color-text)] tabular-nums font-mono">₹{earning.amount.toLocaleString()}</span>
+          <PaymentStatusChip status={earning.status} size="sm" />
+          <span className="text-[var(--color-text-subtle)]">{isExpanded ? '▲' : '▼'}</span>
         </div>
       </button>
 
       {isExpanded && (
-        <div className="px-4 pb-4 bg-gray-50 dark:bg-gray-900/50 animate-in fade-in">
+        <div className="px-4 pb-4 bg-[var(--color-surface-alt)] animate-in fade-in">
           <div className="grid grid-cols-2 gap-4 mb-4">
             <DetailItem label={t('earnings.date', { defaultValue: 'Date' })} value={formatDate(earning.date)} />
             <DetailItem label={t('earnings.recycler', { defaultValue: 'Recycler' })} value={earning.recyclerName} />
@@ -156,11 +160,31 @@ function EarningRowComponent({ earning, isExpanded, onToggle, onViewReceipt }: {
   );
 }
 
+function PaymentStatusChip({ status, size = 'md' }: { status: 'Paid' | 'Pending' | 'Partial'; size?: 'sm' | 'md' | 'lg' }) {
+  const { t } = useTranslation();
+
+  const config = {
+    Paid: { bg: 'bg-[var(--color-verdigris-muted)] text-[var(--color-verdigris)]', label: t('common.paid', { defaultValue: 'Paid' }) },
+    Pending: { bg: 'bg-[var(--color-warning-muted)] text-[var(--color-warning)]', label: t('common.pending', { defaultValue: 'Pending' }) },
+    Partial: { bg: 'bg-[var(--color-copper-light)]/10 text-[var(--color-copper)]', label: 'Partial' },
+  }[status];
+
+  const sizeStyles = {
+    sm: 'px-2 py-0.5 text-xs',
+    md: 'px-3 py-1 text-sm',
+    lg: 'px-4 py-1.5 text-base',
+  };
+
+  return (
+    <span className={`${config.bg} font-medium rounded-full ${sizeStyles[size]}`}>{config.label}</span>
+  );
+}
+
 function DetailItem({ label, value }: { label: string; value: string }) {
   return (
-    <div className="p-3 bg-white dark:bg-gray-800 rounded-lg">
-      <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">{label}</p>
-      <p className="font-medium text-gray-900 dark:text-white">{value}</p>
+    <div className="p-3 bg-[var(--color-surface-elevated)] rounded-lg border border-[var(--color-border)]">
+      <p className="text-xs text-[var(--color-text-muted)] mb-1">{label}</p>
+      <p className="font-medium text-[var(--color-text)]">{value}</p>
     </div>
   );
 }

@@ -13,7 +13,7 @@ export function LotDetail() {
   const navigate = useNavigate();
   const { getSavedLot, loadLots } = useLotStore();
   const params = useParams();
-  useEffect(() => { loadLots().catch(() => {}); }, []);
+  useEffect(() => { loadLots().catch(() => {}); }, [loadLots]);
   
   // Get lot ID from URL params - for now we'll use the first lot
   const lotId = params.id ?? '';
@@ -21,9 +21,9 @@ export function LotDetail() {
 
   if (!lot) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-amber-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 flex items-center justify-center">
+      <div className="min-h-screen bg-[var(--color-surface)] copper-accent flex items-center justify-center">
         <div className="text-center p-8">
-          <p className="text-gray-500 dark:text-gray-400">Lot not found</p>
+          <p className="text-[var(--color-text-muted)]">Lot not found</p>
           <Button onClick={() => navigate('/collector/my-lots')} className="mt-4">
             Back to My Lots
           </Button>
@@ -63,18 +63,18 @@ export function LotDetail() {
   const categoryInfo = CATEGORIES.find(c => c.id === lot.category);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-amber-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
+    <div className="min-h-screen bg-[var(--color-surface)] copper-accent">
       {/* Header */}
-      <header className="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-40">
-        <div className="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
+      <header className="bg-[var(--color-surface-elevated)] border-b border-[var(--color-border)] sticky top-0 z-40">
+        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
           <button
             onClick={handleBack}
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            className="p-2 rounded-lg hover:bg-[var(--color-surface-alt)] transition-colors focus-ring-collector"
             aria-label={t('common.back', { defaultValue: 'Back' })}
           >
-            <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+            <ArrowLeft className="w-5 h-5 text-[var(--color-text)]" />
           </button>
-          <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
+          <h1 className="text-lg font-semibold text-[var(--color-text)] font-display">
             {t('lotDetail.title', { defaultValue: 'Lot Detail' })}
           </h1>
           <div className="w-10" />
@@ -82,10 +82,10 @@ export function LotDetail() {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-2xl mx-auto px-4 pb-20">
+      <main className="max-w-6xl mx-auto px-4 pb-24">
         <div className="space-y-6">
           {/* Photo & Basic Info */}
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden">
+          <div className="bg-[var(--color-surface-elevated)] rounded-2xl shadow-xl overflow-hidden border border-[var(--color-border)]">
             <div className="relative h-64">
               <img
                 src={lot.photoUrl}
@@ -97,7 +97,7 @@ export function LotDetail() {
                   <div>
                     <CategoryIcon category={lot.category} size="lg" />
                     <p className="text-white font-semibold mt-1">
-                      {categoryInfo?.label[t('common.language' as any)?.toString() as keyof typeof categoryInfo.label] || lot.category}
+                      {categoryInfo?.label.en || lot.category}
                     </p>
                   </div>
                   <StatusChip status={lot.status} size="lg" />
@@ -110,46 +110,46 @@ export function LotDetail() {
                 <DetailItem
                   label={t('common.weight', { defaultValue: 'Weight' })}
                   value={`${lot.weightKg} kg`}
-                  icon="⚖️"
+                  icon={<svg className="w-6 h-6 text-[var(--color-copper)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>}
                 />
                 <DetailItem
                   label={t('lotDetail.created', { defaultValue: 'Created' })}
                   value={formatDate(lot.createdAt)}
-                  icon="📅"
+                  icon={<Calendar className="w-6 h-6 text-[var(--color-circuit)]" />}
                 />
               </div>
 
               {lot.recyclerName && (
-                <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-xl border border-green-200 dark:border-green-800">
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">
+                <div className="p-4 bg-[var(--color-verdigris-muted)] border border-[var(--color-verdigris-light)] rounded-xl">
+                  <p className="text-sm text-[var(--color-text-muted)] mb-1">
                     {t('lotDetail.recycler', { defaultValue: 'Selected Recycler' })}
                   </p>
-                  <p className="font-semibold text-gray-900 dark:text-white">{lot.recyclerName}</p>
+                  <p className="font-semibold text-[var(--color-text)]">{lot.recyclerName}</p>
                   {lot.quotedRate && (
-                    <p className="text-sm text-green-600 dark:text-green-400 mt-1">
-                      {t('lotDetail.quotedRate', { defaultValue: 'Quoted Rate' })}: ₹{lot.quotedRate}/kg
+                    <p className="text-sm text-[var(--color-verdigris)] mt-1">
+                      {t('lotDetail.quotedRate', { defaultValue: 'Quoted Rate' })}: <span className="tabular-nums font-mono">₹{lot.quotedRate}/kg</span>
                     </p>
                   )}
                 </div>
               )}
 
               {lot.handoverCode && (
-                <div className="p-4 bg-orange-50 dark:bg-orange-900/20 rounded-xl border border-orange-200 dark:border-orange-800">
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">
+                <div className="p-4 bg-[var(--color-copper-light)]/10 border border-[var(--color-copper-light)] rounded-xl">
+                  <p className="text-sm text-[var(--color-text-muted)] mb-1">
                     {t('lotDetail.handoverCode', { defaultValue: 'Handover Code' })}
                   </p>
-                  <p className="font-mono font-bold text-2xl text-orange-600 dark:text-orange-400 tracking-widest">
+                  <p className="font-mono font-bold text-2xl text-[var(--color-copper)] tracking-widest animate-code-reveal">
                     {lot.handoverCode}
                   </p>
                 </div>
               )}
 
               {lot.gpsLat && lot.gpsLon && (
-                <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-1 flex items-center gap-1">
-                    <MapPin className="w-4 h-4" /> {t('lotDetail.location', { defaultValue: 'Collection Location' })}
+                <div className="p-4 bg-[var(--color-circuit-muted)] border border-[var(--color-circuit-light)] rounded-xl">
+                  <p className="text-sm text-[var(--color-text-muted)] mb-1 flex items-center gap-1">
+                    <MapPin className="w-4 h-4 text-[var(--color-circuit)]" /> {t('lotDetail.location', { defaultValue: 'Collection Location' })}
                   </p>
-                  <p className="font-mono text-sm text-gray-900 dark:text-white">
+                  <p className="font-mono text-sm text-[var(--color-text)] tabular-nums">
                     {lot.gpsLat.toFixed(4)}, {lot.gpsLon.toFixed(4)}
                   </p>
                 </div>
@@ -158,8 +158,8 @@ export function LotDetail() {
           </div>
 
           {/* Estimate / Quote Details */}
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+          <div className="bg-[var(--color-surface-elevated)] rounded-2xl shadow-xl p-6 border border-[var(--color-border)]">
+            <h3 className="text-lg font-semibold text-[var(--color-text)] mb-4 font-display">
               {t('lotDetail.estimate', { defaultValue: 'Value Estimate' })}
             </h3>
             
@@ -218,13 +218,13 @@ export function LotDetail() {
   );
 }
 
-function DetailItem({ label, value, icon }: { label: string; value: string; icon: string }) {
+function DetailItem({ label, value, icon }: { label: string; value: string; icon: React.ReactNode }) {
   return (
-    <div className="flex items-center gap-3 p-4 bg-gray-50 dark:bg-gray-900/50 rounded-xl">
+    <div className="flex items-center gap-3 p-4 bg-[var(--color-surface-alt)] rounded-xl border border-[var(--color-border)]">
       <span className="text-2xl">{icon}</span>
       <div>
-        <p className="text-xs text-gray-500 dark:text-gray-400">{label}</p>
-        <p className="font-semibold text-gray-900 dark:text-white">{value}</p>
+        <p className="text-xs text-[var(--color-text-muted)]">{label}</p>
+        <p className="font-semibold text-[var(--color-text)]">{value}</p>
       </div>
     </div>
   );
@@ -232,9 +232,9 @@ function DetailItem({ label, value, icon }: { label: string; value: string; icon
 
 function DetailRow({ label, value, highlight = false }: { label: string; value: string; highlight?: boolean }) {
   return (
-    <div className="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-700 last:border-0">
-      <span className="text-gray-600 dark:text-gray-400">{label}</span>
-      <span className={`font-semibold ${highlight ? 'text-xl text-orange-600 dark:text-orange-400' : 'text-gray-900 dark:text-white'}`}>
+    <div className="flex justify-between items-center py-2 border-b border-[var(--color-border)] last:border-0">
+      <span className="text-[var(--color-text-muted)]">{label}</span>
+      <span className={`font-semibold ${highlight ? 'text-xl text-[var(--color-copper)]' : 'text-[var(--color-text)]'}`} tabular-nums font-mono>
         {value}
       </span>
     </div>

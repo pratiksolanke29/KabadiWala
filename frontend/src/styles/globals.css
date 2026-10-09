@@ -1,98 +1,70 @@
+/* KabadiWala Global Styles
+ * Import font-face.css FIRST so fonts are available
+ * Then tokens.css BEFORE tailwindcss so CSS custom properties are available
+ */
+
+@import "./font-face.css";
+@import "./tokens.css";
 @import "tailwindcss";
 
-@theme {
-  --color-border: #e5e4e7;
-  --color-border-dark: #2e303a;
-}
+/* No @theme block needed — tokens.css defines all custom properties */
 
-@layer base {
-  * {
-    border-color: var(--color-border);
-  }
-  
-  @media (prefers-color-scheme: dark) {
-    * {
-      border-color: var(--color-border-dark);
-    }
-  }
-  
-  html {
-    scroll-behavior: smooth;
-  }
-  
-  body {
-    background: linear-gradient(to bottom right, #fff7ed, #fff, #fffbeb);
-    min-height: 100vh;
-    color: #1f2937;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  }
-  
-  @media (prefers-color-scheme: dark) {
-    body {
-      background: linear-gradient(to bottom right, #111827, #111827, #1f2937);
-      color: #f9fafb;
-    }
-  }
-  
-  #root {
-    min-height: 100vh;
-  }
-}
-
-@layer components {
-  .animate-in {
-    animation: animateIn 0.3s ease-out;
-  }
-  
-  .fade-in {
-    animation: fadeIn 0.2s ease-out;
-  }
-  
-  .zoom-in-95 {
-    animation: zoomIn 0.2s ease-out;
-  }
-  
-  .slide-in-from-bottom-4 {
-    animation: slideInFromBottom 0.3s ease-out;
-  }
-}
+/* Font faces are loaded via @font-face in index.html or via the font-face CSS */
+/* See templates/font-face-devanagari.css for the rules */
 
 @layer utilities {
-  @keyframes animateIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+  /* Utility classes that don't need custom properties */
+  .animate-in { animation: animateIn var(--transition-normal); }
+  .fade-in { animation: fadeIn var(--transition-fast); }
+  .zoom-in-95 { animation: zoomIn var(--transition-fast); }
+  .slide-in-from-bottom-4 { animation: slideInFromBottom var(--transition-normal); }
+
+  @keyframes animateIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes zoomIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+  @keyframes slideInFromBottom { from { opacity: 0; transform: translateY(1rem); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+  .animate-spin { animation: spin 1s linear infinite; }
+  .animate-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+
+  /* Handover code reveal — the ONE orchestrated moment */
+  @keyframes codeReveal {
+    0% { opacity: 0; transform: scale(0.9) translateY(0.5rem); }
+    50% { opacity: 0.5; transform: scale(1.02) translateY(-0.1rem); }
+    100% { opacity: 1; transform: scale(1) translateY(0); }
   }
-  
-  @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+  .animate-code-reveal { animation: codeReveal 400ms ease-out; }
+
+  /* Copper accent line — collector identity */
+  .copper-accent {
+    position: relative;
   }
-  
-  @keyframes zoomIn {
-    from { opacity: 0; transform: scale(0.95); }
-    to { opacity: 1; transform: scale(1); }
+  .copper-accent::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--color-copper), var(--color-copper-light));
+    border-radius: 0 0 var(--radius-xl) var(--radius-xl);
   }
-  
-  @keyframes slideInFromBottom {
-    from { opacity: 0; transform: translateY(1rem); }
-    to { opacity: 1; transform: translateY(0); }
+
+  /* Circuit accent line — recycler identity */
+  .circuit-accent {
+    position: relative;
   }
-  
-  @keyframes spin {
-    to { transform: rotate(360deg); }
-  }
-  
-  .animate-spin {
-    animation: spin 1s linear infinite;
-  }
-  
-  .animate-pulse {
-    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-  }
-  
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
+  .circuit-accent::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--color-circuit), var(--color-circuit-light));
+    border-radius: 0 0 var(--radius-xl) var(--radius-xl);
   }
 }
 
@@ -102,77 +74,11 @@
   .zoom-in-95,
   .slide-in-from-bottom-4,
   .animate-spin,
-  .animate-pulse {
-    animation: none !important;
-  }
+  .animate-pulse,
+  .animate-code-reveal { animation: none !important; }
 }
 
-.focus-visible-ring:focus-visible {
-  outline: none;
-  ring: 2px;
-  ring-color: #ea580c;
-  ring-offset: 2px;
-  ring-offset-color: white;
-}
-
-@media (prefers-color-scheme: dark) {
-  .focus-visible-ring:focus-visible {
-    ring-offset-color: #111827;
-  }
-}
-
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #d1d5db;
-  border-radius: 9999px;
-}
-
-@media (prefers-color-scheme: dark) {
-  ::-webkit-scrollbar-thumb {
-    background: #4b5563;
-  }
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #9ca3af;
-}
-
-@media (prefers-color-scheme: dark) {
-  ::-webkit-scrollbar-thumb:hover {
-    background: #6b7280;
-  }
-}
-
-input[type=number]::-webkit-inner-spin-button,
-input[type=number]::-webkit-outer-spin-button {
-  appearance: none;
-  margin: 0;
-}
-
-input[type=number] {
-  appearance: none;
-}
-
-::selection {
-  background-color: #fed7aa;
-  color: #9a3412;
-}
-
-@media (prefers-color-scheme: dark) {
-  ::selection {
-    background-color: #ea580c;
-    color: #fff7ed;
-  }
-}
-
+/* Print styles */
 @media print {
   .no-print {
     display: none !important;

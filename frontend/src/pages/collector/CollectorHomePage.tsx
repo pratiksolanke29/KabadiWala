@@ -2,52 +2,51 @@ import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useLotStore } from '../../hooks/useLotStore';
+import { Button } from '../../components/shared/Button';
+import { CategoryIcon } from '../../components/shared/CategoryIcon';
+import { StatusChip } from '../../components/shared/StatusChip';
+import { Recycle, BarChart2, Package, IndianRupee, Shield, ChevronRight } from 'lucide-react';
 
 export function CollectorHomePage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { savedLots, loadLots } = useLotStore();
-  useEffect(() => { loadLots().catch(() => {}); }, []);
+  useEffect(() => { loadLots().catch(() => {}); }, [loadLots]);
 
   const tiles = [
-    { 
-      key: 'createLot', 
-      icon: '➕', 
-      title: t('common.createLot', { defaultValue: 'Create Lot' }), 
+    {
+      key: 'createLot',
+      Icon: Recycle,
+      title: t('common.createLot', { defaultValue: 'Create Lot' }),
       subtitle: t('common.createLotDesc', { defaultValue: 'Photo → Category → Weight → Estimate' }),
-      color: 'bg-orange-500',
       onClick: () => navigate('/collector/create-lot/photo')
     },
-    { 
-      key: 'priceBoard', 
-      icon: '📊', 
-      title: t('common.priceBoard', { defaultValue: 'Price Board' }), 
+    {
+      key: 'priceBoard',
+      Icon: BarChart2,
+      title: t('common.priceBoard', { defaultValue: 'Price Board' }),
       subtitle: t('common.priceBoardDesc', { defaultValue: "Today's rates & trends" }),
-      color: 'bg-blue-500',
       onClick: () => navigate('/collector/price-board')
     },
-    { 
-      key: 'myLots', 
-      icon: '📦', 
-      title: t('common.myLots', { defaultValue: 'My Lots' }), 
+    {
+      key: 'myLots',
+      Icon: Package,
+      title: t('common.myLots', { defaultValue: 'My Lots' }),
       subtitle: t('common.myLotsDesc', { defaultValue: 'Track all your lots' }),
-      color: 'bg-green-500',
       onClick: () => navigate('/collector/my-lots')
     },
-    { 
-      key: 'earnings', 
-      icon: '💰', 
-      title: t('common.earnings', { defaultValue: 'Earnings' }), 
+    {
+      key: 'earnings',
+      Icon: IndianRupee,
+      title: t('common.earnings', { defaultValue: 'Earnings' }),
       subtitle: t('common.earningsDesc', { defaultValue: 'Total earned & pending' }),
-      color: 'bg-amber-500',
       onClick: () => navigate('/collector/earnings')
     },
-    { 
-      key: 'safety', 
-      icon: '🛡️', 
-      title: t('common.safety', { defaultValue: 'Safety' }), 
+    {
+      key: 'safety',
+      Icon: Shield,
+      title: t('common.safety', { defaultValue: 'Safety' }),
       subtitle: t('common.safetyDesc', { defaultValue: 'Guidelines & best practices' }),
-      color: 'bg-red-500',
       onClick: () => navigate('/collector/safety')
     },
   ];
@@ -64,29 +63,29 @@ export function CollectorHomePage() {
     <div className="space-y-8">
       {/* Welcome Section */}
       <div className="mb-8">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
+        <h2 className="text-2xl font-bold text-[var(--color-text)] font-display mb-1">
           {t('home.welcome', { defaultValue: 'Welcome back' })}!
         </h2>
-        <p className="text-gray-600 dark:text-gray-400">
+        <p className="text-[var(--color-text-muted)]">
           {t('home.chooseAction', { defaultValue: 'Choose an action to get started' })}
         </p>
       </div>
 
       {/* Earnings Summary Card */}
       <div className="grid grid-cols-2 gap-4 mb-8">
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">
+        <div className="bg-[var(--color-surface-elevated)] rounded-xl p-4 shadow-sm border border-[var(--color-border)]">
+          <p className="text-sm text-[var(--color-text-muted)] mb-1">
             {t('common.totalEarned', { defaultValue: 'Total Earned' })}
           </p>
-          <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+          <p className="text-2xl font-bold text-[var(--color-verdigris)] tabular-nums font-mono">
             ₹{totalEarned.toLocaleString()}
           </p>
         </div>
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">
+        <div className="bg-[var(--color-surface-elevated)] rounded-xl p-4 shadow-sm border border-[var(--color-border)]">
+          <p className="text-sm text-[var(--color-text-muted)] mb-1">
             {t('common.pending', { defaultValue: 'Pending' })}
           </p>
-          <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">
+          <p className="text-2xl font-bold text-[var(--color-copper)] tabular-nums font-mono">
             ₹{totalPending.toLocaleString()}
           </p>
         </div>
@@ -99,51 +98,57 @@ export function CollectorHomePage() {
             key={tile.key}
             onClick={tile.onClick}
             className={`
-              relative p-6 rounded-2xl ${tile.color} text-white
-              shadow-lg hover:shadow-xl transition-all duration-300
+              relative p-6 rounded-2xl bg-[var(--color-surface-elevated)] border border-[var(--color-border)]
+              text-[var(--color-text)]
+              shadow-sm hover:shadow-lg transition-all duration-200
               hover:-translate-y-1 active:translate-y-0
-              focus:outline-none focus:ring-4 focus:ring-opacity-30
-              flex flex-col items-center text-center group
+              focus:outline-none focus:ring-4 focus:ring-[var(--focus-ring-collector)]/30
+              flex flex-col items-center text-center group copper-accent
             `}
           >
-            <div className="w-16 h-16 rounded-2xl bg-white/20 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-              <span className="text-3xl sm:text-4xl">{tile.icon}</span>
+            <div className="w-16 h-16 rounded-xl bg-[var(--color-copper-light)]/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform text-[var(--color-copper)]">
+              <tile.Icon className="w-8 h-8" />
             </div>
             <h3 className="text-lg sm:text-xl font-bold mb-1">{tile.title}</h3>
-            <p className="text-sm opacity-90 text-center max-w-xs">{tile.subtitle}</p>
+            <p className="text-sm text-[var(--color-text-muted)] text-center max-w-xs">{tile.subtitle}</p>
+            <ChevronRight className="w-5 h-5 text-[var(--color-text-subtle)] mt-auto group-hover:text-[var(--color-copper)] transition-colors" />
           </button>
         ))}
       </div>
 
       {/* Quick Stats */}
       <div className="mt-10">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+        <h3 className="text-lg font-semibold text-[var(--color-text)] mb-4">
           {t('home.quickStats', { defaultValue: 'Quick Stats' })}
         </h3>
         <div className="grid grid-cols-2 gap-4">
           <StatCard
             label={t('common.draft', { defaultValue: 'Draft' })}
             value={savedLots.filter(l => l.status === 'Draft').length}
-            icon="📝"
-            color="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
+            icon={<Package className="w-6 h-6" />}
+            color="text-[var(--color-text-muted)]"
+            bg="bg-[var(--color-surface-alt)]"
           />
           <StatCard
             label={t('common.quoted', { defaultValue: 'Quoted' })}
             value={savedLots.filter(l => l.status === 'Quoted').length}
-            icon="💬"
-            color="bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300"
+            icon={<BarChart2 className="w-6 h-6" />}
+            color="text-[var(--color-copper)]"
+            bg="bg-[var(--color-copper-light)]/10"
           />
           <StatCard
             label={t('common.handedOver', { defaultValue: 'Handed Over' })}
             value={savedLots.filter(l => l.status === 'HandedOver').length}
-            icon="🤝"
-            color="bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300"
+            icon={<Recycle className="w-6 h-6" />}
+            color="text-[var(--color-warning)]"
+            bg="bg-[var(--color-warning-muted)]"
           />
           <StatCard
             label={t('common.paid', { defaultValue: 'Paid' })}
             value={savedLots.filter(l => l.status === 'Paid').length}
-            icon="✅"
-            color="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300"
+            icon={<Shield className="w-6 h-6" />}
+            color="text-[var(--color-verdigris)]"
+            bg="bg-[var(--color-verdigris-muted)]"
           />
         </div>
       </div>
@@ -151,12 +156,12 @@ export function CollectorHomePage() {
   );
 }
 
-function StatCard({ label, value, icon, color }: { label: string; value: number; icon: string; color: string }) {
+function StatCard({ label, value, icon, color, bg }: { label: string; value: number; icon: React.ReactNode; color: string; bg: string }) {
   return (
-    <div className={`rounded-xl p-4 ${color} text-center`}>
-      <span className="text-2xl mb-2 block">{icon}</span>
-      <p className="text-3xl font-bold">{value}</p>
-      <p className="text-sm mt-1">{label}</p>
+    <div className={`rounded-xl p-4 ${bg} text-center border border-[var(--color-border)]`}>
+      <span className={`${color} mb-2 block`}>{icon}</span>
+      <p className="text-3xl font-bold text-[var(--color-text)] tabular-nums font-mono">{value}</p>
+      <p className="text-sm text-[var(--color-text-muted)] mt-1">{label}</p>
     </div>
   );
 }

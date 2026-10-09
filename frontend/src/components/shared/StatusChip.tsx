@@ -5,19 +5,32 @@ interface StatusChipProps {
   status: LotStatus | 'Pending' | 'Accepted' | 'Declined' | 'HandedOver';
   size?: 'sm' | 'md' | 'lg';
   className?: string;
+  context?: 'collector' | 'recycler';
 }
 
-export function StatusChip({ status, size = 'md', className = '' }: StatusChipProps) {
+export function StatusChip({ status, size = 'md', className = '', context = 'collector' }: StatusChipProps) {
   const { t } = useTranslation();
 
-  const statusConfig: Record<string, { bg: string; text: string; label: string }> = {
-    Draft: { bg: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300', text: '', label: t('common.draft', { defaultValue: 'Draft' }) },
-    Quoted: { bg: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300', text: '', label: t('common.quoted', { defaultValue: 'Quoted' }) },
-    HandedOver: { bg: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300', text: '', label: t('common.handedOver', { defaultValue: 'Handed Over' }) },
-    Paid: { bg: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300', text: '', label: t('common.paid', { defaultValue: 'Paid' }) },
-    Pending: { bg: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300', text: '', label: t('common.pending', { defaultValue: 'Pending' }) },
-    Accepted: { bg: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300', text: '', label: t('common.accepted', { defaultValue: 'Accepted' }) },
-    Declined: { bg: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300', text: '', label: t('common.declined', { defaultValue: 'Declined' }) },
+  const isCollector = context === 'collector';
+  const successColor = isCollector
+    ? 'bg-[var(--color-collector-success-light)] text-[var(--color-collector-success)] dark:bg-[var(--color-collector-success)]/20 dark:text-[var(--color-collector-success-light)]'
+    : 'bg-[var(--color-recycler-success-light)] text-[var(--color-recycler-success)] dark:bg-[var(--color-recycler-success)]/20 dark:text-[var(--color-recycler-success-light)]';
+
+  const warningColor = 'bg-[var(--color-warning-light)] text-[var(--color-warning)] dark:bg-[var(--color-warning)]/20 dark:text-[var(--color-warning-light)]';
+  const dangerColor = 'bg-[var(--color-warning-light)] text-[var(--color-warning)] dark:bg-[var(--color-warning)]/20 dark:text-[var(--color-warning-light)]';
+  const neutralColor = 'bg-[var(--color-surface-alt)] text-[var(--color-text-muted)]';
+  const primaryColor = isCollector
+    ? 'bg-[var(--color-collector-primary-light)] text-[var(--color-collector-primary)] dark:bg-[var(--color-collector-primary)]/20 dark:text-[var(--color-collector-primary-light)]'
+    : 'bg-[var(--color-recycler-primary-light)] text-[var(--color-recycler-primary)] dark:bg-[var(--color-recycler-primary)]/20 dark:text-[var(--color-recycler-primary-light)]';
+
+  const statusConfig: Record<string, { bg: string; label: string }> = {
+    Draft: { bg: neutralColor, label: t('common.draft', { defaultValue: 'Draft' }) },
+    Quoted: { bg: primaryColor, label: t('common.quoted', { defaultValue: 'Quoted' }) },
+    HandedOver: { bg: warningColor, label: t('common.handedOver', { defaultValue: 'Handed Over' }) },
+    Paid: { bg: successColor, label: t('common.paid', { defaultValue: 'Paid' }) },
+    Pending: { bg: primaryColor, label: t('common.pending', { defaultValue: 'Pending' }) },
+    Accepted: { bg: successColor, label: t('common.accepted', { defaultValue: 'Accepted' }) },
+    Declined: { bg: dangerColor, label: t('common.declined', { defaultValue: 'Declined' }) },
   };
 
   const config = statusConfig[status] || statusConfig.Draft;
@@ -38,15 +51,24 @@ export function StatusChip({ status, size = 'md', className = '' }: StatusChipPr
 interface PaymentStatusChipProps {
   status: 'Paid' | 'Pending' | 'Partial';
   size?: 'sm' | 'md' | 'lg';
+  context?: 'collector' | 'recycler';
 }
 
-export function PaymentStatusChip({ status, size = 'md' }: PaymentStatusChipProps) {
+export function PaymentStatusChip({ status, size = 'md', context = 'collector' }: PaymentStatusChipProps) {
   const { t } = useTranslation();
+  const isCollector = context === 'collector';
+
+  const successColor = isCollector
+    ? 'bg-[var(--color-collector-success-light)] text-[var(--color-collector-success)] dark:bg-[var(--color-collector-success)]/20 dark:text-[var(--color-collector-success-light)]'
+    : 'bg-[var(--color-recycler-success-light)] text-[var(--color-recycler-success)] dark:bg-[var(--color-recycler-success)]/20 dark:text-[var(--color-recycler-success-light)]';
+
+  const warningColor = 'bg-[var(--color-warning-light)] text-[var(--color-warning)] dark:bg-[var(--color-warning)]/20 dark:text-[var(--color-warning-light)]';
+  const dangerColor = 'bg-[var(--color-warning-light)] text-[var(--color-warning)] dark:bg-[var(--color-warning)]/20 dark:text-[var(--color-warning-light)]';
 
   const config = {
-    Paid: { bg: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300', label: t('common.paid', { defaultValue: 'Paid' }) },
-    Pending: { bg: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300', label: t('common.pending', { defaultValue: 'Pending' }) },
-    Partial: { bg: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300', label: 'Partial' },
+    Paid: { bg: successColor, label: t('common.paid', { defaultValue: 'Paid' }) },
+    Pending: { bg: warningColor, label: t('common.pending', { defaultValue: 'Pending' }) },
+    Partial: { bg: dangerColor, label: 'Partial' },
   }[status];
 
   const sizeStyles = {
