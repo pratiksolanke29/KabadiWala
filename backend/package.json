@@ -1,0 +1,21 @@
+{
+  "name": "kabadiwala-backend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node --no-warnings --env-file-if-exists=.env src/server.js",
+    "dev": "node --no-warnings --env-file-if-exists=.env --watch src/server.js",
+    "test": "node --no-warnings test/smoke.mjs"
+  },
+  "engines": {
+    "node": ">=22.9"
+  },
+  "dependencies": {
+    "@clerk/backend": "^3.23.1",
+    "cors": "^2.8.5",
+    "express": "^5.0.0",
+    "qrcode": "^1.5.4"
+  }
+}
