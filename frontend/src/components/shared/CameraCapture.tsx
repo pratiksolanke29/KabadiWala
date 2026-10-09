@@ -94,17 +94,18 @@ export function CameraCapture({
     }
 
     // Set canvas size to video size
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
+    const scale = Math.min(1, maxWidth / video.videoWidth, maxHeight / video.videoHeight);
+    canvas.width = Math.round(video.videoWidth * scale);
+    canvas.height = Math.round(video.videoHeight * scale);
     
     // Draw video frame to canvas
-    ctx.drawImage(video, 0, 0);
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
     
     // Convert to data URL
     const dataUrl = canvas.toDataURL('image/jpeg', imageQuality);
     onCapture(dataUrl);
     setIsCapturing(false);
-  }, [onCapture, imageQuality, isCapturing, hasPermission]);
+  }, [onCapture, imageQuality, isCapturing, hasPermission, maxWidth, maxHeight]);
 
   const switchCamera = useCallback(() => {
     setActiveFacingMode((mode) => mode === 'environment' ? 'user' : 'environment');

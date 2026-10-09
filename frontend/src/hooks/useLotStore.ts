@@ -38,7 +38,7 @@ const initialDraft: LotDraft = {
 export const useLotStore = create<LotStore>()((set, get) => ({
   draft: initialDraft,
   
-  setPhoto: (photoUrl) => set((state) => ({ draft: { ...state.draft, photoUrl } })),
+  setPhoto: (photoUrl) => set((state) => ({ draft: state.draft.photoUrl === photoUrl ? state.draft : { ...initialDraft, photoUrl } })),
   setCategory: (category) => set((state) => ({ draft: { ...state.draft, category } })),
   setWeight: (weightKg) => set((state) => ({ draft: { ...state.draft, weightKg } })),
   setEstimate: (estimateMin, estimateMax) => set((state) => ({ draft: { ...state.draft, estimateMin, estimateMax } })),

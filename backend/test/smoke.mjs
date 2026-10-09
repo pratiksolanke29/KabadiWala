@@ -87,12 +87,19 @@ rates.find((r) => r.material === 'Cables').accept = false;
 await call('PATCH', '/rates', rates, rt);
 const m3 = await call('POST', `/lots/${l2}/find-recyclers`, null, ct); assert(!m3.some((m) => m.id === 'r1')); ok('rates PATCH takes effect');
 
-// recycler register (auto-approve in prototype mode) + profile
+// recycler register: default is PENDING (admin must approve in /admin)
 const nl = 'tok:user_r9:t@x.com';
 const rr = await call('POST', '/me/recycler', { facilityName: 'Test Fac', authNumber: 'MPCB/1', contact: '9999999999', city: 'Mumbai', address: 'Somewhere' }, nl, 201);
-assert.equal(rr.role, 'recycler'); assert.equal(rr.authorized, true);
+assert.equal(rr.role, 'recycler'); assert.equal(rr.authorized, false); assert.equal(rr.rejected, false); ok('new recycler starts pending');
 await call('POST', '/me/recycler', { facilityName: '' }, 'tok:user_r10:y@x.com', 400);
 const prof = await call('PATCH', '/recycler/profile', { pickupEnabled: false }, nl); assert.equal(prof.pickupEnabled, false); ok('recycler role setup + profile');
+// AUTO_APPROVE_RECYCLERS=1 skips the admin step
+process.env.AUTO_APPROVE_RECYCLERS = '1';
+const autoRec = await call('POST', '/me/recycler', { facilityName: 'Auto Fac', authNumber: 'MPCB/2', contact: '1' }, 'tok:user_r11:z@x.com', 201);
+assert.equal(autoRec.authorized, true);
+delete process.env.AUTO_APPROVE_RECYCLERS;
+const auto2 = await call('POST', '/me/recycler', { facilityName: 'Pending Fac', authNumber: 'MPCB/3', contact: '1' }, 'tok:user_r12:w@x.com', 201);
+assert.equal(auto2.authorized, false); ok('AUTO_APPROVE_RECYCLERS=1 auto-approves, default back to pending');
 await call('GET', '/lots', null, nl, 403); ok('recycler cannot use collector API');
 const cp = await call('PATCH', '/profile', { language: 'hi' }, ct); assert.equal(cp.language, 'hi'); ok('collector profile patch');
 
@@ -100,7 +107,11 @@ const cp = await call('PATCH', '/profile', { language: 'hi' }, ct); assert.equal
 const AK = { 'x-admin-key': process.env.ADMIN_KEY || 'admin-dev-key' };
 const adm = async (m, path, key = AK) => { const r = await fetch(`${base}${path}`, { method: m, headers: key }); return { status: r.status, body: await r.json() }; };
 assert.equal((await adm('GET', '/admin/recyclers', {})).status, 403); ok('admin key required');
-const alist = (await adm('GET', '/admin/recyclers')).body; assert(alist.some((x) => x.id === rr.recyclerId)); ok('admin list recyclers');
+const alist = (await adm('GET', '/admin/recyclers')).body; assert(alist.some((x) => x.id === rr.recyclerId));
+assert.equal(alist.find((x) => x.id === rr.recyclerId).status, 'pending'); ok('admin list recyclers, new one pending');
+assert.equal((await adm('POST', `/admin/recyclers/${rr.recyclerId}/approve`)).status, 200);
+assert.equal((await adm('GET', '/admin/recyclers')).body.find((x) => x.id === rr.recyclerId).status, 'approved');
+assert.equal((await call('GET', '/me', null, nl)).authorized, true); ok('admin approve activates recycler');
 assert.equal((await adm('POST', `/admin/recyclers/${rr.recyclerId}/reject`)).status, 200);
 assert.equal((await adm('GET', '/admin/recyclers')).body.find((x) => x.id === rr.recyclerId).status, 'rejected');
 await call('GET', '/recycler/profile', null, nl, 403); ok('admin reject blocks recycler access');
@@ -108,4 +119,30 @@ assert.equal((await call('GET', '/me', null, nl)).rejected, true);
 await adm('POST', `/admin/recyclers/${rr.recyclerId}/approve`);
 assert.equal((await adm('GET', '/admin/recyclers')).body.find((x) => x.id === rr.recyclerId).status, 'approved');
 assert((await adm('GET', '/admin/lots')).body.length >= 2); ok('admin approve + lots list');
+// admin collectors: lists collectors with activity stats
+assert.equal((await adm('GET', '/admin/collectors', {})).status, 403);
+const cols = (await adm('GET', '/admin/collectors')).body;
+const c1 = cols.find((x) => x.id === reg.collectorId);
+assert(c1 && c1.name === 'Test C' && c1.area === 'andheri-east');
+assert.equal(c1.lotCount, 2); assert.equal(c1.handedOver, 1); assert.equal(c1.totalEarned, 24 * best.ratePerKg);
+assert(c1.lastActiveAt); ok('admin collectors tracking (lots, handovers, earnings, last active)');
+
+// admin delete: recycler without lots -> hard delete, role mapping cleaned (can register again)
+const del = await adm('DELETE', `/admin/recyclers/${auto2.recyclerId}`);
+assert.equal(del.body.mode, 'deleted');
+assert(!(await adm('GET', '/admin/recyclers')).body.some((x) => x.id === auto2.recyclerId));
+const again = await call('POST', '/me/recycler', { facilityName: 'Pending Fac 2', authNumber: 'MPCB/4', contact: '1' }, 'tok:user_r12:w@x.com', 201);
+assert.equal(again.authorized, false); ok('admin hard-deletes empty recycler, clerk user can re-register');
+// admin delete: recycler WITH lots -> deactivated (hidden from matching, history kept)
+const del2 = await adm('DELETE', `/admin/recyclers/${best.id}`);
+assert.equal(del2.body.mode, 'deactivated');
+assert.equal((await adm('GET', '/admin/recyclers')).body.find((x) => x.id === best.id).status, 'rejected');
+const m4 = await call('POST', `/lots/${l2}/find-recyclers`, null, ct); assert(!m4.some((m) => m.id === best.id));
+const rcpt2 = await call('GET', `/receipts/${lotId}`, null, ct); assert.equal(rcpt2.status, 'Paid'); ok('recycler with lots deactivated, not deleted; receipts intact, hidden from matching');
+// admin delete: collector with lots -> blocked; collector without lots -> hard delete
+const delC = await adm('DELETE', `/admin/collectors/${reg.collectorId}`); assert.equal(delC.status, 409);
+await call('POST', '/me/collector', { area: 'thane', name: 'Temp C' }, 'tok:user_c2:c2@x.com', 201);
+const tempId = (await adm('GET', '/admin/collectors')).body.find((x) => x.name === 'Temp C').id;
+assert.equal((await adm('DELETE', `/admin/collectors/${tempId}`)).body.mode, 'deleted');
+assert(!(await adm('GET', '/admin/collectors')).body.some((x) => x.id === tempId)); ok('collector delete: blocked with lots, clean delete without lots');
 console.log('\nALL PASSED'); server.close();

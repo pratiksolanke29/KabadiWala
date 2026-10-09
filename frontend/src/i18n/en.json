@@ -108,7 +108,11 @@
     "priceBoardDesc": "Today's rates & trends",
     "recycler": "Recycler",
     "safetyDesc": "Guidelines & best practices",
-    "totalEarned": "Total Earned"
+    "totalEarned": "Total Earned",
+    "Cables": "Cables",
+    "Batteries": "Batteries",
+    "Motors/Magnets": "Motors / Magnets",
+    "Mixed Plastics": "Mixed Plastics"
   },
   "recyclerPages": {
     "navigation": "Recycler navigation",
@@ -223,7 +227,17 @@
       "pending": "Pending",
       "approved": "Approved",
       "rejected": "Rejected"
-    }
+    },
+    "collectors": "Collectors",
+    "noCollectors": "No collectors yet",
+    "area": "Area",
+    "handedOver": "Handed over",
+    "earned": "Earned",
+    "lastActive": "Last active",
+    "joined": "Joined",
+    "delete": "Delete",
+    "deleteConfirm": "Delete {{name}}? This cannot be undone.",
+    "deactivateConfirm": "{{name}} has lots, so it will be deactivated (hidden, login blocked) instead of deleted. Continue?"
   },
   "clerkAuth": {
     "collector": "Collector",
@@ -236,5 +250,37 @@
     "recyclerSetup": "Set up your recycling facility",
     "name": "Name (optional)",
     "continue": "Continue"
+  },
+  "identify": {
+    "title": "AI photo check",
+    "loading": "Checking the photo... You can select a category below without waiting.",
+    "suggests": "Suggested item",
+    "safety": "Handling tip",
+    "review": "AI can be wrong. Check the photo and confirm or choose a category below. Do not rely on a photo to prove an item is safe.",
+    "useCategory": "Use {{category}}",
+    "noMatch": "No clear match to our lot categories. Please choose the correct category below.",
+    "fallback": "Photo identification is unavailable. Choose a category below to continue.",
+    "categories": {
+      "PCB": "PCB / circuit board",
+      "wires/cables": "Wires / cables",
+      "battery": "Battery",
+      "metal": "Metal",
+      "plastic": "Plastic",
+      "appliance": "Appliance",
+      "other": "Other / unclear"
+    }
+  },
+  "createLot": {
+    "title": "Create Lot",
+    "selectCategory": "Select Category",
+    "categoryDesc": "What type of e-waste are you collecting?",
+    "photoCaptured": "Photo captured successfully",
+    "photoPreview": "Lot photo preview",
+    "selectedCategory": "Selected",
+    "categoryConfirmed": "Tap Next to enter weight",
+    "step1": "Photo",
+    "step2": "Category",
+    "step3": "Weight",
+    "step4": "Estimate"
   }
 }
