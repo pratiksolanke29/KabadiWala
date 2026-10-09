@@ -1,0 +1,50 @@
+
+name: Discord Commit Notifications
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Send Discord notification
+        if: ${{ github.event.deleted == false && github.event.head_commit != null }}
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          REPO: ${{ github.repository }}
+          BRANCH: ${{ github.ref_name }}
+          AUTHOR: ${{ github.actor }}
+          SHA: ${{ github.sha }}
+          MESSAGE: ${{ github.event.head_commit.message }}
+          COMMIT_URL: ${{ github.event.head_commit.url }}
+        run: |
+          PAYLOAD=$(jq -n \
+            --arg repo "$REPO" \
+            --arg branch "$BRANCH" \
+            --arg author "$AUTHOR" \
+            --arg sha "${SHA:0:7}" \
+            --arg message "$MESSAGE" \
+            --arg url "$COMMIT_URL" \
+            '{
+              embeds: [{
+                title: "New Commit Pushed",
+                url: $url,
+                color: 5793266,
+                fields: [
+                  {name: "Repository", value: $repo, inline: true},
+                  {name: "Branch", value: $branch, inline: true},
+                  {name: "Author", value: $author, inline: true},
+                  {name: "Commit", value: $sha, inline: true},
+                  {name: "Message", value: $message, inline: false}
+                ],
+                footer: {text: "GitHub Commit Notifications"}
+              }]
+            }')
+
+          curl --fail-with-body \
+            -H "Content-Type: application/json" \
+            -d "$PAYLOAD" \
+            "$DISCORD_WEBHOOK_URL"
