@@ -1,8 +1,8 @@
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { Button } from '../../components/shared/Button';
 import { useState } from 'react';
 import { ArrowLeft, Shield, AlertTriangle, Info, ChevronRight } from 'lucide-react';
+import i18n from 'i18next';
 
 interface SafetyTopic {
   id: string;
@@ -78,8 +78,8 @@ export function Safety() {
   };
 
   const getCurrentLanguage = () => {
-    // In real app, this would come from i18n
-    return 'mr';
+    // Get current language from i18n
+    return i18n.language || 'en';
   };
 
   const lang = getCurrentLanguage();
@@ -161,7 +161,6 @@ export function Safety() {
 }
 
 function SafetyCard({ topic, lang, onClick }: { topic: SafetyTopic; lang: string; onClick: () => void }) {
-  const { t } = useTranslation();
 
   return (
     <button
