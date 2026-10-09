@@ -53,8 +53,6 @@ export const useAuthStore = create<AuthState>()(
     {
       name: 'kabadiwala-auth',
       partialize: (state) => ({
-        collector: state.collector,
-        recycler: state.recycler,
         language: state.language,
         mode: state.mode,
       }),

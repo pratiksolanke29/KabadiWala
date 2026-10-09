@@ -1,19 +1,22 @@
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useLotStore } from '../../hooks/useLotStore';
 import { Button } from '../../components/shared/Button';
 import { CategoryIcon } from '../../components/shared/CategoryIcon';
 import { StatusChip } from '../../components/shared/StatusChip';
-import { CATEGORIES } from '../../types';
-import { ArrowLeft, MapPin } from 'lucide-react';
+import { CATEGORIES, type Lot } from '../../types';
+import { useState, useEffect } from 'react';
+import { ArrowLeft, Calendar, MapPin, Share2, Eye, QrCode, Download } from 'lucide-react';
 
 export function LotDetail() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { getSavedLot } = useLotStore();
+  const { getSavedLot, loadLots } = useLotStore();
+  const params = useParams();
+  useEffect(() => { loadLots().catch(() => {}); }, []);
   
   // Get lot ID from URL params - for now we'll use the first lot
-  const lotId = '1'; // In real app, this would come from useParams()
+  const lotId = params.id ?? '';
   const lot = getSavedLot(lotId);
 
   if (!lot) {
@@ -37,7 +40,7 @@ export function LotDetail() {
     switch (lot.status) {
       case 'Draft':
         return (
-          <Button fullWidth size="lg" onClick={() => navigate('/collector/recyclers')}>
+          <Button fullWidth size="lg" onClick={() => navigate('/collector/recyclers', { state: { lot } })}>
             {t('lotDetail.findRecycler', { defaultValue: 'Find Recycler' })}
           </Button>
         );

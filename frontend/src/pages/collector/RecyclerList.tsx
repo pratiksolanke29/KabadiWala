@@ -1,61 +1,40 @@
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useLotStore } from '../../hooks/useLotStore';
 import { Button } from '../../components/shared/Button';
-import type { RecyclerMatch } from '../../types';
-import { useState } from 'react';
-import { ArrowLeft, MapPin, Shield, Truck } from 'lucide-react';
-
-const mockRecyclers: RecyclerMatch[] = [
-  {
-    id: 'r1',
-    name: 'Green Recyclers Pvt Ltd',
-    distanceKm: 3.2,
-    ratePerKg: 62,
-    verified: true,
-    pickupAvailable: true,
-  },
-  {
-    id: 'r2',
-    name: 'Mumbai E-Waste Solutions',
-    distanceKm: 5.8,
-    ratePerKg: 58,
-    verified: true,
-    pickupAvailable: true,
-  },
-  {
-    id: 'r3',
-    name: 'Eco Friendly Recycling',
-    distanceKm: 2.1,
-    ratePerKg: 55,
-    verified: false,
-    pickupAvailable: false,
-  },
-  {
-    id: 'r4',
-    name: 'City Scrap Dealers',
-    distanceKm: 8.5,
-    ratePerKg: 65,
-    verified: true,
-    pickupAvailable: true,
-  },
-];
+import type { RecyclerMatch, Lot } from '../../types';
+import { api } from '../../api';
+import { useState, useEffect } from 'react';
+import { ArrowLeft, MapPin, Shield, Truck, Star, Phone } from 'lucide-react';
 
 export function RecyclerList() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { draft } = useLotStore();
-  const [recyclers] = useState<RecyclerMatch[]>(mockRecyclers);
+  const location = useLocation();
+  const lot = (location.state as { lot?: Lot } | null)?.lot;
+  const [recyclers, setRecyclers] = useState<RecyclerMatch[]>([]);
+  const [loadError, setLoadError] = useState('');
+
+  useEffect(() => {
+    if (!lot) { navigate('/collector/my-lots', { replace: true }); return; }
+    api<RecyclerMatch[]>('POST', `/lots/${lot.id}/find-recyclers`)
+      .then(setRecyclers)
+      .catch((e) => setLoadError(e instanceof Error ? e.message : 'Could not load recyclers'));
+  }, [lot?.id]);
+  const [selectedRecycler, setSelectedRecycler] = useState<RecyclerMatch | null>(null);
 
   const handleSelect = (recycler: RecyclerMatch) => {
-    navigate('/collector/recycler-quote', { state: { recycler } });
+    setSelectedRecycler(recycler);
+    navigate('/collector/recycler-quote', { state: { recycler, lot } });
   };
 
   const handleBack = () => {
     navigate('/collector/create-lot/estimate');
   };
 
-  const categoryInfo = draft.category 
+  const cat = lot?.category ?? draft.category;
+  const categoryInfo = cat 
     ? (() => {
         const CATS = [
           { id: 'CRT', label: 'CRT' }, { id: 'LCD', label: 'LCD' },
@@ -63,7 +42,7 @@ export function RecyclerList() {
           { id: 'Batteries', label: 'Batteries' }, { id: 'Motors/Magnets', label: 'Motors/Magnets' },
           { id: 'Mixed Plastics', label: 'Mixed Plastics' }
         ];
-        return CATS.find(c => c.id === draft.category)?.label || draft.category;
+        return CATS.find(c => c.id === cat)?.label || cat;
       })()
     : '';
 
@@ -95,11 +74,11 @@ export function RecyclerList() {
             </div>
             <div className="flex-1">
               <p className="text-sm text-gray-500 dark:text-gray-400">{t('recyclerList.yourLot', { defaultValue: 'Your Lot' })}</p>
-              <p className="font-semibold text-gray-900 dark:text-white">{categoryInfo} • {draft.weightKg} kg</p>
+              <p className="font-semibold text-gray-900 dark:text-white">{categoryInfo} • {lot?.weightKg ?? draft.weightKg} kg</p>
             </div>
             <div className="text-right">
               <p className="text-sm text-gray-500 dark:text-gray-400">{t('recyclerList.estimate', { defaultValue: 'Estimate' })}</p>
-              <p className="font-semibold text-orange-600 dark:text-orange-400">₹{draft.estimateMin?.toLocaleString()} - ₹{draft.estimateMax?.toLocaleString()}</p>
+              <p className="font-semibold text-orange-600 dark:text-orange-400">₹{(lot?.estimateMin ?? draft.estimateMin)?.toLocaleString()} - ₹{(lot?.estimateMax ?? draft.estimateMax)?.toLocaleString()}</p>
             </div>
           </div>
         </div>
@@ -107,6 +86,7 @@ export function RecyclerList() {
 
       {/* Recycler List */}
       <main className="max-w-2xl mx-auto px-4 pb-20">
+        {loadError && <p className="text-red-600 text-center py-2">{loadError}</p>}
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
             {t('recyclerList.nearby', { defaultValue: 'Nearby Recyclers' })}

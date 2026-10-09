@@ -1,10 +1,13 @@
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
+import { useLogout } from '../../auth/useLogout';
 import { useAuthStore } from '../../hooks/useAuthStore';
 import { Button } from '../../components/shared/Button';
+import { Input } from '../../components/shared/Input';
 import { Select } from '../../components/shared/Input';
+import { PinInput } from '../../components/shared/PinInput';
 import { useState } from 'react';
-import { ArrowLeft, User, Globe, Bell, Shield, LogOut, Save } from 'lucide-react';
+import { ArrowLeft, User, Globe, MapPin, Bell, Shield, LogOut, Save } from 'lucide-react';
 
 const MOCK_AREAS = [
   { value: 'andheri-east', label: 'Andheri East' },
@@ -29,6 +32,7 @@ export function Profile() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { collector, updateCollector } = useAuthStore();
+  const logout = useLogout();
   const [area, setArea] = useState(collector?.area || '');
   const [language, setLanguageState] = useState(collector?.language || 'mr');
   const [notifications, setNotifications] = useState(true);
@@ -49,8 +53,7 @@ export function Profile() {
   };
 
   const handleLogout = () => {
-    // In real app, this would call auth store clear
-    navigate('/');
+    logout();
   };
 
   return (
@@ -128,7 +131,7 @@ export function Profile() {
                   </div>
                   <div>
                     <p className="text-xs text-gray-500 dark:text-gray-400">{t('common.phone', { defaultValue: 'Phone' })}</p>
-                    <p className="font-medium text-gray-900 dark:text-white">{collector?.phone}</p>
+                    <p className="font-medium text-gray-900 dark:text-white">{collector?.phone || collector?.email}</p>
                   </div>
                 </div>
                 <span className="text-gray-400">🔒</span>

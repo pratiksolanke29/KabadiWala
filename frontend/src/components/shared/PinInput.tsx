@@ -83,32 +83,32 @@ export function PinInput({ value, onChange, length = 4, error, label, disabled =
       )}
       <div className="flex gap-2 sm:gap-3" role="group" aria-label={label || t('common.pin', { defaultValue: 'PIN' })}>
         {Array.from({ length }, (_, i) => (
-                  <input
-                    key={i}
-                    ref={(el) => { inputsRef.current[i] = el; }}
-                    type="text"
-                    inputMode="numeric"
-                    maxLength={1}
-                    value={displayValues[i]}
-                    onChange={(e) => handleChange(i, e.target.value)}
-                    onKeyDown={(e) => handleKeyDown(i, e)}
-                    onPaste={handlePaste}
-                    disabled={disabled}
-                    autoFocus={autoFocus && i === 0}
-                    className={` 
-                      w-12 h-14 sm:w-14 sm:h-16 text-center text-2xl sm:text-3xl font-mono font-bold
-                      rounded-lg border-2 transition-all duration-200
-                      ${error
-                        ? 'border-red-500 focus:ring-red-500 focus:border-red-500'
-                        : 'border-gray-300 focus:ring-orange-500 focus:border-orange-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white'
-                      }
-                      disabled:bg-gray-100 dark:disabled:bg-gray-800
-                      placeholder:text-gray-300 dark:placeholder:text-gray-600
-                    `}
-                    aria-label={`${t('common.pin', { defaultValue: 'PIN' })} digit ${i + 1}`}
-                    aria-invalid={error ? 'true' : 'false'}
-                  />
-                ))}
+          <input
+            key={i}
+            ref={(el) => { inputsRef.current[i] = el; }}
+            type="text"
+            inputMode="numeric"
+            maxLength={1}
+            value={displayValues[i]}
+            onChange={(e) => handleChange(i, e.target.value)}
+            onKeyDown={(e) => handleKeyDown(i, e)}
+            onPaste={handlePaste}
+            disabled={disabled}
+            autoFocus={autoFocus && i === 0}
+            className={`
+              w-12 h-14 sm:w-14 sm:h-16 text-center text-2xl sm:text-3xl font-mono font-bold
+              rounded-lg border-2 transition-all duration-200
+              ${error
+                ? 'border-red-500 focus:ring-red-500 focus:border-red-500'
+                : 'border-gray-300 focus:ring-orange-500 focus:border-orange-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white'
+              }
+              disabled:bg-gray-100 dark:disabled:bg-gray-800
+              placeholder:text-gray-300 dark:placeholder:text-gray-600
+            `}
+            aria-label={`${t('common.pin', { defaultValue: 'PIN' })} digit ${i + 1}`}
+            aria-invalid={error ? 'true' : 'false'}
+          />
+        ))}
       </div>
       {error && (
         <p className="mt-1.5 text-sm text-red-600 dark:text-red-400" role="alert">

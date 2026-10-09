@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
+import { Button } from '../../components/shared/Button';
 import { useState } from 'react';
 import { ArrowLeft, Shield, AlertTriangle, Info, ChevronRight } from 'lucide-react';
 
@@ -160,6 +161,7 @@ export function Safety() {
 }
 
 function SafetyCard({ topic, lang, onClick }: { topic: SafetyTopic; lang: string; onClick: () => void }) {
+  const { t } = useTranslation();
 
   return (
     <button

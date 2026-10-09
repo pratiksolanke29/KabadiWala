@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next';
+
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'outline' | 'danger' | 'ghost';
   size?: 'sm' | 'md' | 'lg' | 'xl';
@@ -20,6 +22,7 @@ export function Button({
   className = '',
   ...props
 }: ButtonProps) {
+  const { t } = useTranslation();
   
   const baseStyles = `
     inline-flex items-center justify-center font-medium rounded-lg

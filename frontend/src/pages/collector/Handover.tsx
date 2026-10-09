@@ -1,26 +1,58 @@
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useLotStore } from '../../hooks/useLotStore';
+import { api } from '../../api';
+import { QrImage } from '../../components/shared/QrImage';
 import { Button } from '../../components/shared/Button';
 import { CategoryIcon } from '../../components/shared/CategoryIcon';
 import { StatusChip } from '../../components/shared/StatusChip';
 import { Modal } from '../../components/shared/Modal';
 import { CATEGORIES, type Lot } from '../../types';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ArrowLeft, QrCode, Share2, CheckCircle, Truck, Shield, AlertTriangle } from 'lucide-react';
 
 export function Handover() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const params = useParams<{ id: string }>();
-  const { getSavedLot, updateSavedLot } = useLotStore();
+  const [lot, setLot] = useState<Lot | null>(null);
+  const [loadError, setLoadError] = useState('');
   const [showCodeModal, setShowCodeModal] = useState(false);
-  const [handoverCode, setHandoverCode] = useState('');
   const [showReceipt, setShowReceipt] = useState(false);
   const [generating, setGenerating] = useState(false);
 
   const lotId = params?.id;
-  const lot = lotId ? getSavedLot(lotId) : null;
+
+  const loadLot = async () => {
+    if (!lotId) return;
+    try {
+      const l = await api<Lot>('GET', `/lots/${lotId}`);
+      setLot(l);
+      setLoadError('');
+      return l;
+    } catch (e) {
+      setLoadError(e instanceof Error ? e.message : 'Error');
+    }
+  };
+
+  useEffect(() => { loadLot(); }, [lotId]);
+
+  // The recycler confirms the handover on their side. Poll the server while we wait
+  // so the receipt appears on this screen as soon as it happens.
+  const done = lot?.status === 'HandedOver' || lot?.status === 'Paid';
+  useEffect(() => {
+    if (!lot || done) return;
+    const timer = setInterval(loadLot, 4000);
+    return () => clearInterval(timer);
+  }, [lot?.id, done]);
+
+  // Open the receipt automatically once the lot is handed over (also for /collector/receipt/:id).
+  useEffect(() => {
+    if (done) { setShowCodeModal(false); setShowReceipt(true); }
+  }, [done]);
+
+  if (!lot && !loadError) {
+    return <p className="p-8 text-center">{t('common.loading', { defaultValue: 'Loading...' })}</p>;
+  }
 
   if (!lot) {
     return (
@@ -39,21 +71,17 @@ export function Handover() {
     navigate('/collector/my-lots');
   };
 
-  const generateCode = () => {
+  // The code is created and stored by the server (POST /lots/:id/handover-code), never in the browser.
+  const generateCode = async () => {
     setGenerating(true);
-    // Simulate code generation
-    setTimeout(() => {
-      const code = generateHandoverCode();
-      setHandoverCode(code);
-      updateSavedLot(lot.id, { handoverCode: code, status: 'Quoted' });
-      setGenerating(false);
+    try {
+      await api('POST', `/lots/${lot.id}/handover-code`);
+      await loadLot();
       setShowCodeModal(true);
-    }, 1000);
-  };
-
-  const handleViewReceipt = () => {
-    setShowCodeModal(false);
-    setShowReceipt(true);
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Could not generate code');
+    }
+    setGenerating(false);
   };
 
   const handleDone = () => {
@@ -169,6 +197,13 @@ export function Handover() {
                     {t('common.share', { defaultValue: 'Share' })}
                   </Button>
                 </div>
+
+                <p className="text-sm text-center text-gray-500 dark:text-gray-400">
+                  {t('handover.waitingRecycler', { defaultValue: 'Waiting for the recycler to confirm the handover...' })}
+                </p>
+                <button className="w-full text-sm underline text-gray-500 dark:text-gray-400" onClick={generateCode} disabled={generating}>
+                  {t('handover.regenerate', { defaultValue: 'Regenerate code' })}
+                </button>
               </div>
             ) : (
               <div className="text-center py-8">
@@ -196,14 +231,6 @@ export function Handover() {
             </h3>
 
             <div className="space-y-3">
-              <DetailRow
-                label={t('common.distance', { defaultValue: 'Distance' })}
-                value={lot.recyclerName ? '3.2 km' : '—'}
-              />
-              <DetailRow
-                label={t('handover.estTime', { defaultValue: 'Est. Time' })}
-                value={lot.recyclerName ? '10 min' : '—'}
-              />
               <DetailRow
                 label={t('handover.pickup', { defaultValue: 'Pickup' })}
                 value={lot.recyclerName ? t('common.available', { defaultValue: 'Available' }) : t('common.notAvailable', { defaultValue: 'Not Available' })}
@@ -233,26 +260,6 @@ export function Handover() {
             </ul>
           </div>
 
-          {/* Simulate Recycler Confirmation (for demo) */}
-          {lot.handoverCode && lot.status === 'Quoted' && (
-            <div className="bg-green-50 dark:bg-green-900/20 rounded-xl p-4 border border-green-200 dark:border-green-800">
-              <p className="text-sm text-green-700 dark:text-green-300 mb-3">
-                {t('handover.demoMode', { defaultValue: 'Demo Mode: Simulate recycler confirming handover' })}
-              </p>
-              <Button variant="primary" fullWidth onClick={() => {
-                updateSavedLot(lot.id, { 
-                  status: 'HandedOver', 
-                  handedOverAt: new Date().toISOString(),
-                  finalWeightKg: lot.weightKg,
-                  finalRate: lot.quotedRate,
-                  finalTotal: lot.quotedTotal,
-                });
-                setShowReceipt(true);
-              }} leftIcon={<CheckCircle className="w-4 h-4" />}>
-                {t('handover.simulateHandover', { defaultValue: 'Simulate Handover Complete' })}
-              </Button>
-            </div>
-          )}
         </div>
       </main>
 
@@ -276,24 +283,19 @@ export function Handover() {
           
           <div className="bg-gray-100 dark:bg-gray-800 rounded-xl p-6 mb-6">
             <div className="text-4xl font-mono font-bold tracking-widest text-orange-600 dark:text-orange-400 mb-2">
-              {handoverCode}
+              {lot.handoverCode}
             </div>
             <p className="text-sm text-gray-500 dark:text-gray-400">
               {t('handover.refId', { defaultValue: 'Reference ID' })}
             </p>
           </div>
 
-          {/* QR Code Display */}
-          <div className="bg-white dark:bg-gray-900 rounded-xl p-6 mb-6 inline-block">
-            <div className="w-48 h-48 bg-white rounded-lg p-4 flex items-center justify-center">
-              <div className="text-center">
-                <div className="text-2xl font-mono tracking-widest text-gray-900 mb-1">{handoverCode}</div>
-                <div className="text-xs text-gray-500">QR Code</div>
-              </div>
-            </div>
+          {/* QR Code Display (generated by the server) */}
+          <div className="bg-white dark:bg-gray-900 rounded-xl p-4 mb-6 inline-block">
+            <QrImage lotId={lot.id} className="w-48 h-48" />
           </div>
 
-          <Button fullWidth size="lg" onClick={handleViewReceipt}>
+          <Button fullWidth size="lg" onClick={() => setShowCodeModal(false)}>
             {t('common.done', { defaultValue: 'Done' })}
           </Button>
         </div>
@@ -439,13 +441,4 @@ function formatDate(dateString: string): string {
     hour: '2-digit',
     minute: '2-digit',
   });
-}
-
-function generateHandoverCode(): string {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let result = '';
-  for (let i = 0; i < 6; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return result;
 }

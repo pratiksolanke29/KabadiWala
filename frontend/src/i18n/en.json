@@ -95,7 +95,44 @@
     "lastUpdated": "Last Updated",
     "offline": "Offline",
     "online": "Online",
-    "syncPending": "Sync Pending"
+    "syncPending": "Sync Pending",
+    "dashboard": "Dashboard",
+    "available": "Available",
+    "notAvailable": "Not Available",
+    "collectorId": "Collector ID",
+    "createLotDesc": "Photo → Category → Weight → Estimate",
+    "earningsDesc": "Total earned & pending",
+    "location": "Location",
+    "lotId": "Lot ID",
+    "myLotsDesc": "Track all your lots",
+    "priceBoardDesc": "Today's rates & trends",
+    "recycler": "Recycler",
+    "safetyDesc": "Guidelines & best practices",
+    "totalEarned": "Total Earned"
+  },
+  "recyclerPages": {
+    "navigation": "Recycler navigation",
+    "ratesHelp": "Choose the materials you accept and set your offered prices. These are your facility rates, not live market prices.",
+    "acceptMaterial": "Accept this material",
+    "ratePerKg": "Rate (₹/kg)",
+    "saved": "Saved successfully",
+    "refresh": "Refresh",
+    "noTransactions": "No transactions yet. Confirm a handover to see it here.",
+    "material": "Material",
+    "lotId": "Lot ID",
+    "collector": "Collector",
+    "location": "Location",
+    "areasHelp": "Separate service areas with commas. Use the same area names as collectors, for example andheri-east.",
+    "pickupEnabled": "Pickup available"
+  },
+  "categories": {
+    "CRT": "CRT",
+    "LCD": "LCD",
+    "PCB": "PCB",
+    "Cables": "Cables",
+    "Batteries": "Batteries",
+    "Motors/Magnets": "Motors / Magnets",
+    "Mixed Plastics": "Mixed Plastics"
   },
   "lotDetail": {
     "title": "Lot Detail",
@@ -110,7 +147,6 @@
     "location": "Collection Location",
     "estimate": "Value Estimate",
     "estimateRange": "Estimate Range",
-    "quotedRate": "Quoted Rate",
     "quotedTotal": "Quoted Total",
     "finalRate": "Final Rate",
     "finalTotal": "Final Total",
@@ -149,6 +185,56 @@
     "instruction2": "Show the handover code / QR code for verification",
     "instruction3": "Verify the weight matches your recorded weight",
     "instruction4": "Confirm payment method (Cash/Digital)",
-    "instruction5": "Receive payment and confirm handover complete"
+    "instruction5": "Receive payment and confirm handover complete",
+    "waitingRecycler": "Waiting for the recycler to confirm the handover...",
+    "regenerate": "Regenerate code"
+  },
+  "auth": {
+    "logoutConfirm": "Are you sure you want to logout?"
+  },
+  "home": {
+    "chooseAction": "Choose an action to get started",
+    "quickStats": "Quick Stats",
+    "welcome": "Welcome back"
+  },
+  "admin": {
+    "title": "Admin Panel",
+    "adminKey": "Admin key",
+    "keyPlaceholder": "Enter admin key",
+    "login": "Log in",
+    "badKey": "Wrong admin key",
+    "recyclers": "Recyclers",
+    "lots": "Lots",
+    "pendingShort": "pending",
+    "refresh": "Refresh",
+    "all": "All",
+    "noRecyclers": "No recyclers here",
+    "noLots": "No lots yet",
+    "authNumber": "Auth no.",
+    "approve": "Approve",
+    "reject": "Reject",
+    "lot": "Lot",
+    "category": "Category",
+    "weight": "Weight",
+    "collector": "Collector",
+    "recycler": "Recycler",
+    "amount": "Amount",
+    "status": {
+      "pending": "Pending",
+      "approved": "Approved",
+      "rejected": "Rejected"
+    }
+  },
+  "clerkAuth": {
+    "collector": "Collector",
+    "recycler": "Recycler",
+    "changeRole": "Change role",
+    "fillAll": "Please fill all fields",
+    "retry": "Try again",
+    "otherRole": "This account is already registered as the other role. Sign in with a different email to use this role.",
+    "collectorSetup": "Set up your collector profile",
+    "recyclerSetup": "Set up your recycling facility",
+    "name": "Name (optional)",
+    "continue": "Continue"
   }
 }

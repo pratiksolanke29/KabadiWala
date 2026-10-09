@@ -1,8 +1,10 @@
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
+import { Button } from '../../components/shared/Button';
 import { CategoryIcon } from '../../components/shared/CategoryIcon';
-import { type Category } from '../../types';
-import { useState } from 'react';
+import { CATEGORIES, type Category } from '../../types';
+import { useState, useEffect } from 'react';
+import { api } from '../../api';
 import { ArrowLeft, TrendingUp, TrendingDown, Minus, BarChart2 } from 'lucide-react';
 
 interface PriceEntry {
@@ -15,20 +17,12 @@ interface PriceEntry {
   sparkline: number[];
 }
 
-const mockPriceData: PriceEntry[] = [
-  { material: 'CRT', ratePerKg: 25, trend: 'stable', marketMin: 20, marketMax: 30, recyclerOffered: 28, sparkline: [24, 25, 25, 24, 25, 25, 25] },
-  { material: 'LCD', ratePerKg: 45, trend: 'up', marketMin: 40, marketMax: 55, recyclerOffered: 48, sparkline: [42, 43, 44, 44, 45, 45, 45] },
-  { material: 'PCB', ratePerKg: 60, trend: 'up', marketMin: 55, marketMax: 70, recyclerOffered: 62, sparkline: [55, 56, 57, 58, 59, 60, 60] },
-  { material: 'Cables', ratePerKg: 50, trend: 'stable', marketMin: 45, marketMax: 58, recyclerOffered: 52, sparkline: [48, 49, 50, 50, 50, 50, 50] },
-  { material: 'Batteries', ratePerKg: 120, trend: 'down', marketMin: 110, marketMax: 140, recyclerOffered: 125, sparkline: [125, 123, 122, 121, 120, 120, 120] },
-  { material: 'Motors/Magnets', ratePerKg: 35, trend: 'stable', marketMin: 30, marketMax: 42, recyclerOffered: 38, sparkline: [34, 35, 35, 35, 35, 35, 35] },
-  { material: 'Mixed Plastics', ratePerKg: 15, trend: 'stable', marketMin: 12, marketMax: 18, recyclerOffered: 16, sparkline: [14, 15, 15, 15, 15, 15, 15] },
-];
-
 export function PriceBoard() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [selectedMaterial, setSelectedMaterial] = useState<Category | null>(null);
+  const [priceData, setPriceData] = useState<PriceEntry[]>([]);
+  useEffect(() => { api<PriceEntry[]>('GET', '/price-board').then(setPriceData).catch(() => {}); }, []);
 
   const handleBack = () => {
     navigate('/collector/home');
@@ -87,7 +81,7 @@ export function PriceBoard() {
           </div>
 
           <div className="divide-y divide-gray-100 dark:divide-gray-700">
-            {mockPriceData.map((entry) => (
+            {priceData.map((entry) => (
               <PriceRow
                 key={entry.material}
                 entry={entry}
@@ -116,10 +110,10 @@ export function PriceBoard() {
       </main>
 
       {/* Price Detail Modal */}
-      {selectedMaterial && (
+      {selectedMaterial && priceData.length > 0 && (
         <PriceDetailModal
           material={selectedMaterial}
-          data={mockPriceData.find(d => d.material === selectedMaterial)!}
+          data={priceData.find(d => d.material === selectedMaterial) ?? priceData[0]}
           onClose={() => setSelectedMaterial(null)}
         />
       )}
@@ -170,7 +164,7 @@ function PriceRow({ entry, onClick }: { entry: PriceEntry; onClick: () => void }
           <p className="text-xs text-gray-500 dark:text-gray-400">{t('priceBoard.perKg', { defaultValue: '/kg' })}</p>
           {entry.recyclerOffered && (
             <p className="text-xs text-green-600 dark:text-green-400 mt-1">
-              {t('priceBoard.recyclerOffered', { defaultValue: 'Recycler: ₹{price}/kg', price: entry.recyclerOffered })}
+              {t('priceBoard.recyclerOffered', { defaultValue: 'Recycler: ₹{{price}}/kg', price: entry.recyclerOffered })}
             </p>
           )}
         </div>
@@ -222,7 +216,7 @@ function PriceDetailModal({ material, data, onClose }: { material: Category; dat
                 </span>
                 {data.recyclerOffered && (
                   <span className="flex items-center gap-1 text-green-600 dark:text-green-400">
-                    {t('priceBoard.recyclerOfferedShort', { defaultValue: 'Recycler: ₹{price}/kg', price: data.recyclerOffered })}
+                    {t('priceBoard.recyclerOfferedShort', { defaultValue: 'Recycler: ₹{{price}}/kg', price: data.recyclerOffered })}
                   </span>
                 )}
               </div>

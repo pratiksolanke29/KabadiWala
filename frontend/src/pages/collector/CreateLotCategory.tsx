@@ -10,7 +10,7 @@ import { ArrowLeft, Sparkles } from 'lucide-react';
 export function CreateLotCategory() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { draft, setCategory } = useLotStore();
+  const { draft, setCategory, isDraftComplete } = useLotStore();
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(draft.category);
   const [aiSuggestion] = useState<Category>('PCB'); // Mock AI suggestion
 

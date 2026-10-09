@@ -22,49 +22,72 @@ export function CameraCapture({
   const { t } = useTranslation();
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  // Streams are resources, not render state. Updating them must not restart the effect.
   const streamRef = useRef<MediaStream | null>(null);
+  const requestRef = useRef(0);
+  const tRef = useRef(t);
+  tRef.current = t;
   const [error, setError] = useState<string | null>(null);
   const [hasPermission, setHasPermission] = useState(false);
   const [isCapturing, setIsCapturing] = useState(false);
+  const [activeFacingMode, setActiveFacingMode] = useState(facingMode);
+
+  useEffect(() => setActiveFacingMode(facingMode), [facingMode]);
+
+  const stopCamera = useCallback(() => {
+    // Also invalidate a permission request that completes after close/unmount.
+    requestRef.current += 1;
+    streamRef.current?.getTracks().forEach((track) => track.stop());
+    streamRef.current = null;
+    if (videoRef.current) videoRef.current.srcObject = null;
+  }, []);
 
   const startCamera = useCallback(async () => {
+    stopCamera();
+    const request = requestRef.current;
+    setError(null);
+    setHasPermission(false);
     try {
-      setError(null);
+      if (!navigator.mediaDevices?.getUserMedia) throw new Error('Camera requires HTTPS or localhost');
       const mediaStream = await navigator.mediaDevices.getUserMedia({
+        audio: false,
         video: {
-          facingMode: { ideal: facingMode },
+          facingMode: { ideal: activeFacingMode },
           width: { ideal: maxWidth },
           height: { ideal: maxHeight },
         },
       });
-      streamRef.current = mediaStream;
-      setHasPermission(true);
-      if (videoRef.current) {
-        videoRef.current.srcObject = mediaStream;
+      if (request !== requestRef.current || !videoRef.current) {
+        mediaStream.getTracks().forEach((track) => track.stop());
+        return;
       }
+      streamRef.current = mediaStream;
+      // Video stays mounted during loading, so there is always a playback target.
+      videoRef.current.srcObject = mediaStream;
+      await videoRef.current.play();
     } catch (err) {
+      if (request !== requestRef.current) return;
+      stopCamera();
       console.error('Camera error:', err);
-      setError(t('camera.error', { defaultValue: 'Unable to access camera. Please check permissions.' }));
+      setError(tRef.current('camera.error', { defaultValue: 'Unable to access camera. Please check permissions.' }));
       setHasPermission(false);
     }
-  }, [facingMode, maxWidth, maxHeight, t]);
+  }, [activeFacingMode, maxWidth, maxHeight, stopCamera]);
 
-  const stopCamera = useCallback(() => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((track) => track.stop());
-      streamRef.current = null;
-      setHasPermission(false);
-    }
-  }, []);
+  const closeCamera = useCallback(() => {
+    stopCamera();
+    onClose?.();
+  }, [stopCamera, onClose]);
 
   const capturePhoto = useCallback(() => {
-    if (!videoRef.current || !canvasRef.current || isCapturing) return;
-
+    if (!videoRef.current || !canvasRef.current || isCapturing || !hasPermission ||
+        videoRef.current.readyState < 2 || !videoRef.current.videoWidth || !videoRef.current.videoHeight) return;
+    
     setIsCapturing(true);
     const video = videoRef.current;
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
-
+    
     if (!ctx) {
       setIsCapturing(false);
       return;
@@ -73,28 +96,26 @@ export function CameraCapture({
     // Set canvas size to video size
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
-
+    
     // Draw video frame to canvas
     ctx.drawImage(video, 0, 0);
-
+    
     // Convert to data URL
     const dataUrl = canvas.toDataURL('image/jpeg', imageQuality);
     onCapture(dataUrl);
     setIsCapturing(false);
-  }, [onCapture, imageQuality, isCapturing]);
+  }, [onCapture, imageQuality, isCapturing, hasPermission]);
 
   const switchCamera = useCallback(() => {
-    stopCamera();
-    startCamera();
-  }, [startCamera, stopCamera]);
+    setActiveFacingMode((mode) => mode === 'environment' ? 'user' : 'environment');
+  }, []);
 
   useEffect(() => {
     startCamera();
     return () => stopCamera();
   }, [startCamera, stopCamera]);
 
-  if (!hasPermission) {
-    return (
+  const loadingView = !hasPermission ? (
       <div className="flex flex-col items-center justify-center h-full min-h-[400px] bg-gray-100 dark:bg-gray-800 rounded-xl">
         {error ? (
           <div className="text-center p-8">
@@ -108,7 +129,7 @@ export function CameraCapture({
             </button>
             {onClose && (
               <button
-                onClick={onClose}
+                onClick={closeCamera}
                 className="mt-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
               >
                 {t('common.cancel', { defaultValue: 'Cancel' })}
@@ -122,66 +143,75 @@ export function CameraCapture({
           </div>
         )}
       </div>
-    );
-  }
+    ) : null;
 
   return (
     <div className="relative w-full">
-      <div className="relative bg-black rounded-xl overflow-hidden">
-        <video
-          ref={videoRef}
-          autoPlay
-          playsInline
-          className="w-full h-auto max-h-[500px] object-cover"
-          aria-label={t('camera.preview', { defaultValue: 'Camera preview' })}
-        />
-        <canvas ref={canvasRef} className="hidden" />
-
-        {onClose && (
-          <button
-            onClick={onClose}
-            className="absolute top-3 right-3 z-10 p-2 bg-black/50 text-white rounded-full hover:bg-black/70 transition-colors"
-            aria-label={t('common.close', { defaultValue: 'Close' })}
-          >
-            <X className="w-5 h-5" />
-          </button>
-        )}
-
-        <button
-          onClick={switchCamera}
-          className="absolute top-3 left-3 z-10 p-2 bg-black/50 text-white rounded-full hover:bg-black/70 transition-colors"
-          aria-label={t('camera.switch', { defaultValue: 'Switch camera' })}
-        >
-          <RotateCcw className="w-5 h-5" />
-        </button>
-      </div>
-
-      <div className="flex items-center justify-center gap-6 mt-6 p-4">
-        {onClose && (
-          <button
-            onClick={onClose}
-            className="px-6 py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors font-medium"
-          >
-            {t('common.cancel', { defaultValue: 'Cancel' })}
-          </button>
-        )}
-        <button
-          onClick={capturePhoto}
-          disabled={isCapturing}
-          className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-full border-4 border-white bg-orange-500 hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center"
-          aria-label={t('camera.capture', { defaultValue: 'Capture photo' })}
-        >
-          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white" />
-          {isCapturing && (
-            <div className="absolute inset-0 rounded-full border-4 border-white/50 animate-pulse" />
+      {loadingView}
+      <div className={hasPermission ? '' : 'hidden'}>
+        <div className="relative bg-black rounded-xl overflow-hidden">
+          <video
+            ref={videoRef}
+            autoPlay
+            playsInline
+            muted
+            onLoadedData={() => {
+              const video = videoRef.current;
+              if (streamRef.current && video?.srcObject === streamRef.current && video.videoWidth > 0) {
+                setHasPermission(true);
+              }
+            }}
+            className="w-full h-auto max-h-[500px] object-cover"
+            aria-label={t('camera.preview', { defaultValue: 'Camera preview' })}
+          />
+          <canvas ref={canvasRef} className="hidden" />
+          
+          {onClose && (
+            <button
+              onClick={closeCamera}
+              className="absolute top-3 right-3 z-10 p-2 bg-black/50 text-white rounded-full hover:bg-black/70 transition-colors"
+              aria-label={t('common.close', { defaultValue: 'Close' })}
+            >
+              <X className="w-5 h-5" />
+            </button>
           )}
-        </button>
-        <div className="w-16 h-16 sm:w-20 sm:h-20" /> {/* spacer for alignment */}
-      </div>
 
-      <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-2">
-        {t('camera.instruction', { defaultValue: 'Position the item in the frame and tap the button to capture' })}
-      </p>
+          <button
+            onClick={switchCamera}
+            className="absolute top-3 left-3 z-10 p-2 bg-black/50 text-white rounded-full hover:bg-black/70 transition-colors"
+            aria-label={t('camera.switch', { defaultValue: 'Switch camera' })}
+          >
+            <RotateCcw className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="flex items-center justify-center gap-6 mt-6 p-4">
+          {onClose && (
+            <button
+              onClick={closeCamera}
+              className="px-6 py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors font-medium"
+            >
+              {t('common.cancel', { defaultValue: 'Cancel' })}
+            </button>
+          )}
+          <button
+            onClick={capturePhoto}
+            disabled={isCapturing || !hasPermission}
+            className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-full border-4 border-white bg-orange-500 hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center"
+            aria-label={t('camera.capture', { defaultValue: 'Capture photo' })}
+          >
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white" />
+            {isCapturing && (
+              <div className="absolute inset-0 rounded-full border-4 border-white/50 animate-pulse" />
+            )}
+          </button>
+          <div className="w-16 h-16 sm:w-20 sm:h-20" /> {/* spacer for alignment */}
+        </div>
+
+        <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-2">
+          {t('camera.instruction', { defaultValue: 'Position the item in the frame and tap the button to capture' })}
+        </p>
+      </div>
     </div>
   );
 }

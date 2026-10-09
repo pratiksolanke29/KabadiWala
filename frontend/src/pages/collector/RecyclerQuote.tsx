@@ -2,16 +2,17 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useLotStore } from '../../hooks/useLotStore';
 import { Button } from '../../components/shared/Button';
-import { Modal } from '../../components/shared/Modal';
 import type { RecyclerMatch, Lot } from '../../types';
 import { useState } from 'react';
-import { ArrowLeft, Shield, Truck, Phone, Clock, MapPin as MapPinIcon, QrCode, CheckCircle } from 'lucide-react';
+import { api } from '../../api';
+import { QrImage } from '../../components/shared/QrImage';
+import { ArrowLeft, MapPin, Shield, Truck, Phone, Clock, MapPin as MapPinIcon, QrCode, CheckCircle } from 'lucide-react';
 
 export function RecyclerQuote() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
-  const { draft, updateSavedLot, resetDraft } = useLotStore();
+  const { draft, resetDraft, loadLots } = useLotStore();
   const [showHandover, setShowHandover] = useState(false);
   const [handoverCode, setHandoverCode] = useState('');
   const [showHandoverModal, setShowHandoverModal] = useState(false);
@@ -30,21 +31,16 @@ export function RecyclerQuote() {
   const quotedTotal = quotedRate * (lot?.weightKg || draft.weightKg || 0);
   const distance = recycler.distanceKm;
 
-  const handleChooseRecycler = () => {
-    // Update lot with recycler info
-    if (lot) {
-      updateSavedLot(lot.id, {
-        status: 'Quoted',
-        recyclerId: recycler.id,
-        recyclerName: recycler.name,
-        quotedRate,
-        quotedTotal,
-      });
+  const handleChooseRecycler = async () => {
+    if (!lot) return;
+    try {
+      const r = await api<{ handoverCode: string }>('POST', `/lots/${lot.id}/choose-recycler`, { recyclerId: recycler.id });
+      setHandoverCode(r.handoverCode);
+      setShowHandover(true);
+      loadLots().catch(() => {});
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Could not choose recycler');
     }
-    // Generate handover code
-    const code = generateHandoverCode();
-    setHandoverCode(code);
-    setShowHandover(true);
   };
 
   const handleCall = () => {
@@ -207,6 +203,7 @@ export function RecyclerQuote() {
             <p className="text-sm text-gray-500 dark:text-gray-400">
               {t('recyclerQuote.refId', { defaultValue: 'Reference ID' })}
             </p>
+            {lot && <QrImage lotId={lot.id} className="mx-auto mt-4 w-40 h-40" />}
           </div>
 
           <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800 mb-6">
@@ -262,6 +259,7 @@ function InfoItem({ icon, label, value, valueColor = 'text-gray-900 dark:text-wh
 }
 
 function QuoteRow({ label, value, highlight = false }: { label: string; value: string; highlight?: boolean }) {
+  const { t } = useTranslation();
   return (
     <div className="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-700 last:border-0">
       <span className="text-gray-600 dark:text-gray-400">{label}</span>
@@ -272,11 +270,64 @@ function QuoteRow({ label, value, highlight = false }: { label: string; value: s
   );
 }
 
-function generateHandoverCode(): string {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let result = '';
-  for (let i = 0; i < 6; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return result;
+function ProgressStep({ step, total, label, active, completed }: { step: number; total: number; label: string; active?: boolean; completed?: boolean }) {
+  return (
+    <div className="flex flex-col items-center flex-1 relative">
+      {step < total && (
+        <div className="absolute top-3 left-1/2 w-full h-1.5 -translate-x-1/2 z-0" />
+      )}
+      <div className={`
+        relative z-10 w-6 h-6 rounded-full border-2 flex items-center justify-center
+        ${completed ? 'bg-green-500 border-green-500 text-white' : active ? 'bg-orange-500 border-orange-500 text-white' : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-400'}
+      `}>
+        {completed ? (
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+          </svg>
+        ) : active ? (
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+          </svg>
+        ) : (
+          <span className="text-sm font-bold">{step}</span>
+        )}
+      </div>
+      <p className={`
+        mt-2 text-xs text-center font-medium
+        ${completed ? 'text-green-600 dark:text-green-400' : active ? 'text-orange-600 dark:text-orange-400' : 'text-gray-500 dark:text-gray-400'}
+      `}>
+        {label}
+      </p>
+    </div>
+  );
+}
+
+function Modal({ isOpen, onClose, title, size = 'md', children }: { isOpen: boolean; onClose: () => void; title: string; size?: 'sm' | 'md' | 'lg' | 'xl'; children: React.ReactNode }) {
+  const { t } = useTranslation();
+  
+  if (!isOpen) return null;
+
+  const sizeStyles = {
+    sm: 'max-w-sm',
+    md: 'max-w-md',
+    lg: 'max-w-lg',
+    xl: 'max-w-xl',
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <div className="flex min-h-full items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/50" onClick={onClose} aria-hidden="true" />
+        <div className={`relative w-full ${sizeStyles[size]} bg-white dark:bg-gray-800 rounded-xl shadow-xl animate-in fade-in zoom-in-95`}>
+          <div className="flex items-center justify-between p-4 border-b dark:border-gray-700">
+            <h2 id="modal-title" className="text-lg font-semibold text-gray-900 dark:text-white">{title}</h2>
+            <button onClick={onClose} className="p-1 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" aria-label={t('common.close', { defaultValue: 'Close' })}>
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+          </div>
+          <div className="p-4">{children}</div>
+        </div>
+      </div>
+    </div>
+  );
 }

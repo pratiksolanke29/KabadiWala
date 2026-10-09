@@ -1,49 +1,37 @@
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useLotStore } from '../../hooks/useLotStore';
+import { api } from '../../api';
 import { NumberInput } from '../../components/shared/NumberInput';
 import { Button } from '../../components/shared/Button';
 import { CategoryIcon } from '../../components/shared/CategoryIcon';
-import { CATEGORIES, type Category } from '../../types';
-import { useState, useEffect } from 'react';
+import { CATEGORIES } from '../../types';
+import { useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
 
 export function CreateLotWeight() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { draft, setWeight, setEstimate } = useLotStore();
-  const [weight, setWeightState] = useState<string>('');
+  const [weight, setWeightState] = useState<number | null>(draft.weightKg);
   const [error, setError] = useState('');
-  
-  useEffect(() => {
-    if (draft.weightKg !== null && draft.weightKg !== undefined) {
-      setWeightState(String(draft.weightKg));
-    } else {
-      setWeightState('');
-    }
-  }, [draft.weightKg]);
 
   const handleWeightChange = (value: string) => {
-    setWeightState(value);
+    const numValue = value === '' ? null : parseFloat(value);
+    setWeightState(numValue);
     setError('');
     
-    const numValue = value === '' ? null : parseFloat(value);
     if (numValue !== null && numValue > 0) {
       setWeight(numValue);
-      // Mock estimate calculation - in real app this would come from API
-      const categoryRates: Record<Category, number> = {
-        'CRT': 25, 'LCD': 45, 'PCB': 60, 'Cables': 50,
-        'Batteries': 120, 'Motors/Magnets': 35, 'Mixed Plastics': 15
-      };
-      const rate = categoryRates[draft.category!] || 30;
-      const estimate = numValue * rate;
-      setEstimate(Math.round(estimate * 0.8), Math.round(estimate * 1.2));
+      // Estimate comes from the backend (market min/max x weight)
+      api<{ estimateMin: number; estimateMax: number }>('POST', '/estimate', { category: draft.category, weightKg: numValue })
+        .then((e) => setEstimate(e.estimateMin, e.estimateMax))
+        .catch(() => setError('Weight must be between 0 and 1000 kg'));
     }
   };
 
   const handleNext = () => {
-    const numValue = weight === '' ? null : parseFloat(weight);
-    if (numValue !== null && numValue > 0) {
+    if (weight && weight > 0) {
       navigate('/collector/create-lot/estimate');
     } else {
       setError(t('createLot.weightRequired', { defaultValue: 'Please enter a valid weight' }));
@@ -113,7 +101,7 @@ export function CreateLotWeight() {
             <NumberInput
               label={t('createLot.weightLabel', { defaultValue: 'Weight' })}
               value={weight}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleWeightChange(e.target.value)}
+              onChange={handleWeightChange}
               error={error}
               min={0.1}
               max={1000}
@@ -125,22 +113,19 @@ export function CreateLotWeight() {
           </div>
 
           {/* Estimated Value Preview */}
-          {(() => {
-            const numValue = weight === '' ? null : parseFloat(weight);
-            return numValue !== null && numValue > 0 && draft.estimateMin && draft.estimateMax ? (
-              <div className="mb-6 p-4 bg-orange-50 dark:bg-orange-900/20 rounded-xl border border-orange-200 dark:border-orange-800">
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
-                  {t('createLot.estimatedValue', { defaultValue: 'Estimated Value' })}
-                </p>
-                <p className="text-3xl font-bold text-orange-600 dark:text-orange-400">
-                  ₹{draft.estimateMin.toLocaleString()} - ₹{draft.estimateMax.toLocaleString()}
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  {t('createLot.estimateDisclaimer', { defaultValue: 'Final price may vary based on actual condition and market rates' })}
-                </p>
-              </div>
-            ) : null;
-          })()}
+          {weight && weight > 0 && draft.estimateMin && draft.estimateMax && (
+            <div className="mb-6 p-4 bg-orange-50 dark:bg-orange-900/20 rounded-xl border border-orange-200 dark:border-orange-800">
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+                {t('createLot.estimatedValue', { defaultValue: 'Estimated Value' })}
+              </p>
+              <p className="text-3xl font-bold text-orange-600 dark:text-orange-400">
+                ₹{draft.estimateMin.toLocaleString()} - ₹{draft.estimateMax.toLocaleString()}
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                {t('createLot.estimateDisclaimer', { defaultValue: 'Final price may vary based on actual condition and market rates' })}
+              </p>
+            </div>
+          )}
         </div>
       </main>
 
@@ -150,7 +135,7 @@ export function CreateLotWeight() {
           <Button variant="outline" fullWidth onClick={handleBack}>
             {t('common.back', { defaultValue: 'Back' })}
           </Button>
-          <Button fullWidth onClick={handleNext} disabled={!weight || parseFloat(weight) <= 0} size="lg">
+          <Button fullWidth onClick={handleNext} disabled={!weight || weight <= 0} size="lg">
             {t('common.next', { defaultValue: 'Next' })}
           </Button>
         </div>

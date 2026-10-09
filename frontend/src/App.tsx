@@ -1,10 +1,12 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { useAuth } from '@clerk/clerk-react';
+import { AuthPage } from './auth/AuthPage';
+import { RoleSetup } from './auth/RoleSetup';
+import { AuthBridge } from './auth/AuthBridge';
 import { useAuthStore } from './hooks/useAuthStore';
 import { LanguageSelect } from './pages/collector/LanguageSelect';
 import { ModeSelect } from './pages/ModeSelect';
-import { CollectorLogin } from './pages/collector/CollectorLogin';
-import { CollectorRegister } from './pages/collector/CollectorRegister';
 import { CollectorHomePage } from './pages/collector/CollectorHomePage';
 import { CollectorLayout } from './components/collector/CollectorLayout';
 import { CreateLotPhoto } from './pages/collector/CreateLotPhoto';
@@ -20,10 +22,12 @@ import { Earnings } from './pages/collector/Earnings';
 import { Safety } from './pages/collector/Safety';
 import { Profile } from './pages/collector/Profile';
 import { Handover } from './pages/collector/Handover';
-import { RecyclerLogin } from './pages/recycler/RecyclerLogin';
-import { RecyclerRegister } from './pages/recycler/RecyclerRegister';
 import { RecyclerDashboard } from './pages/recycler/RecyclerDashboard';
-import { RecyclerLayout } from './components/recycler/RecyclerLayout';
+import { RecyclerRates } from './pages/recycler/RecyclerRates';
+import { RecyclerTransactions } from './pages/recycler/RecyclerTransactions';
+import { RecyclerProfile } from './pages/recycler/RecyclerProfile';
+import { RecyclerLayout } from './components/collector/RecyclerLayout';
+import { AdminPanel } from './pages/admin/AdminPanel';
 import './i18n';
 import './styles/globals.css';
 
@@ -36,25 +40,14 @@ const queryClient = new QueryClient({
   },
 });
 
-// Protected route wrapper for collector
-function CollectorProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { collector, mode } = useAuthStore();
-  
-  if (!collector || mode !== 'collector') {
-    return <Navigate to="/collector/login" replace />;
-  }
-  
-  return <>{children}</>;
-}
-
-// Protected route wrapper for recycler
-function RecyclerProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { recycler, mode } = useAuthStore();
-  
-  if (!recycler || mode !== 'recycler') {
-    return <Navigate to="/recycler/login" replace />;
-  }
-  
+// Route guard: must be signed in with Clerk AND have this role's profile loaded (done by /<role>/setup).
+function ProtectedRoute({ role, children }: { role: 'collector' | 'recycler'; children: React.ReactNode }) {
+  const { isLoaded, isSignedIn } = useAuth();
+  const hasProfile = useAuthStore((s) => (role === 'collector' ? !!s.collector : !!s.recycler));
+  const location = useLocation();
+  if (!isLoaded) return null;
+  if (!isSignedIn) return <Navigate to={`/${role}/login`} replace />;
+  if (!hasProfile) return <Navigate to={`/${role}/setup`} replace state={{ from: location.pathname }} />;
   return <>{children}</>;
 }
 
@@ -62,16 +55,19 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
+        <AuthBridge />
         <Routes>
           {/* Language Select - Entry Point */}
           <Route path="/" element={<LanguageSelect />} />
           <Route path="/mode" element={<ModeSelect />} />
           
           {/* Collector Routes */}
-          <Route path="/collector/login" element={<CollectorLogin />} />
-          <Route path="/collector/register" element={<CollectorRegister />} />
+          <Route path="/collector" element={<Navigate to="/collector/home" replace />} />
+          <Route path="/collector/login/*" element={<AuthPage role="collector" kind="login" />} />
+          <Route path="/collector/signup/*" element={<AuthPage role="collector" kind="signup" />} />
+          <Route path="/collector/setup" element={<RoleSetup role="collector" />} />
           
-          <Route element={<CollectorProtectedRoute><CollectorLayout /></CollectorProtectedRoute>}>
+          <Route element={<ProtectedRoute role="collector"><CollectorLayout /></ProtectedRoute>}>
             <Route path="/collector/home" element={<CollectorHomePage />} />
             <Route path="/collector/create-lot/photo" element={<CreateLotPhoto />} />
             <Route path="/collector/create-lot/category" element={<CreateLotCategory />} />
@@ -82,6 +78,7 @@ function App() {
             <Route path="/collector/my-lots" element={<MyLots />} />
             <Route path="/collector/my-lots/:id" element={<LotDetail />} />
             <Route path="/collector/handover/:id" element={<Handover />} />
+            <Route path="/collector/receipt/:id" element={<Handover />} />
             <Route path="/collector/price-board" element={<PriceBoard />} />
             <Route path="/collector/earnings" element={<Earnings />} />
             <Route path="/collector/safety" element={<Safety />} />
@@ -90,13 +87,19 @@ function App() {
           </Route>
           
           {/* Recycler Routes */}
-          <Route path="/recycler/login" element={<RecyclerLogin />} />
-          <Route path="/recycler/register" element={<RecyclerRegister />} />
-          <Route element={<RecyclerProtectedRoute><RecyclerLayout /></RecyclerProtectedRoute>}>
+          <Route path="/recycler/login/*" element={<AuthPage role="recycler" kind="login" />} />
+          <Route path="/recycler/signup/*" element={<AuthPage role="recycler" kind="signup" />} />
+          <Route path="/recycler/setup" element={<RoleSetup role="recycler" />} />
+          <Route element={<ProtectedRoute role="recycler"><RecyclerLayout /></ProtectedRoute>}>
             <Route path="/recycler/dashboard" element={<RecyclerDashboard />} />
-            {/* TODO: Add more recycler routes */}
+            <Route path="/recycler/rates" element={<RecyclerRates />} />
+            <Route path="/recycler/transactions" element={<RecyclerTransactions />} />
+            <Route path="/recycler/profile" element={<RecyclerProfile />} />
           </Route>
           
+          {/* Admin */}
+          <Route path="/admin" element={<AdminPanel />} />
+
           {/* Catch all */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

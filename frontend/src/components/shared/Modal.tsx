@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { forwardRef } from 'react';
 import { X } from 'lucide-react';
 
 interface ModalProps {

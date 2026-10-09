@@ -1,13 +1,14 @@
+import { Modal } from '../../components/shared/Modal';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useLotStore } from '../../hooks/useLotStore';
 import { Button } from '../../components/shared/Button';
 import { CategoryIcon } from '../../components/shared/CategoryIcon';
 import { StatusChip } from '../../components/shared/StatusChip';
-import { Modal } from '../../components/shared/Modal';
-import { CATEGORIES, type Lot } from '../../types';
+import { CATEGORIES, type Category, type Lot } from '../../types';
 import { useState } from 'react';
-import { ArrowLeft, Save, Search, QrCode, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Save, Search, QrCode, Share2, CheckCircle } from 'lucide-react';
+import { api } from '../../api';
 
 export function CreateLotEstimate() {
   const { t } = useTranslation();
@@ -16,50 +17,32 @@ export function CreateLotEstimate() {
   const [showSaveConfirm, setShowSaveConfirm] = useState(false);
   const [savedLot, setSavedLot] = useState<Lot | null>(null);
 
-  const handleSaveLot = () => {
-    // Create a new lot from draft
-    const newLot: Lot = {
-      id: `lot-${Date.now()}`,
-      photoUrl: draft.photoUrl!,
-      category: draft.category!,
-      weightKg: draft.weightKg!,
-      estimateMin: draft.estimateMin!,
-      estimateMax: draft.estimateMax!,
-      status: 'Draft',
-      gpsLat: 19.0760,
-      gpsLon: 72.8777,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-    
-    addSavedLot(newLot);
-    setSavedLot(newLot);
+  const createOnServer = async (): Promise<Lot | null> => {
+    try {
+      const r = await api<{ lot: Lot }>('POST', '/lots', {
+        photoUrl: draft.photoUrl, category: draft.category, weightKg: draft.weightKg,
+      });
+      addSavedLot(r.lot);
+      return r.lot;
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Could not save lot');
+      return null;
+    }
+  };
+
+  const handleSaveLot = async () => {
+    const lot = await createOnServer();
+    if (!lot) return;
+    setSavedLot(lot);
     setShowSaveConfirm(true);
     resetDraft();
   };
 
-  const handleFindRecycler = () => {
-    // Create a quoted lot
-    const newLot: Lot = {
-      id: `lot-${Date.now()}`,
-      photoUrl: draft.photoUrl!,
-      category: draft.category!,
-      weightKg: draft.weightKg!,
-      estimateMin: draft.estimateMin!,
-      estimateMax: draft.estimateMax!,
-      status: 'Quoted',
-      quotedRate: Math.round((draft.estimateMin! + draft.estimateMax!) / 2 / draft.weightKg!),
-      quotedTotal: Math.round((draft.estimateMin! + draft.estimateMax!) / 2),
-      gpsLat: 19.0760,
-      gpsLon: 72.8777,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-    
-    addSavedLot(newLot);
-    setSavedLot(newLot);
-    resetDraft();
-    navigate('/collector/recyclers');
+  const handleFindRecycler = async () => {
+    const lot = await createOnServer();
+    if (!lot) return;
+    setSavedLot(lot);
+    navigate('/collector/recyclers', { state: { lot } });
   };
 
   const handleBack = () => {

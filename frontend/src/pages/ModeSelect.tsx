@@ -1,22 +1,18 @@
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@clerk/clerk-react';
 import { useAuthStore } from '../hooks/useAuthStore';
 
 export function ModeSelect() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const setMode = useAuthStore((s) => s.setMode);
-  const collector = useAuthStore((s) => s.collector);
-  const recycler = useAuthStore((s) => s.recycler);
+  const { isSignedIn } = useAuth();
 
+  // Role pick: signed-in users go to /<role>/setup (it loads the account and routes on), others to Clerk sign-in.
   const handleSelect = (mode: 'collector' | 'recycler') => {
     setMode(mode);
-    // Route to the right home/dashboard if already authenticated, else to login
-    if (mode === 'collector') {
-      navigate(collector ? '/collector' : '/collector/login');
-    } else {
-      navigate(recycler ? '/recycler/dashboard' : '/recycler/login');
-    }
+    navigate(isSignedIn ? `/${mode}/setup` : `/${mode}/login`);
   };
 
   return (

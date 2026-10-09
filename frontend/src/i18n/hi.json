@@ -95,7 +95,44 @@
     "lastUpdated": "अंतिम अपडेट",
     "offline": "ऑफलाइन",
     "online": "ऑनलाइन",
-    "syncPending": "सिंक लंबित"
+    "syncPending": "सिंक लंबित",
+    "dashboard": "डैशबोर्ड",
+    "available": "उपलब्ध",
+    "notAvailable": "उपलब्ध नहीं",
+    "collectorId": "कलेक्टर आईडी",
+    "createLotDesc": "फोटो → श्रेणी → वज़न → अनुमान",
+    "earningsDesc": "कुल कमाई और बाकी",
+    "location": "स्थान",
+    "lotId": "लॉट आईडी",
+    "myLotsDesc": "अपने सभी लॉट देखें",
+    "priceBoardDesc": "आज के रेट और ट्रेंड",
+    "recycler": "रिसाइकलर",
+    "safetyDesc": "दिशानिर्देश और सुरक्षित तरीके",
+    "totalEarned": "कुल कमाई"
+  },
+  "recyclerPages": {
+    "navigation": "रीसाइक्लर नेविगेशन",
+    "ratesHelp": "स्वीकार करने वाली सामग्री चुनें और अपने दाम तय करें। ये आपके केंद्र के दाम हैं, बाजार के लाइव दाम नहीं।",
+    "acceptMaterial": "यह सामग्री स्वीकार करें",
+    "ratePerKg": "दर (₹/किलो)",
+    "saved": "सफलतापूर्वक सहेजा गया",
+    "refresh": "रीफ्रेश करें",
+    "noTransactions": "अभी कोई लेन-देन नहीं है। हैंडओवर की पुष्टि के बाद यहां दिखेगा।",
+    "material": "सामग्री",
+    "lotId": "लॉट आईडी",
+    "collector": "संग्राहक",
+    "location": "स्थान",
+    "areasHelp": "सेवा क्षेत्रों को कॉमा से अलग करें। संग्राहकों जैसे ही क्षेत्र नाम लिखें, जैसे andheri-east।",
+    "pickupEnabled": "पिकअप उपलब्ध"
+  },
+  "categories": {
+    "CRT": "CRT",
+    "LCD": "LCD",
+    "PCB": "PCB",
+    "Cables": "केबल",
+    "Batteries": "बैटरी",
+    "Motors/Magnets": "मोटर / चुंबक",
+    "Mixed Plastics": "मिश्रित प्लास्टिक"
   },
   "lotDetail": {
     "title": "लॉट विवरण",
@@ -110,7 +147,6 @@
     "location": "संग्रह स्थान",
     "estimate": "मूल्य अनुमान",
     "estimateRange": "अनुमान सीमा",
-    "quotedRate": "उद्धृत दर",
     "quotedTotal": "उद्धृत कुल",
     "finalRate": "अंतिम दर",
     "finalTotal": "अंतिम कुल",
@@ -149,6 +185,56 @@
     "instruction2": "सत्यापन के लिए हैंडओवर कोड / QR कोड दिखाएं",
     "instruction3": "सत्यापित करें कि वजन आपके रिकॉर्ड किए गए वजन से मेल खाता है",
     "instruction4": "भुगतान विधि (नकद/डिजिटल) की पुष्टि करें",
-    "instruction5": "भुगतान प्राप्त करें और हैंडओवर पूर्ण की पुष्टि करें"
+    "instruction5": "भुगतान प्राप्त करें और हैंडओवर पूर्ण की पुष्टि करें",
+    "waitingRecycler": "रिसाइकलर के हैंडओवर की पुष्टि का इंतज़ार...",
+    "regenerate": "कोड दोबारा बनाएँ"
+  },
+  "auth": {
+    "logoutConfirm": "क्या आप लॉग आउट करना चाहते हैं?"
+  },
+  "home": {
+    "chooseAction": "शुरू करने के लिए एक विकल्प चुनें",
+    "quickStats": "त्वरित आँकड़े",
+    "welcome": "वापसी पर स्वागत है"
+  },
+  "admin": {
+    "title": "एडमिन पैनल",
+    "adminKey": "एडमिन की",
+    "keyPlaceholder": "एडमिन की डालें",
+    "login": "लॉग इन",
+    "badKey": "एडमिन की गलत है",
+    "recyclers": "रीसाइक्लर",
+    "lots": "लॉट",
+    "pendingShort": "पेंडिंग",
+    "refresh": "रिफ्रेश",
+    "all": "सभी",
+    "noRecyclers": "यहाँ कोई रीसाइक्लर नहीं",
+    "noLots": "अभी कोई लॉट नहीं",
+    "authNumber": "ऑथ नंबर",
+    "approve": "मंज़ूर करें",
+    "reject": "अस्वीकार करें",
+    "lot": "लॉट",
+    "category": "श्रेणी",
+    "weight": "वज़न",
+    "collector": "कलेक्टर",
+    "recycler": "रीसाइक्लर",
+    "amount": "रकम",
+    "status": {
+      "pending": "पेंडिंग",
+      "approved": "मंज़ूर",
+      "rejected": "अस्वीकृत"
+    }
+  },
+  "clerkAuth": {
+    "collector": "कलेक्टर",
+    "recycler": "रिसाइक्लर",
+    "changeRole": "भूमिका बदलें",
+    "fillAll": "कृपया सभी फ़ील्ड भरें",
+    "retry": "फिर से कोशिश करें",
+    "otherRole": "यह अकाउंट पहले से दूसरी भूमिका के लिए रजिस्टर है। इस भूमिका के लिए दूसरे ईमेल से साइन इन करें।",
+    "collectorSetup": "अपनी कलेक्टर प्रोफ़ाइल बनाएं",
+    "recyclerSetup": "अपनी रिसाइक्लिंग सुविधा सेट करें",
+    "name": "नाम (वैकल्पिक)",
+    "continue": "आगे बढ़ें"
   }
 }

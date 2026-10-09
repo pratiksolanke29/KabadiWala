@@ -1,6 +1,7 @@
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
+import { useLogout } from '../../auth/useLogout';
 import { useAuthStore } from '../../hooks/useAuthStore';
 import { useState } from 'react';
 import { LogOut, User, ChevronDown } from 'lucide-react';
@@ -8,19 +9,21 @@ import { LogOut, User, ChevronDown } from 'lucide-react';
 export function CollectorLayout() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { collector, setCollector, language } = useAuthStore();
+  // Every other collector screen already draws its own header, so the app header is shown on Home only (avoids two stacked headers).
+  const showHeader = useLocation().pathname === '/collector/home';
+  const { collector, language } = useAuthStore();
+  const logout = useLogout();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const handleLogout = () => {
-    setCollector(null);
-    navigate('/');
+    logout();
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-amber-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
       {/* Header */}
-      <header className="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-40">
+      {showHeader && <header className="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-40">
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-orange-500 flex items-center justify-center">
@@ -68,7 +71,7 @@ export function CollectorLayout() {
             )}
           </div>
         </div>
-      </header>
+      </header>}
 
       {/* Main Content - Outlet for child routes */}
       <main className="max-w-4xl mx-auto px-4 pb-20">

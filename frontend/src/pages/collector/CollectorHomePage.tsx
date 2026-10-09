@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useLotStore } from '../../hooks/useLotStore';
@@ -5,7 +6,8 @@ import { useLotStore } from '../../hooks/useLotStore';
 export function CollectorHomePage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { savedLots } = useLotStore();
+  const { savedLots, loadLots } = useLotStore();
+  useEffect(() => { loadLots().catch(() => {}); }, []);
 
   const tiles = [
     { 

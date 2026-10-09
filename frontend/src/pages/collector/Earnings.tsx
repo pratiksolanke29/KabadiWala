@@ -1,36 +1,31 @@
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { useLotStore } from '../../hooks/useLotStore';
 import { Button } from '../../components/shared/Button';
 import { StatusChip } from '../../components/shared/StatusChip';
-import { type EarningRow } from '../../types';
-import { useState } from 'react';
-import { ArrowLeft, Eye } from 'lucide-react';
-
-const mockEarnings: EarningRow[] = [
-  { date: '2024-01-20', recyclerName: 'Green Recyclers', amount: 1550, status: 'Paid', lotId: '1' },
-  { date: '2024-01-15', recyclerName: 'Mumbai E-Waste', amount: 720, status: 'Paid', lotId: '2' },
-  { date: '2024-01-10', recyclerName: 'Eco Solutions', amount: 960, status: 'Pending', lotId: '3' },
-  { date: '2024-01-05', recyclerName: 'City Scrap', amount: 300, status: 'Paid', lotId: '4' },
-  { date: '2024-01-02', recyclerName: 'Green Recyclers', amount: 2100, status: 'Paid', lotId: '5' },
-];
+import { CategoryIcon } from '../../components/shared/CategoryIcon';
+import { CATEGORIES, type Lot, type EarningRow } from '../../types';
+import { useState, useEffect } from 'react';
+import { api } from '../../api';
+import { ArrowLeft, Calendar, Eye, Download, Clock } from 'lucide-react';
 
 export function Earnings() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { savedLots } = useLotStore();
+  const [earnings, setEarnings] = useState<EarningRow[]>([]);
+  const [totals, setTotals] = useState({ totalEarned: 0, totalPending: 0 });
+  useEffect(() => {
+    api<{ totalEarned: number; totalPending: number; rows: EarningRow[] }>('GET', '/earnings')
+      .then((d) => { setEarnings(d.rows); setTotals({ totalEarned: d.totalEarned, totalPending: d.totalPending }); })
+      .catch(() => {});
+  }, []);
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
 
   const handleBack = () => {
     navigate('/collector/home');
   };
 
-  const totalEarned = savedLots
-    .filter(l => l.status === 'Paid')
-    .reduce((sum, l) => sum + (l.finalTotal || 0), 0);
-  const totalPending = savedLots
-    .filter(l => l.status === 'HandedOver' || l.status === 'Quoted')
-    .reduce((sum, l) => sum + (l.quotedTotal || l.estimateMax || 0), 0);
+  const totalEarned = totals.totalEarned;
+  const totalPending = totals.totalPending;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-amber-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
@@ -79,7 +74,7 @@ export function Earnings() {
           </div>
 
           <div className="divide-y divide-gray-100 dark:divide-gray-700">
-            {mockEarnings.map((earning) => (
+            {earnings.map((earning) => (
               <EarningRowComponent
                 key={earning.lotId}
                 earning={earning}
@@ -90,7 +85,7 @@ export function Earnings() {
             ))}
           </div>
 
-          {mockEarnings.length === 0 && (
+          {earnings.length === 0 && (
             <div className="p-12 text-center">
               <p className="text-gray-500 dark:text-gray-400 mb-4">{t('earnings.noTransactions', { defaultValue: 'No transactions yet' })}</p>
               <Button onClick={() => navigate('/collector/create-lot/photo')}>

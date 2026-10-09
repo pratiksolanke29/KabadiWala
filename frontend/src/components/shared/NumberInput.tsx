@@ -2,7 +2,9 @@ import { useTranslation } from 'react-i18next';
 import { forwardRef, useState, useEffect } from 'react';
 import { Minus, Plus } from 'lucide-react';
 
-interface NumberInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type'> {
+interface NumberInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type' | 'value' | 'onChange'> {
+  value?: number | string | null;
+  onChange?: (value: string) => void;
   label?: string;
   error?: string;
   helperText?: string;
@@ -35,12 +37,10 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
   }, ref) => {
     const { t } = useTranslation();
     const inputId = id || props.name;
-    // Normalize incoming value to string (React allows string | number | readonly string[])
-    const normalizedValue = value === undefined || value === null ? '' : String(value);
-    const [localValue, setLocalValue] = useState(normalizedValue);
+    const [localValue, setLocalValue] = useState(String(value ?? ''));
 
     useEffect(() => {
-      if (value !== undefined && value !== null) {
+      if (value !== undefined) {
         setLocalValue(String(value));
       }
     }, [value]);

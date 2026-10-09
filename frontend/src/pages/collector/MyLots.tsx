@@ -1,16 +1,19 @@
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useLotStore } from '../../hooks/useLotStore';
+import { Button } from '../../components/shared/Button';
 import { StatusChip } from '../../components/shared/StatusChip';
 import { CategoryIcon } from '../../components/shared/CategoryIcon';
 import { CATEGORIES, type Lot } from '../../types';
-import { useState } from 'react';
-import { ArrowLeft, Calendar } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { ArrowLeft, Calendar, MapPin, Share2, Eye, QrCode } from 'lucide-react';
+import { formatDistanceToNow } from 'date-fns';
 
 export function MyLots() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { savedLots } = useLotStore();
+  const { savedLots, loadLots } = useLotStore();
+  useEffect(() => { loadLots().catch(() => {}); }, []);
   const [filter, setFilter] = useState<Lot['status'] | 'all'>('all');
 
   const filteredLots = filter === 'all' 
@@ -76,7 +79,7 @@ export function MyLots() {
       {/* Lots List */}
       <main className="max-w-2xl mx-auto px-4 pb-20">
         {filteredLots.length === 0 ? (
-          <EmptyState filter={filter} t={t} />
+          <EmptyState filter={filter} />
         ) : (
           <div className="space-y-3">
             {filteredLots.map((lot) => (
@@ -93,13 +96,15 @@ export function MyLots() {
   );
 }
 
-function EmptyState({ filter, t }: { filter: string; t: ReturnType<typeof useTranslation>['t'] }) {
+function EmptyState({ filter }: { filter: string }) {
+  const { t } = useTranslation();
+  
   const messages: Record<string, { icon: string; title: string; desc: string }> = {
-    all: { icon: '📦', title: t('myLots.noLotsAllTitle', { defaultValue: 'No lots yet' }), desc: t('myLots.noLotsAllDesc', { defaultValue: 'Create your first lot to get started' }) },
-    Draft: { icon: '📝', title: t('myLots.noDraftTitle', { defaultValue: 'No draft lots' }), desc: t('myLots.noDraftDesc', { defaultValue: 'Saved drafts will appear here' }) },
-    Quoted: { icon: '💬', title: t('myLots.noQuotedTitle', { defaultValue: 'No quoted lots' }), desc: t('myLots.noQuotedDesc', { defaultValue: 'Lots with recycler quotes appear here' }) },
-    HandedOver: { icon: '🤝', title: t('myLots.noHandedOverTitle', { defaultValue: 'No handed over lots' }), desc: t('myLots.noHandedOverDesc', { defaultValue: 'Completed handovers will show here' }) },
-    Paid: { icon: '✅', title: t('myLots.noPaidTitle', { defaultValue: 'No paid lots' }), desc: t('myLots.noPaidDesc', { defaultValue: 'Fully paid lots will appear here' }) },
+    all: { icon: '📦', title: 'No lots yet', desc: 'Create your first lot to get started' },
+    Draft: { icon: '📝', title: 'No draft lots', desc: 'Saved drafts will appear here' },
+    Quoted: { icon: '💬', title: 'No quoted lots', desc: 'Lots with recycler quotes appear here' },
+    HandedOver: { icon: '🤝', title: 'No handed over lots', desc: 'Completed handovers will show here' },
+    Paid: { icon: '✅', title: 'No paid lots', desc: 'Fully paid lots will appear here' },
   };
   
   const msg = messages[filter] || messages.all;

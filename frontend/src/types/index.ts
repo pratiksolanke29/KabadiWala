@@ -31,10 +31,9 @@ export const CATEGORIES: CategoryInfo[] = [
 
 // Collector Types
 export interface CollectorAuth {
-  phone: string;
-  pinHash: string;
-  accessToken: string;
-  refreshToken: string;
+  email?: string;
+  phone?: string;
+  name?: string;
   collectorId: string;
   area: string;
   language: Language;
@@ -103,9 +102,7 @@ export interface SafetyTopic {
 export interface RecyclerAuth {
   id: string;
   facilityName: string;
-  emailOrPhone: string;
-  accessToken: string;
-  refreshToken: string;
+  email?: string;
   authorized: boolean;
   serviceAreas: string[];
   pickupEnabled: boolean;
@@ -113,6 +110,7 @@ export interface RecyclerAuth {
 }
 
 export interface IncomingLot {
+  pickupAvailable: boolean;
   id: string;
   photoUrl: string;
   category: Category;
