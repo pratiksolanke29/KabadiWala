@@ -59,7 +59,7 @@ function App() {
       <BrowserRouter>
         <AuthBridge />
         <Routes>
-          {/* Language Select - Entry Point */}
+          {/* Language Select - Entry Point, but redirect authenticated users without profile to setup */}
           <Route path="/" element={<LanguageSelect />} />
           <Route path="/mode" element={<ModeSelect />} />
           
