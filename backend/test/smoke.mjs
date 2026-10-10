@@ -6,7 +6,8 @@ import { openDb } from '../src/db.js';
 // Clerk is mocked: a token "tok:<clerkUserId>:<email>" is accepted as that user; anything else is rejected.
 const verifyToken = async (t) => { const [p, id, email] = t.split(':'); if (p !== 'tok' || !id) throw new Error('bad token'); return { userId: id, email: email || null }; };
 const db = openDb(':memory:');
-const server = createApp(db, { verifyToken }).listen(0);
+const sentNotes = [], sentMails = [];
+const server = createApp(db, { verifyToken, notify: async (subject, message) => { sentNotes.push({ subject, message }); return true; }, sendMail: async (to, subject, text) => { sentMails.push({ to, subject, text }); return true; } }).listen(0);
 const base = `http://localhost:${server.address().port}`;
 const call = async (method, path, body, token, expect = 200) => {
   const r = await fetch(base + path, { method, headers: { 'content-type': 'application/json', ...(token ? { authorization: 'Bearer ' + token } : {}) }, body: body ? JSON.stringify(body) : undefined });
@@ -292,5 +293,31 @@ ok('profile edit + photo for collector and recycler');
   assert.equal((await call('GET', '/me', null, nt2)).role, null);
   assert(!(await adm('GET', '/admin/recyclers')).body.some((x) => x.id === nag.recyclerId));
   ok('help requests + admin status; collector self-delete cascades and can re-register');
+}
+
+// ---- AWS hooks (SNS admin alerts, SES receipts) with mocked senders ----
+{
+  const n0 = sentNotes.length, m0 = sentMails.length;
+  const ht = 'tok:user_awsc:aws@x.com';
+  const hc = await call('POST', '/me/collector', { area: 'thane', name: 'Aws C', phone: '9999999999' }, ht, 201);
+  await call('POST', '/help', { subject: 'AWS test', message: 'hello' }, ht, 201);
+  await call('POST', '/me/recycler', { facilityName: 'Notify Fac', authNumber: 'N1', contact: '1', state: 'Maharashtra', district: 'Thane', pincode: '400601', lat: 19.2, lon: 72.97 }, 'tok:user_awsr:awsr@x.com', 201);
+  await new Promise((r) => setTimeout(r, 50));
+  const notes = sentNotes.slice(n0);
+  assert(notes.some((x) => x.subject.includes('help request') && x.message.includes('AWS test')));
+  assert(notes.some((x) => x.subject.includes('waiting for approval') && x.message.includes('Notify Fac')));
+  // a paid handover emails the collector; a pending payment emails only once it is confirmed
+  const awsLot = await call('POST', '/lots', { photoUrl: 'data:image/png;base64,AAAA', category: 'PCB', weightKg: 10 }, ht, 201);
+  const am = await call('POST', `/lots/${awsLot.lotId}/find-recyclers`, null, ht);
+  const art = asRecycler(am[0].id);
+  const ach = await call('POST', `/lots/${awsLot.lotId}/choose-recycler`, { recyclerId: am[0].id }, ht);
+  await call('POST', `/lots/${awsLot.lotId}/accept`, {}, art);
+  await call('POST', `/handover/${awsLot.lotId}/confirm`, { refId: ach.handoverCode, finalWeightKg: 10, paymentMode: 'Pending' }, art);
+  await new Promise((r) => setTimeout(r, 50));
+  assert.equal(sentMails.length, m0);
+  await call('POST', `/transactions/${awsLot.lotId}/confirm-payment`, { paymentMode: 'Cash' }, art);
+  await new Promise((r) => setTimeout(r, 50));
+  assert.equal(sentMails.length, m0 + 1); assert.equal(sentMails[m0].to, 'aws@x.com'); assert(sentMails[m0].text.includes('Total: Rs'));
+  ok('SNS alerts (help request, recycler pending) and SES receipt on paid');
 }
 console.log('\nALL PASSED'); server.close();

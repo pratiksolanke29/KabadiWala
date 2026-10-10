@@ -6,6 +6,7 @@ export interface Identification {
   lotCategory?: Category | null;
   reason?: string;
   tip?: string;
+  aws?: { labels: { name: string; confidence: number }[]; category?: string };
 }
 // One short-lived in-memory request cache prevents React StrictMode double-billing.
 // Never persist photos or identification results to browser storage.

@@ -100,6 +100,28 @@ assert.equal(parseGeminiResponse(geminiResponse({ category: 'appliance', lotCate
 console.log('PASS image transport: exact bytes/MIME, prefix stripping, fresh per-photo REST body, other/null and LCD parsing');
 console.log('PASS identify providers: auto/gemini/bedrock selection, gemini request shape, parsing guards, fallbacks');
 
+
+// ---- Amazon Rekognition alongside the AI model (mocked) ----
+{
+  const { mapLabels, createLabeler } = await import('../src/aws.js');
+  assert.deepEqual(mapLabels([{ name: 'Person', confidence: 99 }, { name: 'Battery', confidence: 90 }]), { category: 'battery', lotCategory: 'Batteries' });
+  assert.deepEqual(mapLabels([{ name: 'Person', confidence: 99 }]), { category: null, lotCategory: null });
+  const rek = async () => ({ Labels: [{ Name: 'Electronics', Confidence: 98.4 }, { Name: 'Circuit Board', Confidence: 91 }] });
+  // 1) AI works: result gets aws labels attached, AI answer untouched
+  const withAi = await createIdentifier({ env: { AI_PROVIDER: 'bedrock' }, send: mock, sendLabels: rek })(photo, 'mr');
+  assert.equal(withAi.available, true); assert.equal(withAi.provider, 'bedrock'); assert.equal(withAi.aws.labels[0].name, 'Electronics'); assert.equal(withAi.aws.category, 'PCB');
+  // 2) AI fails: Rekognition gives a fallback suggestion
+  const failing = async () => { throw new Error('boom'); };
+  const fb = await createIdentifier({ env: { AI_PROVIDER: 'bedrock' }, send: failing, sendLabels: rek })(photo, 'mr');
+  assert.equal(fb.available, true); assert.equal(fb.provider, 'rekognition'); assert.equal(fb.category, 'PCB'); assert.equal(fb.lotCategory, 'PCB'); assert(fb.reason.includes('Electronics'));
+  // 3) Rekognition fails or is off: behaves exactly as before
+  const off = await createIdentifier({ env: { AI_PROVIDER: 'bedrock' }, send: failing, sendLabels: failing })(photo, 'mr');
+  assert.equal(off.available, false);
+  assert.equal(await createLabeler({ env: {} })(Buffer.from('x')), null); // not enabled -> no AWS call at all
+  const plain = await createIdentifier({ env: { AI_PROVIDER: 'bedrock' }, send: mock })(photo, 'mr'); assert.equal(plain.aws, undefined);
+  console.log('PASS rekognition: label mapping, attached to AI result, fallback when AI fails, no-op when off or failing');
+}
+
 // ---- /identify endpoint with mock Bedrock ----
 calls = 0; // reset mock counter; provider-selection tests above also used it
 const db = openDb(':memory:');

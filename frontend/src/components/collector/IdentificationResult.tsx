@@ -15,6 +15,7 @@ export function IdentificationResult({ result, loading, onConfirm }: {
       <p className="font-medium">{t('identify.suggests')}: {t(`identify.categories.${result.category}`, { defaultValue: result.category })}</p>
       <p className="text-sm mt-2">{result.reason}</p>
       <p className="text-sm mt-2"><strong>{t('identify.safety')}:</strong> {result.tip}</p>
+      {result.aws?.labels?.length ? <p className="text-sm mt-2"><strong>{t('identify.awsLabels', { defaultValue: 'Amazon Rekognition' })}:</strong> {result.aws.labels.map((l) => `${l.name} (${l.confidence}%)`).join(', ')}</p> : null}
       <p className="text-sm mt-3">{t('identify.review')}</p>
       {match ? <div className="mt-3"><Button onClick={() => onConfirm(match.id)}>{t('identify.useCategory', { category: match.label[lang] })}</Button></div>
         : <p className="text-sm mt-3">{t('identify.noMatch')}</p>}

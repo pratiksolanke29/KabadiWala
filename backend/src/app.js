@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import { createIdentifier } from './identify.js';
+import { createNotifier, createMailer } from './aws.js';
 import { verifyToken as clerkVerifyToken, createClerkClient } from '@clerk/backend';
 import QRCode from 'qrcode';
 import { randomBytes } from 'node:crypto';
@@ -54,7 +55,7 @@ function clerkVerifier() {
   };
 }
 
-export function createApp(db = openDb(), { verifyToken = clerkVerifier(), identifyPhoto = createIdentifier() } = {}) {
+export function createApp(db = openDb(), { verifyToken = clerkVerifier(), identifyPhoto = createIdentifier(), notify = createNotifier(), sendMail = createMailer() } = {}) {
   const app = express();
   app.use(cors());
   app.use(express.json({ limit: '10mb' }));
@@ -193,6 +194,7 @@ export function createApp(db = openDb(), { verifyToken = clerkVerifier(), identi
     const id = uuid();
     db.prepare('INSERT INTO help_requests (id, user_role, user_id, name, contact, subject, message, status, created_at) VALUES (?,?,?,?,?,?,?,?,?)')
       .run(id, u.role, u.profile_id, p?.name ?? null, [p?.phone, p?.email].filter(Boolean).join(' / ') || null, subject, message, 'open', iso());
+    void notify('Kabadiwala: new help request', `${u.role} ${p?.name ?? ''} wrote: ${subject}\n\n${message}`);
     res.status(201).json({ success: true, id });
   }));
 
@@ -232,6 +234,7 @@ export function createApp(db = openDb(), { verifyToken = clerkVerifier(), identi
     const ins = db.prepare('INSERT INTO recycler_rates VALUES (?,?,?,?)');
     for (const m of CATEGORIES) ins.run(id, m, 1, marketRow(m).rate);
     db.prepare('INSERT INTO users VALUES (?,?,?,?,?)').run(cu.userId, 'recycler', id, cu.email ?? null, iso());
+    if (!autoApprove()) void notify('Kabadiwala: recycler waiting for approval', `${b.facilityName} (${addr.district ?? b.city ?? 'unknown location'}), contact ${b.contact}. Approve or reject it in the admin panel.`);
     res.status(201).json({ email: cu.email ?? null, ...meOut(db.prepare('SELECT * FROM users WHERE clerk_id = ?').get(cu.userId)) });
   }));
 
@@ -599,6 +602,21 @@ export function createApp(db = openDb(), { verifyToken = clerkVerifier(), identi
     res.json({ success: true });
   }));
 
+  // Plain text receipt to the collector's email once a lot is paid (Amazon SES; no-op when SES is not configured).
+  const sendReceipt = async (lotId) => {
+    try {
+      const l = db.prepare(`SELECT l.*, c.email AS c_email, c.name AS c_name, r.facility_name AS r_name FROM lots l JOIN collectors c ON c.id = l.collector_id LEFT JOIN recyclers r ON r.id = l.recycler_id WHERE l.id = ?`).get(lotId);
+      if (!l?.c_email) return;
+      await sendMail(l.c_email, `Kabadiwala receipt: ${l.category}, Rs ${l.final_total}`, [
+        `Hello ${l.c_name || ''}`.trim() + ',', '',
+        'Your e-waste lot has been handed over and paid.', '',
+        `Lot: ${l.id.slice(-8).toUpperCase()}`, `Material: ${l.category}`, `Weight: ${l.final_weight_kg} kg`,
+        `Rate: Rs ${l.final_rate}/kg`, `Total: Rs ${l.final_total}`, `Payment: ${l.payment_mode}`,
+        `Recycler: ${l.r_name ?? '-'}`, `Date: ${l.handed_over_at}`, '', 'Thank you for recycling with Kabadiwala.',
+      ].join('\n'));
+    } catch (e) { console.error('RECEIPT MAIL FAILED:', e?.message ?? e); }
+  };
+
   app.post('/handover/:lotId/confirm', R, wrap((req, res) => {
     const l = recLot(req.params.lotId, req.userId);
     const { refId, paymentMode } = req.body ?? {};
@@ -614,6 +632,7 @@ export function createApp(db = openDb(), { verifyToken = clerkVerifier(), identi
     const paid = paymentMode !== 'Pending';
     db.prepare(`UPDATE lots SET status=?, recycler_status='HandedOver', final_weight_kg=?, final_rate=?, final_total=?, payment_mode=?, code_used=1,
       handed_over_at=?, paid_at=?, updated_at=? WHERE id=?`).run(paid ? 'Paid' : 'HandedOver', finalWeightKg, finalRate, total, paymentMode, now, paid ? now : null, now, l.id);
+    if (paid) void sendReceipt(l.id);
     res.json({ success: true, receiptUrl: `/transactions/${l.id}`, finalTotal: total });
   }));
 
@@ -646,6 +665,7 @@ export function createApp(db = openDb(), { verifyToken = clerkVerifier(), identi
     if (l.status !== 'HandedOver' || l.payment_mode !== 'Pending') throw new HttpError(409, 'No pending payment on this lot');
     const now = iso();
     db.prepare(`UPDATE lots SET status='Paid', payment_mode=?, paid_at=?, updated_at=? WHERE id=?`).run(mode, now, now, l.id);
+    void sendReceipt(l.id);
     res.json({ success: true, paymentStatus: 'Paid', paymentMode: mode });
   }));
   app.get('/transactions/:lotId', R, wrap((req, res) => {
