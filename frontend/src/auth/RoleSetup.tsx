@@ -20,7 +20,7 @@ export function RoleSetup({ role }: { role: Role }) {
   const { isLoaded, isSignedIn } = useAuth();
   const { signOut } = useClerk();
   const { setCollector, setRecycler, language } = useAuthStore();
-  const [state, setState] = useState<'loading' | 'form' | 'other' | 'error'>('loading');
+  const [state, setState] = useState<'loading' | 'form' | 'other' | 'error' | 'notRegistered'>('loading');
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
   const [f, setF] = useState({ name: '', phone: '', facilityName: '', address: '', authNumber: '', contact: '' });
@@ -40,7 +40,8 @@ export function RoleSetup({ role }: { role: Role }) {
     api('GET', '/me').then((me) => {
       if (me.role === role) apply(me);
       else if (me.role) setState('other');
-      else setState('form');
+      // Signed in through the Login page but never registered: ask them to sign up first instead of showing the form.
+      else setState(new URLSearchParams(location.search).get('src') === 'login' ? 'notRegistered' : 'form');
     }).catch((e) => { setError(e.message); setState('error'); });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoaded, isSignedIn]);
@@ -73,6 +74,11 @@ export function RoleSetup({ role }: { role: Role }) {
     <p className="text-red-600 text-sm">{error}</p>
     <Button fullWidth onClick={() => window.location.reload()}>{t('clerkAuth.retry', { defaultValue: 'Try again' })}</Button>
     <Button fullWidth variant="outline" onClick={() => signOut({ redirectUrl: '/' })}>{t('common.logout', { defaultValue: 'Logout' })}</Button>
+  </>);
+  if (state === 'notRegistered') return shell(<>
+    <h2 className="text-xl font-bold text-gray-900 dark:text-white">{t('login.signUpFirst', { defaultValue: 'Please sign up first' })}</h2>
+    <p className="text-gray-800 dark:text-gray-200">{t('login.signUpFirstDesc', { defaultValue: 'This Google account is not registered yet. Sign up to continue.' })}</p>
+    <Button fullWidth onClick={() => signOut({ redirectUrl: `/${role}/signup` })}>{t('login.goSignUp', { defaultValue: 'Sign up' })}</Button>
   </>);
   if (state === 'other') return shell(<>
     <p className="text-gray-800 dark:text-gray-200">

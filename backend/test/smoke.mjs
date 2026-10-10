@@ -143,12 +143,11 @@ assert.equal(del2.body.mode, 'deactivated');
 assert(!(await adm('GET', '/admin/recyclers')).body.some((x) => x.id === best.id)); // gone from admin list right away
 const m4 = await call('POST', `/lots/${l2}/find-recyclers`, null, ct); assert(!m4.some((m) => m.id === best.id));
 const rcpt2 = await call('GET', `/receipts/${lotId}`, null, ct); assert.equal(rcpt2.status, 'Paid'); ok('recycler with lots deactivated, not deleted; receipts intact, hidden from matching');
-// admin delete: collector with lots -> blocked; collector without lots -> hard delete
-const delC = await adm('DELETE', `/admin/collectors/${reg.collectorId}`); assert.equal(delC.status, 409);
+// admin delete: collector with lots -> lots and ratings are deleted too (see end of file); collector without lots -> hard delete
 await call('POST', '/me/collector', { area: 'thane', name: 'Temp C' }, 'tok:user_c2:c2@x.com', 201);
 const tempId = (await adm('GET', '/admin/collectors')).body.find((x) => x.name === 'Temp C').id;
 assert.equal((await adm('DELETE', `/admin/collectors/${tempId}`)).body.mode, 'deleted');
-assert(!(await adm('GET', '/admin/collectors')).body.some((x) => x.id === tempId)); ok('collector delete: blocked with lots, clean delete without lots');
+assert(!(await adm('GET', '/admin/collectors')).body.some((x) => x.id === tempId)); ok('collector delete without lots');
 // pending payment -> recycler confirms later
 {
   const pl = await call('POST', '/lots', { photoUrl: 'data:image/png;base64,AAAA', category: 'PCB', weightKg: 10 }, ct, 201);
@@ -181,4 +180,117 @@ assert(nm && nm.distanceKm > 800 && nm.distanceKm < 900, 'Delhi-Nagpur straight 
 for (let i = 1; i < dm.length; i++) assert(dm[i - 1].distanceKm <= dm[i].distanceKm);
 await call('POST', `/lots/${big.lotId}/choose-recycler`, { recyclerId: nag.recyclerId }, dc);
 ok('Delhi collector: 5 kg lot hides Nagpur (>100 km), 600 kg lot shows it at ' + nm.distanceKm + ' km, nearest-first');
+
+// ---- round 5: lot delete, rate lock, profile + photo, public ratings ----
+const nt = 'tok:user_nag:n@x.com';
+const rl = await call('POST', `/lots/${big.lotId}/choose-recycler`, { recyclerId: nag.recyclerId }, dc); // same recycler again: keeps the snapshot
+const lockedRate = rl.quotedRate;
+await call('PATCH', '/rates', [{ material: 'PCB', accept: true, ratePerKg: lockedRate + 50 }], nt);
+const rechose = await call('POST', `/lots/${big.lotId}/choose-recycler`, { recyclerId: nag.recyclerId }, dc);
+assert.equal(rechose.quotedRate, lockedRate); assert.equal(rechose.handoverCode, rl.handoverCode);
+const bl = await call('GET', `/lots/${big.lotId}`, null, dc);
+assert.equal(bl.quotedRate, lockedRate); assert.equal(bl.quotedTotal, Math.round(lockedRate * 600));
+const incR = (await call('GET', '/dashboard', null, nt)).incoming.find((x) => x.id === big.lotId);
+assert.equal(incR.quotedRate, lockedRate); assert.equal(incR.quotedTotal, Math.round(lockedRate * 600));
+const newLot = await call('POST', '/lots', { photoUrl: 'data:image/png;base64,AAAA', category: 'PCB', weightKg: 600 }, dc, 201);
+assert.equal((await call('POST', `/lots/${newLot.lotId}/find-recyclers`, null, dc)).find((m) => m.id === nag.recyclerId).ratePerKg, lockedRate + 50);
+ok('rate lock: later rate change does not touch a quoted lot, new lots see the new rate');
+// delete
+await call('DELETE', `/lots/${newLot.lotId}`, null, ct, 404); // not his
+await call('DELETE', `/lots/${newLot.lotId}`, null, dc);
+await call('GET', `/lots/${newLot.lotId}`, null, dc, 404);
+await call('POST', `/lots/${big.lotId}/rate`, { stars: 5 }, dc, 409); // not completed yet
+await call('POST', `/handover/${big.lotId}/confirm`, { refId: rl.handoverCode, finalWeightKg: 600, paymentMode: 'Cash' }, nt, 409); // not accepted yet
+await call('POST', `/lots/${big.lotId}/accept`, null, nt);
+await call('POST', `/handover/${big.lotId}/confirm`, { refId: rl.handoverCode, finalWeightKg: 600, paymentMode: 'Cash' }, nt);
+await call('DELETE', `/lots/${big.lotId}`, null, dc, 409);
+assert((await call('GET', '/lots', null, dc)).some((x) => x.id === big.lotId));
+ok('lot delete: own unsold lot only, blocked after handover');
+// ratings
+await call('POST', `/lots/${big.lotId}/rate`, { stars: 6 }, dc, 400);
+await call('POST', `/lots/${big.lotId}/rate`, { stars: 4, comment: 'Quick and fair' }, dc, 201);
+await call('POST', `/lots/${big.lotId}/rate`, { stars: 5 }, dc, 409);
+await call('POST', `/transactions/${big.lotId}/rate`, { stars: 5, comment: 'On time' }, nt, 201);
+await call('POST', `/transactions/${big.lotId}/rate`, { stars: 5 }, nt, 409);
+await call('POST', `/transactions/${big.lotId}/rate`, { stars: 5 }, 'tok:user_r10:y@x.com', 403);
+assert.equal((await call('GET', `/lots/${big.lotId}`, null, dc)).myRating.stars, 4);
+const rprof = await call('GET', '/recycler/profile', null, nt);
+assert.equal(rprof.rating.count, 1); assert.equal(rprof.rating.average, 4); assert.equal(rprof.reviews[0].comment, 'Quick and fair');
+const cprof = await call('GET', '/profile', null, dc);
+assert.equal(cprof.rating.average, 5); assert(cprof.joinedAt);
+assert.equal((await call('GET', `/ratings/recycler/${nag.recyclerId}`, null, dc)).count, 1); // public to any signed-in user
+assert.equal((await call('GET', '/dashboard', null, nt)).completed.length, 1);
+assert.equal((await call('GET', `/transactions/${big.lotId}`, null, nt)).myRating.stars, 5);
+ok('ratings: both sides once after completion, public on profiles');
+// profile edit + photo
+const picd = 'data:image/png;base64,iVBORw0KGgo=';
+await call('PATCH', '/profile', { photoUrl: 'http://evil/x.png' }, dc, 400);
+await call('PATCH', '/profile', { name: ' ' }, dc, 400);
+const upd = await call('PATCH', '/profile', { name: 'Delhi Renamed', phone: '9876543210', photoUrl: picd }, dc);
+assert.equal(upd.name, 'Delhi Renamed'); assert.equal(upd.photoUrl, picd);
+assert.equal((await call('PATCH', '/profile', { area: 'Delhi' }, dc)).photoUrl, picd); // untouched fields stay
+const rprof2 = await call('PATCH', '/recycler/profile', { facilityName: 'Nagpur Recyclers 2', location: 'New address', photoUrl: picd }, nt);
+assert.equal(rprof2.facilityName, 'Nagpur Recyclers 2'); assert.equal(rprof2.photoUrl, picd); assert.equal(rprof2.location, 'New address');
+assert.equal((await call('PATCH', '/profile', { photoUrl: '' }, dc)).photoUrl, undefined);
+ok('profile edit + photo for collector and recycler');
+
+// admin deletes a collector that has lots + ratings: everything goes with them
+{
+  const xt = 'tok:user_xdel:x@x.com';
+  const xc = await call('POST', '/me/collector', { area: 'thane', name: 'X Del' }, xt, 201);
+  const xl = await call('POST', '/lots', { photoUrl: 'data:image/png;base64,AAAA', category: 'PCB', weightKg: 600 }, xt, 201);
+  await call('POST', '/lots', { photoUrl: 'data:image/png;base64,AAAA', category: 'PCB', weightKg: 5 }, xt, 201);
+  const xm = await call('POST', `/lots/${xl.lotId}/find-recyclers`, null, xt);
+  const xr = xm[0].id, xrt = asRecycler(xr);
+  const xch = await call('POST', `/lots/${xl.lotId}/choose-recycler`, { recyclerId: xr }, xt);
+  await call('POST', `/lots/${xl.lotId}/accept`, {}, xrt);
+  await call('POST', `/handover/${xl.lotId}/confirm`, { refId: xch.handoverCode, finalWeightKg: 600, paymentMode: 'Cash' }, xrt);
+  await call('POST', `/lots/${xl.lotId}/rate`, { stars: 3 }, xt, 201);
+  await call('POST', `/transactions/${xl.lotId}/rate`, { stars: 2 }, xrt, 201);
+  const dx = await adm('DELETE', `/admin/collectors/${xc.collectorId}`);
+  assert.equal(dx.status, 200); assert.equal(dx.body.lotsDeleted, 2);
+  assert.equal(db.prepare('SELECT COUNT(*) n FROM lots WHERE collector_id = ?').get(xc.collectorId).n, 0);
+  assert.equal(db.prepare('SELECT COUNT(*) n FROM ratings WHERE lot_id = ?').get(xl.lotId).n, 0);
+  assert.equal((await call('GET', '/recycler/profile', null, xrt)).rating.count, 0);
+  assert.equal((await call('GET', '/me', null, xt)).role, null);
+  assert(!(await adm('GET', '/admin/collectors')).body.some((x) => x.id === xc.collectorId));
+  ok('admin deletes collector with lots: lots + ratings removed too');
+}
+
+// ---- self-service delete + help ----
+{
+  const AKH = { 'x-admin-key': AK['x-admin-key'], 'content-type': 'application/json' };
+  const st = 'tok:user_selfdel:s@x.com';
+  const sc = await call('POST', '/me/collector', { area: 'thane', name: 'Self Del' }, st, 201);
+  const sl = await call('POST', '/lots', { photoUrl: 'data:image/png;base64,AAAA', category: 'PCB', weightKg: 5 }, st, 201);
+  await call('POST', '/help', { subject: '', message: 'x' }, st, 400);
+  await call('POST', '/help', { subject: 'Cannot upload', message: 'Photo upload fails' }, st, 201);
+  await call('POST', '/help', { subject: 'x', message: 'y' }, 'tok:user_norole:n@x.com', 403);
+  await call('POST', '/help', { subject: 'x', message: 'y' }, null, 401);
+  const hl = (await adm('GET', '/admin/help')).body;
+  assert.equal(hl.length, 1); assert.equal(hl[0].role, 'collector'); assert.equal(hl[0].name, 'Self Del'); assert.equal(hl[0].status, 'open');
+  assert.equal((await adm('GET', '/admin/help', {})).status, 403);
+  const hr = await fetch(`${base}/admin/help/${hl[0].id}/status`, { method: 'POST', headers: AKH, body: JSON.stringify({ status: 'resolved' }) });
+  assert.equal(hr.status, 200);
+  assert.equal((await adm('GET', '/admin/help')).body[0].status, 'resolved');
+  assert.equal((await fetch(`${base}/admin/help/${hl[0].id}/status`, { method: 'POST', headers: AKH, body: JSON.stringify({ status: 'bad' }) })).status, 400);
+  const dme = await call('DELETE', '/me', null, st);
+  assert.equal(dme.lotsDeleted, 1);
+  assert.equal(db.prepare('SELECT COUNT(*) n FROM lots WHERE collector_id = ?').get(sc.collectorId).n, 0);
+  assert.equal((await call('GET', '/me', null, st)).role, null);
+  await call('DELETE', '/me', null, st, 404);
+  await call('POST', '/me/collector', { area: 'thane', name: 'Self Del 2' }, st, 201); // can sign up fresh
+  assert.equal((await adm('GET', '/admin/help')).body.length, 0); // their help requests go with the account
+  // recycler self-delete: with lots -> deactivated and login mapping removed; without lots -> hard delete
+  const rtk = 'tok:user_rself:rs@x.com';
+  const rs = await call('POST', '/me/recycler', { facilityName: 'Self Rec', authNumber: 'A', contact: '1', state: 'Maharashtra', district: 'Nagpur', pincode: '440016', lat: 21.15, lon: 78.95 }, rtk, 201);
+  assert.equal((await call('DELETE', '/me', null, rtk)).mode, 'deleted');
+  assert.equal(db.prepare('SELECT COUNT(*) n FROM recyclers WHERE id = ?').get(rs.recyclerId).n, 0);
+  assert.equal((await call('GET', '/me', null, rtk)).role, null);
+  const nt2 = 'tok:user_nag:n@x.com';
+  assert.equal((await call('DELETE', '/me', null, nt2)).mode, 'deactivated'); // Nagpur recycler has completed lots
+  assert.equal((await call('GET', '/me', null, nt2)).role, null);
+  assert(!(await adm('GET', '/admin/recyclers')).body.some((x) => x.id === nag.recyclerId));
+  ok('help requests + admin status; collector self-delete cascades and can re-register');
+}
 console.log('\nALL PASSED'); server.close();

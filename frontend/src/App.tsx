@@ -21,6 +21,8 @@ import { PriceBoard } from './pages/collector/PriceBoard';
 import { Earnings } from './pages/collector/Earnings';
 import { Safety } from './pages/collector/Safety';
 import { Profile } from './pages/collector/Profile';
+import { Help } from './pages/collector/Help';
+import { RecyclerHelp } from './pages/recycler/RecyclerHelp';
 import { Handover } from './pages/collector/Handover';
 import { RecyclerDashboard } from './pages/recycler/RecyclerDashboard';
 import { RecyclerRates } from './pages/recycler/RecyclerRates';
@@ -83,6 +85,7 @@ function App() {
             <Route path="/collector/earnings" element={<Earnings />} />
             <Route path="/collector/safety" element={<Safety />} />
             <Route path="/collector/profile" element={<Profile />} />
+            <Route path="/collector/help" element={<Help />} />
             {/* TODO: Add more collector routes */}
           </Route>
           
@@ -95,6 +98,7 @@ function App() {
             <Route path="/recycler/rates" element={<RecyclerRates />} />
             <Route path="/recycler/transactions" element={<RecyclerTransactions />} />
             <Route path="/recycler/profile" element={<RecyclerProfile />} />
+            <Route path="/recycler/help" element={<RecyclerHelp />} />
           </Route>
           
           {/* Admin */}

@@ -11,6 +11,7 @@ import { useState, useEffect } from 'react';
 import { api } from '../../api';
 import { formatKm } from '../../utils/distance';
 import { QrScanner } from '../../components/shared/QrScanner';
+import { RatingBadge } from '../../components/shared/Ratings';
 import { LogOut, ChevronDown, RefreshCw, Truck, CheckCircle, XCircle, Shield, History, DollarSign, Settings, Recycle, LogOut as LogOutIcon, Building, AlertTriangle, BarChart2, User, MapPin } from 'lucide-react';
 
 export function RecyclerDashboard() {
@@ -369,7 +370,7 @@ function IncomingLotRow({ lot, onAccept, onDecline, onView }: { lot: IncomingLot
             )}
           </div>
           <p className="text-xs text-[var(--color-text-subtle)]">
-            {t('dashboard.collector', { defaultValue: 'Collector' })}: {lot.collectorName} • {t('dashboard.total', { defaultValue: 'Total' })}: <span className="tabular-nums font-mono">₹{lot.quotedTotal.toLocaleString()}</span>
+            {t('dashboard.collector', { defaultValue: 'Collector' })}: {lot.collectorName} (<RatingBadge rating={lot.collectorRating} />) • {t('dashboard.total', { defaultValue: 'Total' })}: <span className="tabular-nums font-mono">₹{lot.quotedTotal.toLocaleString()}</span>
           </p>
         </div>
         <div className="flex flex-col items-end gap-2">

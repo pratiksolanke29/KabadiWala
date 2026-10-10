@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../api';
+import { RateDeal } from '../../components/shared/Ratings';
 import type { TransactionRow, CompletedLot } from '../../types';
 import { RecyclerShell, RequestState, cardClass } from './RecyclerShell';
 import { Button } from '../../components/shared/Button';
@@ -108,6 +109,9 @@ export function RecyclerTransactions() {
               </div>
             ))}
           </dl>
+          <div className="mt-6">
+            <RateDeal key={detail.id} path={`/transactions/${detail.id}/rate`} existing={detail.myRating} whom={detail.collectorName} />
+          </div>
         </section>
       )}
     </RecyclerShell>

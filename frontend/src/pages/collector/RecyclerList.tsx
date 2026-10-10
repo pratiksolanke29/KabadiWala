@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { RatingBadge } from '../../components/shared/Ratings';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useLotStore } from '../../hooks/useLotStore';
 import { Button } from '../../components/shared/Button';
@@ -142,6 +143,7 @@ function RecyclerCard({ recycler, onSelect }: { recycler: RecyclerMatch; onSelec
             <span className="flex items-center gap-1 font-semibold text-[var(--color-copper)] tabular-nums font-mono">
               ₹{recycler.ratePerKg}/kg
             </span>
+            <RatingBadge rating={recycler.rating} />
             {recycler.pickupAvailable && (
               <span className="flex items-center gap-1 text-[var(--color-circuit)]">
                 <Truck className="w-3.5 h-3.5" />

@@ -6,6 +6,7 @@ import { Button } from '../../components/shared/Button';
 import { CategoryIcon } from '../../components/shared/CategoryIcon';
 import { StatusChip } from '../../components/shared/StatusChip';
 import { Modal } from '../../components/shared/Modal';
+import { RateDeal } from '../../components/shared/Ratings';
 import { CATEGORIES, type Lot } from '../../types';
 import { useEffect, useState } from 'react';
 import { ArrowLeft, QrCode, Share2, CheckCircle, Truck, Shield, AlertTriangle } from 'lucide-react';
@@ -379,6 +380,8 @@ function ReceiptView({ lot, categoryInfo, onClose }: { lot: Lot; categoryInfo: a
           )}
         </div>
       </div>
+
+      <RateDeal path={`/lots/${lot.id}/rate`} existing={lot.myRating} whom={lot.recyclerName || t('common.recycler', { defaultValue: 'Recycler' })} />
 
       <div className="flex gap-3">
         <Button variant="outline" fullWidth onClick={() => { /* Share receipt */ }} leftIcon={<Share2 className="w-4 h-4" />}>{t('common.share', { defaultValue: 'Share' })}</Button>

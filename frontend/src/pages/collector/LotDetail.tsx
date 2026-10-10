@@ -6,6 +6,7 @@ import { CategoryIcon } from '../../components/shared/CategoryIcon';
 import { StatusChip } from '../../components/shared/StatusChip';
 import { CATEGORIES, type Lot } from '../../types';
 import { useState, useEffect } from 'react';
+import { api } from '../../api';
 import { ArrowLeft, Calendar, MapPin, Share2, Eye, QrCode, Download } from 'lucide-react';
 
 export function LotDetail() {
@@ -31,6 +32,17 @@ export function LotDetail() {
       </div>
     );
   }
+
+  const handleDelete = async () => {
+    if (!window.confirm(t('lotDelete.confirm', { defaultValue: 'Delete this lot? This cannot be undone.' }))) return;
+    try {
+      await api('DELETE', `/lots/${lot.id}`);
+      await loadLots().catch(() => {});
+      navigate('/collector/my-lots');
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Could not delete lot');
+    }
+  };
 
   const handleBack = () => {
     navigate('/collector/my-lots');
@@ -206,6 +218,11 @@ export function LotDetail() {
           {/* Action Button */}
           <div className="space-y-3">
             {getActionButton()}
+            {(lot.status === 'Draft' || lot.status === 'Quoted') && (
+              <Button variant="danger" fullWidth onClick={handleDelete}>
+                {t('lotDelete.button', { defaultValue: 'Delete Lot' })}
+              </Button>
+            )}
             {lot.status === 'Paid' && (
               <Button variant="ghost" fullWidth onClick={() => navigate('/collector/earnings')}>
                 {t('lotDetail.viewEarnings', { defaultValue: 'View in Earnings' })}

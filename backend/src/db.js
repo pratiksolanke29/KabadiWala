@@ -63,6 +63,18 @@ export function openDb(file = process.env.DB_FILE || 'kabadiwala.db') {
   try { db.exec('ALTER TABLE collectors ADD COLUMN lon REAL'); } catch { /* column exists */ }
   // Admin "Delete" on a recycler that has lots: hide it everywhere but keep the row so lot history/receipts stay valid.
   try { db.exec('ALTER TABLE recyclers ADD COLUMN deleted INTEGER NOT NULL DEFAULT 0'); } catch { /* column exists */ }
+  for (const t of ['collectors', 'recyclers']) {
+    try { db.exec(`ALTER TABLE ${t} ADD COLUMN photo_url TEXT`); } catch { /* column exists */ }
+  }
+  db.exec(`CREATE TABLE IF NOT EXISTS help_requests (
+    id TEXT PRIMARY KEY, user_role TEXT NOT NULL, user_id TEXT NOT NULL, name TEXT, contact TEXT,
+    subject TEXT NOT NULL, message TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'open' CHECK (status IN ('open','resolved')),
+    created_at TEXT NOT NULL, resolved_at TEXT);`);
+  db.exec(`CREATE TABLE IF NOT EXISTS ratings (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, lot_id TEXT NOT NULL, from_role TEXT NOT NULL CHECK (from_role IN ('collector','recycler')),
+    from_id TEXT NOT NULL, to_role TEXT NOT NULL, to_id TEXT NOT NULL, stars INTEGER NOT NULL CHECK (stars BETWEEN 1 AND 5),
+    comment TEXT, created_at TEXT NOT NULL, UNIQUE (lot_id, from_role));
+  CREATE INDEX IF NOT EXISTS idx_ratings_to ON ratings (to_role, to_id);`);
   seed(db);
   return db;
 }

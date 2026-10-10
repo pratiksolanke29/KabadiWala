@@ -3,8 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { useLogout } from '../../auth/useLogout';
 import { useAuthStore } from '../../hooks/useAuthStore';
 import { Button } from '../../components/shared/Button';
-import { Select } from '../../components/shared/Input';
-import { useState } from 'react';
+import { Input, Select } from '../../components/shared/Input';
+import { RatingBadge, ReviewList, type RatingSummary, type ReviewItem } from '../../components/shared/Ratings';
+import { resizeImage, joinedLabel } from '../../utils/imageResize';
+import { api } from '../../api';
+import { useDeleteAccount } from '../../auth/useDeleteAccount';
+import { useEffect, useRef, useState } from 'react';
 import { ArrowLeft, User, Globe, MapPin, Bell, Shield, LogOut, Save } from 'lucide-react';
 
 const MOCK_AREAS = [
@@ -31,11 +35,34 @@ export function Profile() {
   const navigate = useNavigate();
   const { collector, updateCollector } = useAuthStore();
   const logout = useLogout();
+  const deleteAccount = useDeleteAccount('collector');
   const [area, setArea] = useState(collector?.area || '');
   const [language, setLanguageState] = useState(collector?.language || 'mr');
   const [notifications, setNotifications] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [name, setName] = useState(collector?.name || '');
+  const [phone, setPhone] = useState(collector?.phone || '');
+  const [photoUrl, setPhotoUrl] = useState('');
+  const [joinedAt, setJoinedAt] = useState('');
+  const [rating, setRating] = useState<RatingSummary>({ count: 0, average: 0 });
+  const [reviews, setReviews] = useState<ReviewItem[]>([]);
+  const [saveError, setSaveError] = useState('');
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    api<any>('GET', '/profile').then((p) => {
+      setName(p.name || ''); setPhone(p.phone || ''); setPhotoUrl(p.photoUrl || '');
+      setJoinedAt(p.joinedAt || ''); setRating(p.rating); setReviews(p.reviews || []);
+    }).catch(() => {});
+  }, []);
+
+  const handlePhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    e.target.value = '';
+    if (!f) return;
+    try { setPhotoUrl(await resizeImage(f)); } catch (err) { setSaveError(err instanceof Error ? err.message : 'Error'); }
+  };
 
   const handleBack = () => {
     navigate('/collector/home');
@@ -43,11 +70,17 @@ export function Profile() {
 
   const handleSave = async () => {
     setSaving(true);
-    await new Promise(r => setTimeout(r, 500));
-    updateCollector({ area, language });
-    setSaving(false);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+    setSaveError('');
+    try {
+      const p = await api<any>('PATCH', '/profile', { area, language, name: name.trim() || undefined, phone: phone.trim() || undefined, photoUrl });
+      updateCollector({ area, language, name: p.name, phone: p.phone });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : 'Error');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleLogout = () => {
@@ -79,16 +112,20 @@ export function Profile() {
           {/* Profile Header */}
           <div className="bg-[var(--color-surface-elevated)] rounded-2xl shadow-xl p-6 border border-[var(--color-border)]">
             <div className="flex items-center gap-4 mb-6">
-              <div className="w-20 h-20 rounded-2xl bg-[var(--color-copper-light)]/10 flex items-center justify-center">
-                <User className="w-10 h-10 text-[var(--color-copper)]" />
-              </div>
+              <button type="button" onClick={() => fileRef.current?.click()} title={t('profileEdit.changePhoto', { defaultValue: 'Change photo' })}
+                className="w-20 h-20 rounded-2xl bg-[var(--color-copper-light)]/10 flex items-center justify-center overflow-hidden focus-ring-collector">
+                {photoUrl ? <img src={photoUrl} alt="" className="w-full h-full object-cover" /> : <User className="w-10 h-10 text-[var(--color-copper)]" />}
+              </button>
+              <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handlePhoto} />
               <div>
                 <h2 className="text-xl font-bold text-[var(--color-text)] font-display">
-                  {t('profile.collectorId', { defaultValue: 'Collector ID' })}: {collector?.collectorId}
+                  {name || collector?.name || collector?.email}
                 </h2>
-                <p className="text-[var(--color-text-muted)]">
-                  {t('profile.memberSince', { defaultValue: 'Member since January 2024' })}
-                </p>
+                {joinedAt && (
+                  <p className="text-[var(--color-text-muted)]">
+                    {t('profileEdit.activeSince', { defaultValue: 'Active since {{date}}', date: joinedLabel(joinedAt) })}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -96,8 +133,12 @@ export function Profile() {
             <div className="grid grid-cols-3 gap-4">
               <StatItem label={t('profile.totalLots', { defaultValue: 'Total Lots' })} value="12" icon={<svg className="w-6 h-6 text-[var(--color-copper)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" /><polyline points="3.27 6.96 12 12.01 20.73 6.96" /><line x1="12" y1="22.08" x2="12" y2="12" /></svg>} />
               <StatItem label={t('profile.totalEarned', { defaultValue: 'Total Earned' })} value="₹45,230" icon={<svg className="w-6 h-6 text-[var(--color-verdigris)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></svg>} />
-              <StatItem label={t('profile.rating', { defaultValue: 'Rating' })} value="4.8 ★" icon={<svg className="w-6 h-6 text-[var(--color-trust)]" viewBox="0 0 24 24" fill="currentColor" strokeWidth="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 9 8.26 12 2" /></svg>} />
+              <StatItem label={t('profile.rating', { defaultValue: 'Rating' })} value={rating.count ? `${rating.average.toFixed(1)} ★` : '-'} icon={<svg className="w-6 h-6 text-[var(--color-trust)]" viewBox="0 0 24 24" fill="currentColor" strokeWidth="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 9 8.26 12 2" /></svg>} />
             </div>
+            {rating.count > 0 && (
+              <p className="mt-3 text-sm text-center text-[var(--color-text-muted)]"><RatingBadge rating={rating} /></p>
+            )}
+            <ReviewList reviews={reviews} />
           </div>
 
           {/* Settings Sections */}
@@ -110,6 +151,12 @@ export function Profile() {
               </h3>
             </div>
             <div className="p-4 space-y-4 border-b border-[var(--color-border)]">
+              <Input label={t('profileEdit.name', { defaultValue: 'Name' })} value={name} onChange={(e) => setName(e.target.value)} />
+              <Input label={t('profileEdit.phone', { defaultValue: 'Phone' })} type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} />
+              <div className="p-3 bg-[var(--color-surface-alt)] rounded-xl">
+                <p className="text-xs text-[var(--color-text-muted)]">{t('profileEdit.collectorId', { defaultValue: 'Collector ID' })}</p>
+                <p className="font-medium text-[var(--color-text)] font-mono">{collector?.collectorId}</p>
+              </div>
               <div className="flex items-center justify-between p-3 bg-[var(--color-surface-alt)] rounded-xl">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-lg bg-[var(--color-circuit-muted)] flex items-center justify-center">
@@ -196,15 +243,19 @@ export function Profile() {
               </h3>
             </div>
             <div className="p-4 space-y-3">
+              <Button variant="outline" fullWidth onClick={() => navigate('/collector/help')}>
+                {t('help.title', { defaultValue: 'Help' })}
+              </Button>
               <Button variant="outline" fullWidth leftIcon={<LogOut className="w-4 h-4" />} onClick={handleLogout}>
                 {t('common.logout', { defaultValue: 'Logout' })}
               </Button>
-              <Button variant="danger" fullWidth leftIcon={<Shield className="w-4 h-4" />} onClick={() => {}}>
+              <Button variant="danger" fullWidth leftIcon={<Shield className="w-4 h-4" />} onClick={deleteAccount}>
                 {t('profile.deleteAccount', { defaultValue: 'Delete Account' })}
               </Button>
             </div>
           </div>
 
+          {saveError && <p role="alert" className="text-sm text-[var(--color-warning)] text-center">{saveError}</p>}
           {/* Save Button */}
           <Button
             fullWidth

@@ -8,6 +8,9 @@ interface AdminRecycler {
   id: string; facilityName: string; identifier: string; city?: string; authNumber?: string;
   contact?: string; status: 'pending' | 'approved' | 'rejected'; createdAt: string; lotCount: number;
 }
+interface AdminHelp {
+  id: string; role: string; name: string; contact: string; subject: string; message: string; status: 'open' | 'resolved'; createdAt: string;
+}
 interface AdminLot {
   id: string; category: string; weightKg: number; status: string; collectorName?: string; collectorPhone?: string;
   recyclerName?: string; quotedTotal?: number; finalTotal?: number; createdAt: string;
@@ -17,8 +20,8 @@ interface AdminCollector {
   createdAt: string; lotCount: number; handedOver: number; totalEarned: number; lastActiveAt?: string;
 }
 
-async function adminFetch<T>(key: string, method: string, path: string): Promise<T> {
-  const r = await fetch(BASE + path, { method, headers: { 'x-admin-key': key } });
+async function adminFetch<T>(key: string, method: string, path: string, body?: unknown): Promise<T> {
+  const r = await fetch(BASE + path, { method, headers: { 'x-admin-key': key, ...(body ? { 'content-type': 'application/json' } : {}) }, body: body ? JSON.stringify(body) : undefined });
   const data = await r.json().catch(() => ({}));
   if (!r.ok) throw Object.assign(new Error(data?.error || `Request failed (${r.status})`), { status: r.status });
   return data as T;
@@ -30,27 +33,29 @@ export function AdminPanel() {
   const [input, setInput] = useState('');
   const [error, setError] = useState('');
   // Opening /admin?tab=collectors (or ?tab=lots) jumps straight to that tab.
-  const [tab, setTab] = useState<'recyclers' | 'collectors' | 'lots'>(() => {
+  const [tab, setTab] = useState<'recyclers' | 'collectors' | 'lots' | 'help'>(() => {
     const q = new URLSearchParams(window.location.search).get('tab');
-    return q === 'collectors' || q === 'lots' ? q : 'recyclers';
+    return q === 'collectors' || q === 'lots' || q === 'help' ? q : 'recyclers';
   });
   const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
   const [recyclers, setRecyclers] = useState<AdminRecycler[]>([]);
   const [collectors, setCollectors] = useState<AdminCollector[]>([]);
   const [lots, setLots] = useState<AdminLot[]>([]);
+  const [helps, setHelps] = useState<AdminHelp[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const logout = () => { sessionStorage.removeItem(KEY_STORE); setKey(''); setRecyclers([]); setCollectors([]); setLots([]); };
+  const logout = () => { sessionStorage.removeItem(KEY_STORE); setKey(''); setRecyclers([]); setCollectors([]); setLots([]); setHelps([]); };
 
   const load = useCallback(async (k: string) => {
     setLoading(true);
     try {
-      const [r, c, l] = await Promise.all([
+      const [r, c, l, h] = await Promise.all([
         adminFetch<AdminRecycler[]>(k, 'GET', '/admin/recyclers'),
         adminFetch<AdminCollector[]>(k, 'GET', '/admin/collectors'),
         adminFetch<AdminLot[]>(k, 'GET', '/admin/lots'),
+        adminFetch<AdminHelp[]>(k, 'GET', '/admin/help'),
       ]);
-      setRecyclers(r); setCollectors(c); setLots(l); setError('');
+      setRecyclers(r); setCollectors(c); setLots(l); setHelps(h); setError('');
     } catch (e) {
       if ((e as { status?: number }).status === 403) {
         sessionStorage.removeItem(KEY_STORE); setKey('');
@@ -86,8 +91,17 @@ export function AdminPanel() {
     } catch (e) { setError((e as Error).message); }
   };
 
+  const setHelpStatus = async (h: AdminHelp, status: 'open' | 'resolved') => {
+    try {
+      await adminFetch(key, 'POST', `/admin/help/${h.id}/status`, { status });
+      setHelps((prev) => prev.map((x) => (x.id === h.id ? { ...x, status } : x)));
+    } catch (e) { setError((e as Error).message); }
+  };
+
   const removeCollector = async (c: AdminCollector) => {
-    if (!window.confirm(t('admin.deleteConfirm', { name: c.name || c.id }))) return;
+    const base = t('admin.deleteConfirm', { name: c.name || c.id });
+    const msg = c.lotCount > 0 ? base + '\n\n' + t('admin.deleteCollectorLots', { count: c.lotCount, defaultValue: 'This will also delete their {{count}} lot(s) and ratings.' }) : base;
+    if (!window.confirm(msg)) return;
     try {
       await adminFetch(key, 'DELETE', `/admin/collectors/${c.id}`);
       setCollectors((prev) => prev.filter((x) => x.id !== c.id));
@@ -153,6 +167,10 @@ export function AdminPanel() {
           <button onClick={() => setTab('lots')} data-testid="tab-lots"
             className={`px-4 py-2 rounded ${tab === 'lots' ? 'bg-[var(--color-circuit)] text-white' : 'bg-[var(--color-surface-elevated)] text-[var(--color-text)] border border-[var(--color-border)]'}`}>
             {t('admin.lots')} ({lots.length})
+          </button>
+          <button onClick={() => setTab('help')} data-testid="tab-help"
+            className={`px-4 py-2 rounded ${tab === 'help' ? 'bg-[var(--color-circuit)] text-white' : 'bg-[var(--color-surface-elevated)] text-[var(--color-text)] border border-[var(--color-border)]'}`}>
+            {t('admin.help', { defaultValue: 'Help' })} ({helps.filter((h) => h.status === 'open').length})
           </button>
           <button onClick={() => void load(key)} className="ml-auto px-3 py-2 rounded bg-[var(--color-surface-elevated)] border border-[var(--color-border)] text-sm text-[var(--color-text)] hover:bg-[var(--color-surface-alt)]">{loading ? t('common.loading') : t('admin.refresh')}</button>
         </div>
@@ -228,6 +246,32 @@ export function AdminPanel() {
                 ))}
               </tbody>
             </table>
+          </div>
+        )}
+
+        {tab === 'help' && (
+          <div className="space-y-3">
+            {helps.length === 0 && <p className="text-[var(--color-text-muted)]">{t('admin.noHelp', { defaultValue: 'No help requests yet' })}</p>}
+            {helps.map((h) => (
+              <div key={h.id} className="bg-[var(--color-surface-elevated)] rounded-lg shadow-sm p-4 border border-[var(--color-border)]" data-testid={`help-${h.id}`}>
+                <div className="flex items-start justify-between gap-3 flex-wrap">
+                  <div>
+                    <p className="font-semibold text-[var(--color-text)]">{h.subject}</p>
+                    <p className="text-sm text-[var(--color-text-muted)]">{h.name || '-'} · {h.role} · {h.contact || '-'} · {new Date(h.createdAt).toLocaleString()}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${h.status === 'resolved' ? 'bg-[var(--color-verdigris-muted)] text-[var(--color-verdigris)]' : 'bg-[var(--color-warning-muted)] text-[var(--color-warning)]'}`}>
+                      {t(`admin.helpStatus.${h.status}`, { defaultValue: h.status })}
+                    </span>
+                    <button onClick={() => void setHelpStatus(h, h.status === 'open' ? 'resolved' : 'open')} data-testid={`help-toggle-${h.id}`}
+                      className="px-3 py-1 rounded border border-[var(--color-border)] text-sm text-[var(--color-text)]">
+                      {h.status === 'open' ? t('admin.markResolved', { defaultValue: 'Mark resolved' }) : t('admin.reopen', { defaultValue: 'Reopen' })}
+                    </button>
+                  </div>
+                </div>
+                <p className="mt-2 text-sm text-[var(--color-text)] whitespace-pre-wrap break-words">{h.message}</p>
+              </div>
+            ))}
           </div>
         )}
 

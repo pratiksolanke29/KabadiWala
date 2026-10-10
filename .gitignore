@@ -43,3 +43,6 @@ backend/*.sqlite-journal
 # OS junk
 Thumbs.db
 .DS_Store
+backend/*.db-shm
+backend/*.db-wal
+backend/*.db-journal

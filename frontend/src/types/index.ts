@@ -62,6 +62,7 @@ export interface Lot {
   updatedAt: string;
   handedOverAt?: string;
   paidAt?: string;
+  myRating?: { stars: number; comment: string };
 }
 
 export interface PriceEntry {
@@ -81,6 +82,7 @@ export interface RecyclerMatch {
   ratePerKg: number;
   verified: boolean;
   pickupAvailable: boolean;
+  rating?: { count: number; average: number };
 }
 
 export interface EarningRow {
@@ -122,6 +124,7 @@ export interface IncomingLot {
   distanceKm: number;
   quotedRate: number;
   quotedTotal: number;
+  collectorRating?: { count: number; average: number };
   refId: string;
   status: 'Pending' | 'Accepted' | 'Declined' | 'HandedOver';
   createdAt: string;
@@ -137,6 +140,7 @@ export interface CompletedLot {
   handedOverAt: string;
   collectorName: string;
   refId: string;
+  myRating?: { stars: number; comment: string };
 }
 
 export interface RateEntry {

@@ -45,7 +45,7 @@ export function CollectorLayout() {
                   <User className="w-5 h-5 text-[var(--color-copper)]" />
                 </div>
                 <span className="text-sm font-medium text-[var(--color-text)] hidden sm:block">
-                  {collector?.collectorId}
+                  {collector?.name || collector?.email || collector?.collectorId}
                 </span>
                 <ChevronDown className="w-4 h-4 text-[var(--color-text-muted)]" />
               </button>

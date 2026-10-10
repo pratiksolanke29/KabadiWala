@@ -94,6 +94,7 @@ export function createApp(db = openDb(), { verifyToken = clerkVerifier(), identi
     gpsLat: r.gps_lat ?? undefined, gpsLon: r.gps_lon ?? undefined,
     createdAt: r.created_at, updatedAt: r.updated_at,
     handedOverAt: r.handed_over_at ?? undefined, paidAt: r.paid_at ?? undefined,
+    myRating: myRating(r.id, 'collector'),
   };
   const LOT_SQL = `SELECT l.*, r.facility_name AS recycler_name FROM lots l LEFT JOIN recyclers r ON r.id = l.recycler_id`;
   const getLot = (id) => db.prepare(`${LOT_SQL} WHERE l.id = ?`).get(id);
@@ -108,6 +109,40 @@ export function createApp(db = openDb(), { verifyToken = clerkVerifier(), identi
       : (lot?.gps_lat != null && lot?.gps_lon != null) ? [lot.gps_lat, lot.gps_lon]
       : AREAS[col.area] ?? [19.076, 72.8777];
   const marketRow = (m) => db.prepare('SELECT * FROM market WHERE material = ?').get(m);
+
+  // ---------- ratings (public) ----------
+  const ratingOf = (role, id) => {
+    const r = db.prepare('SELECT COUNT(*) AS n, AVG(stars) AS avg FROM ratings WHERE to_role = ? AND to_id = ?').get(role, id);
+    return { count: r.n, average: r.n ? Math.round(r.avg * 10) / 10 : 0 };
+  };
+  const reviewsOf = (role, id) => db.prepare('SELECT * FROM ratings WHERE to_role = ? AND to_id = ? ORDER BY created_at DESC LIMIT 20').all(role, id).map((x) => {
+    const who = x.from_role === 'collector'
+      ? db.prepare('SELECT name, phone, email FROM collectors WHERE id = ?').get(x.from_id)
+      : db.prepare('SELECT facility_name AS name FROM recyclers WHERE id = ?').get(x.from_id);
+    return { stars: x.stars, comment: x.comment ?? '', fromRole: x.from_role, fromName: who?.name || 'User', createdAt: x.created_at };
+  });
+  const myRating = (lotId, role) => {
+    const x = db.prepare('SELECT stars, comment FROM ratings WHERE lot_id = ? AND from_role = ?').get(lotId, role);
+    return x ? { stars: x.stars, comment: x.comment ?? '' } : undefined;
+  };
+  const checkPhoto = (v) => {
+    if (v === null || v === '') return '';
+    if (typeof v !== 'string' || !/^data:image\/(png|jpe?g|webp);base64,/.test(v)) throw bad('Profile picture must be a PNG, JPG or WebP image');
+    if (v.length > 700000) throw bad('Profile picture is too large');
+    return v;
+  };
+  const giveRating = (lot, fromRole, fromId, body) => {
+    if (lot.status !== 'HandedOver' && lot.status !== 'Paid') throw new HttpError(409, 'You can rate after the deal is completed');
+    const stars = Number(body?.stars);
+    if (!Number.isInteger(stars) || stars < 1 || stars > 5) throw bad('Stars must be 1 to 5');
+    const comment = String(body?.comment ?? '').trim().slice(0, 500);
+    if (db.prepare('SELECT 1 FROM ratings WHERE lot_id = ? AND from_role = ?').get(lot.id, fromRole)) throw new HttpError(409, 'You already rated this deal');
+    const toRole = fromRole === 'collector' ? 'recycler' : 'collector';
+    const toId = fromRole === 'collector' ? lot.recycler_id : lot.collector_id;
+    db.prepare('INSERT INTO ratings (lot_id, from_role, from_id, to_role, to_id, stars, comment, created_at) VALUES (?,?,?,?,?,?,?,?)')
+      .run(lot.id, fromRole, fromId, toRole, toId, stars, comment || null, iso());
+    return { success: true, stars, comment };
+  };
 
   // ---------- health ----------
   app.get('/health', (_q, res) => res.json({ ok: true }));
@@ -129,6 +164,36 @@ export function createApp(db = openDb(), { verifyToken = clerkVerifier(), identi
   app.get('/me', wrap(async (req, res) => {
     const cu = await clerkUser(req);
     res.json({ email: cu.email ?? null, ...meOut(db.prepare('SELECT * FROM users WHERE clerk_id = ?').get(cu.userId)) });
+  }));
+
+  // Self-service account deletion (collector or recycler). The Clerk login itself stays, so the person can sign up fresh.
+  app.delete('/me', wrap(async (req, res) => {
+    const cu = await clerkUser(req);
+    const u = db.prepare('SELECT * FROM users WHERE clerk_id = ?').get(cu.userId);
+    if (!u) throw new HttpError(404, 'Account not found');
+    if (u.role === 'collector') return res.json(purgeCollector({ id: u.profile_id }));
+    const out = purgeRecycler({ id: u.profile_id });
+    db.prepare('DELETE FROM users WHERE clerk_id = ?').run(cu.userId);
+    db.prepare('DELETE FROM help_requests WHERE user_role = ? AND user_id = ?').run('recycler', u.profile_id);
+    res.json(out);
+  }));
+
+  // Help: a signed-in collector or recycler sends an issue to the admin.
+  app.post('/help', wrap(async (req, res) => {
+    const cu = await clerkUser(req);
+    const u = db.prepare('SELECT * FROM users WHERE clerk_id = ?').get(cu.userId);
+    if (!u) throw new HttpError(403, 'Choose a role first');
+    const subject = String(req.body?.subject ?? '').trim(), message = String(req.body?.message ?? '').trim();
+    if (!subject) throw bad('Subject is required');
+    if (!message) throw bad('Description is required');
+    if (subject.length > 200 || message.length > 2000) throw bad('Message is too long');
+    const p = u.role === 'collector'
+      ? db.prepare('SELECT name, phone, email FROM collectors WHERE id = ?').get(u.profile_id)
+      : db.prepare('SELECT facility_name AS name, contact AS phone, email FROM recyclers WHERE id = ?').get(u.profile_id);
+    const id = uuid();
+    db.prepare('INSERT INTO help_requests (id, user_role, user_id, name, contact, subject, message, status, created_at) VALUES (?,?,?,?,?,?,?,?,?)')
+      .run(id, u.role, u.profile_id, p?.name ?? null, [p?.phone, p?.email].filter(Boolean).join(' / ') || null, subject, message, 'open', iso());
+    res.status(201).json({ success: true, id });
   }));
 
   // One-time role setup for a new user. A Clerk account has exactly one role.
@@ -200,34 +265,69 @@ export function createApp(db = openDb(), { verifyToken = clerkVerifier(), identi
     res.json({ success: true });
   }));
 
-  // Remove a recycler account. No linked lots -> hard delete (row, rates, role mapping; the Clerk user can sign up again).
-  // Has linked lots -> soft delete (hidden from admin list, rejected, login blocked), so lot history and receipts stay intact. Either way it disappears from the admin list and Nearby Recyclers.
+  // Shared by the admin delete and the self-service delete.
+  // Recycler: no linked lots -> hard delete (row, rates, role mapping). Has lots -> soft delete (hidden, rejected, login mapping removed) so collectors' lot history and receipts stay intact.
+  const purgeRecycler = (r) => {
+    const lotCount = db.prepare('SELECT COUNT(*) AS n FROM lots WHERE recycler_id = ?').get(r.id).n;
+    if (lotCount > 0) {
+      db.prepare('UPDATE recyclers SET authorized = 0, rejected = 1, deleted = 1 WHERE id = ?').run(r.id);
+      return { success: true, mode: 'deactivated', lotCount };
+    }
+    db.prepare('DELETE FROM recycler_rates WHERE recycler_id = ?').run(r.id);
+    db.prepare('DELETE FROM declines WHERE recycler_id = ?').run(r.id);
+    db.prepare("DELETE FROM ratings WHERE (from_role = 'recycler' AND from_id = ?) OR (to_role = 'recycler' AND to_id = ?)").run(r.id, r.id);
+    db.prepare("DELETE FROM users WHERE role = 'recycler' AND profile_id = ?").run(r.id);
+    db.prepare('DELETE FROM recyclers WHERE id = ?').run(r.id);
+    return { success: true, mode: 'deleted' };
+  };
+  // Deletes the collector, all their lots (any status) and the ratings tied to them.
+  const purgeCollector = (c) => {
+    const lotIds = db.prepare('SELECT id FROM lots WHERE collector_id = ?').all(c.id).map((l) => l.id);
+    db.exec('BEGIN');
+    try {
+      for (const id of lotIds) {
+        db.prepare('DELETE FROM ratings WHERE lot_id = ?').run(id);
+        db.prepare('DELETE FROM declines WHERE lot_id = ?').run(id);
+      }
+      db.prepare("DELETE FROM ratings WHERE (from_role = 'collector' AND from_id = ?) OR (to_role = 'collector' AND to_id = ?)").run(c.id, c.id);
+      db.prepare('DELETE FROM lots WHERE collector_id = ?').run(c.id);
+      db.prepare("DELETE FROM users WHERE role = 'collector' AND profile_id = ?").run(c.id);
+      db.prepare('DELETE FROM help_requests WHERE user_role = ? AND user_id = ?').run('collector', c.id);
+      db.prepare('DELETE FROM collectors WHERE id = ?').run(c.id);
+      db.exec('COMMIT');
+    } catch (e) { db.exec('ROLLBACK'); throw e; }
+    return { success: true, mode: 'deleted', lotsDeleted: lotIds.length };
+  };
+
   app.delete('/admin/recyclers/:id', wrap((req, res) => {
     adminOnly(req);
     const r = db.prepare('SELECT id FROM recyclers WHERE id = ? AND deleted = 0').get(req.params.id);
     if (!r) throw new HttpError(404, 'Recycler not found');
-    const lotCount = db.prepare('SELECT COUNT(*) AS n FROM lots WHERE recycler_id = ?').get(r.id).n;
-    if (lotCount > 0) {
-      db.prepare('UPDATE recyclers SET authorized = 0, rejected = 1, deleted = 1 WHERE id = ?').run(r.id);
-      return res.json({ success: true, mode: 'deactivated', lotCount });
-    }
-    db.prepare('DELETE FROM recycler_rates WHERE recycler_id = ?').run(r.id);
-    db.prepare('DELETE FROM declines WHERE recycler_id = ?').run(r.id);
-    db.prepare("DELETE FROM users WHERE role = 'recycler' AND profile_id = ?").run(r.id);
-    db.prepare('DELETE FROM recyclers WHERE id = ?').run(r.id);
-    res.json({ success: true, mode: 'deleted' });
+    res.json(purgeRecycler(r));
   }));
 
-  // Remove a collector account. Only possible with no lots - lot history is never deleted.
+  // Remove a collector account. Also deletes all of their lots (any status) and the ratings tied to them or to the collector.
   app.delete('/admin/collectors/:id', wrap((req, res) => {
     adminOnly(req);
     const c = db.prepare('SELECT id FROM collectors WHERE id = ?').get(req.params.id);
     if (!c) throw new HttpError(404, 'Collector not found');
-    const lotCount = db.prepare('SELECT COUNT(*) AS n FROM lots WHERE collector_id = ?').get(c.id).n;
-    if (lotCount > 0) throw new HttpError(409, `Collector has ${lotCount} lot(s); lot history cannot be deleted`);
-    db.prepare("DELETE FROM users WHERE role = 'collector' AND profile_id = ?").run(c.id);
-    db.prepare('DELETE FROM collectors WHERE id = ?').run(c.id);
-    res.json({ success: true, mode: 'deleted' });
+    res.json(purgeCollector(c));
+  }));
+
+  // Help requests from users (see POST /help)
+  app.get('/admin/help', wrap((req, res) => {
+    adminOnly(req);
+    res.json(db.prepare('SELECT * FROM help_requests ORDER BY created_at DESC').all().map((h) => ({
+      id: h.id, role: h.user_role, name: h.name ?? '', contact: h.contact ?? '', subject: h.subject, message: h.message,
+      status: h.status, createdAt: h.created_at, resolvedAt: h.resolved_at ?? undefined })));
+  }));
+  app.post('/admin/help/:id/status', wrap((req, res) => {
+    adminOnly(req);
+    const st = req.body?.status;
+    if (!['open', 'resolved'].includes(st)) throw bad('status must be open or resolved');
+    const r = db.prepare('UPDATE help_requests SET status = ?, resolved_at = ? WHERE id = ?').run(st, st === 'resolved' ? iso() : null, req.params.id);
+    if (!r.changes) throw new HttpError(404, 'Request not found');
+    res.json({ success: true, status: st });
   }));
 
   app.get('/admin/collectors', wrap((req, res) => {
@@ -332,6 +432,16 @@ export function createApp(db = openDb(), { verifyToken = clerkVerifier(), identi
 
   app.get('/lots/:id', C, wrap((req, res) => res.json(lotOut(ownLot(req.params.id, req.userId)))));
 
+  // Collector deletes their own lot, only while it is not handed over or completed.
+  app.delete('/lots/:id', C, wrap((req, res) => {
+    const lot = ownLot(req.params.id, req.userId);
+    if (lot.status !== 'Draft' && lot.status !== 'Quoted') throw new HttpError(409, 'This lot is already handed over and cannot be deleted');
+    db.prepare('DELETE FROM declines WHERE lot_id = ?').run(lot.id);
+    db.prepare('DELETE FROM lots WHERE id = ?').run(lot.id);
+    res.json({ success: true });
+  }));
+  app.post('/lots/:id/rate', C, wrap((req, res) => res.status(201).json(giveRating(ownLot(req.params.id, req.userId), 'collector', req.userId, req.body))));
+
   app.post('/lots/:id/find-recyclers', C, wrap((req, res) => {
     const lot = ownLot(req.params.id, req.userId);
     if (lot.status === 'HandedOver' || lot.status === 'Paid') throw new HttpError(409, 'Lot already handed over');
@@ -342,7 +452,7 @@ export function createApp(db = openDb(), { verifyToken = clerkVerifier(), identi
       WHERE r.authorized = 1 AND rr.material = ? AND rr.accept = 1`).all(lot.category);
     const out = rows
       .filter((r) => !declined.has(r.id))
-      .map((r) => ({ id: r.id, name: r.facility_name, distanceKm: round1(haversine(from, [r.lat, r.lon])), ratePerKg: r.rate_per_kg, verified: !!r.authorized, pickupAvailable: !!r.pickup_enabled }))
+      .map((r) => ({ id: r.id, name: r.facility_name, distanceKm: round1(haversine(from, [r.lat, r.lon])), ratePerKg: r.rate_per_kg, verified: !!r.authorized, pickupAvailable: !!r.pickup_enabled, rating: ratingOf('recycler', r.id) }))
       .filter((r) => withinReach(lot, r.distanceKm))
       .sort((a, b) => a.distanceKm - b.distanceKm || b.ratePerKg - a.ratePerKg || Number(b.verified) - Number(a.verified));
     res.json(out);
@@ -351,6 +461,11 @@ export function createApp(db = openDb(), { verifyToken = clerkVerifier(), identi
   app.post('/lots/:id/choose-recycler', C, wrap(async (req, res) => {
     const lot = ownLot(req.params.id, req.userId);
     if (lot.status !== 'Draft' && lot.status !== 'Quoted') throw new HttpError(409, 'Lot can no longer change recycler');
+    // Rate lock: once this recycler is chosen and the QR exists, the quoted rate/total stay as they were, whatever the recycler changes later.
+    if (lot.status === 'Quoted' && lot.recycler_id === req.body?.recyclerId && lot.handover_code && lot.quoted_rate != null) {
+      return res.json({ quotedRate: lot.quoted_rate, quotedTotal: lot.quoted_total, handoverCode: lot.handover_code, handoverQrUrl: `/lots/${lot.id}/qr.png`,
+        qrPayload: `kabadiwala://handover/${lot.id}/${lot.handover_code}` });
+    }
     const r = db.prepare(`SELECT r.*, rr.rate_per_kg FROM recyclers r JOIN recycler_rates rr ON rr.recycler_id = r.id
       WHERE r.id = ? AND r.authorized = 1 AND rr.material = ? AND rr.accept = 1`).get(req.body?.recyclerId ?? '', lot.category);
     if (!r || !withinReach(lot, haversine(collectorPoint(db.prepare('SELECT * FROM collectors WHERE id = ?').get(req.userId), lot), [r.lat, r.lon]))) throw bad('Recycler not available for this lot');
@@ -404,18 +519,26 @@ export function createApp(db = openDb(), { verifyToken = clerkVerifier(), identi
   ];
   app.get('/safety', C, wrap((_q, res) => res.json({ topics: SAFETY.map(([id, en, mr, hi]) => ({ id, title: { en, mr, hi }, imageUrl: `/static/safety/${id}.png`, detailImageUrl: `/static/safety/${id}-detail.png` })) })));
 
-  app.get('/profile', C, wrap((req, res) => {
-    const c = db.prepare('SELECT * FROM collectors WHERE id = ?').get(req.userId);
-    res.json({ collectorId: c.id, phone: c.phone ?? undefined, email: c.email ?? undefined, area: c.area, language: c.language, name: c.name ?? undefined });
-  }));
+  const colProfileOut = (c) => ({ collectorId: c.id, phone: c.phone ?? undefined, email: c.email ?? undefined, area: c.area, language: c.language, name: c.name ?? undefined,
+    photoUrl: c.photo_url || undefined, joinedAt: c.created_at, state: c.state ?? undefined, district: c.district ?? undefined,
+    rating: ratingOf('collector', c.id), reviews: reviewsOf('collector', c.id) });
+  app.get('/profile', C, wrap((req, res) => res.json(colProfileOut(db.prepare('SELECT * FROM collectors WHERE id = ?').get(req.userId)))));
   app.patch('/profile', C, wrap((req, res) => {
-    const { area, language, name } = req.body ?? {};
+    const { area, language, name, phone, photoUrl } = req.body ?? {};
     if (language && !['mr', 'hi', 'en'].includes(language)) throw bad('Bad language');
     if (area !== undefined && !String(area).trim()) throw bad('Area cannot be empty');
-    db.prepare('UPDATE collectors SET area = COALESCE(?, area), language = COALESCE(?, language), name = COALESCE(?, name) WHERE id = ?')
-      .run(area ?? null, language ?? null, name ?? null, req.userId);
-    const c = db.prepare('SELECT * FROM collectors WHERE id = ?').get(req.userId);
-    res.json({ collectorId: c.id, phone: c.phone ?? undefined, email: c.email ?? undefined, area: c.area, language: c.language, name: c.name ?? undefined });
+    if (name !== undefined && !String(name).trim()) throw bad('Name cannot be empty');
+    if (phone !== undefined && phone !== '' && !/^[0-9+\-\s]{7,15}$/.test(String(phone))) throw bad('Enter a valid phone number');
+    const photo = photoUrl === undefined ? null : checkPhoto(photoUrl);
+    db.prepare('UPDATE collectors SET area = COALESCE(?, area), language = COALESCE(?, language), name = COALESCE(?, name), phone = COALESCE(?, phone), photo_url = COALESCE(?, photo_url) WHERE id = ?')
+      .run(area ?? null, language ?? null, name === undefined ? null : String(name).trim(), phone ? String(phone).trim() : null, photo, req.userId);
+    res.json(colProfileOut(db.prepare('SELECT * FROM collectors WHERE id = ?').get(req.userId)));
+  }));
+  // Ratings are public: any signed-in user can read them.
+  app.get('/ratings/:role/:id', wrap(async (req, res) => {
+    await clerkUser(req);
+    if (!['collector', 'recycler'].includes(req.params.role)) throw new HttpError(404, 'Not found');
+    res.json({ ...ratingOf(req.params.role, req.params.id), reviews: reviewsOf(req.params.role, req.params.id) });
   }));
 
   // ================= RECYCLER API =================
@@ -432,12 +555,14 @@ export function createApp(db = openDb(), { verifyToken = clerkVerifier(), identi
       distanceKm: round1(haversine(from, [rec.lat, rec.lon])), quotedRate: l.quoted_rate, quotedTotal: l.quoted_total,
       refId: l.recycler_status === 'Accepted' || l.recycler_status === 'HandedOver' ? l.handover_code : '',
       status: l.recycler_status, pickupAvailable: !!rec.pickup_enabled, createdAt: l.created_at,
+      collectorRating: ratingOf('collector', col.id),
     };
   };
   const completedOut = (l) => ({
     id: l.id, category: l.category, finalWeightKg: l.final_weight_kg, finalRate: l.final_rate, finalTotal: l.final_total,
     paymentMode: l.payment_mode, handedOverAt: l.handed_over_at, refId: l.handover_code,
     collectorName: l.collector_name || l.collector_phone,
+    myRating: myRating(l.id, 'recycler'),
   });
   const recLot = (id, rid) => {
     const l = db.prepare('SELECT * FROM lots WHERE id = ? AND recycler_id = ?').get(id, rid);
@@ -530,13 +655,18 @@ export function createApp(db = openDb(), { verifyToken = clerkVerifier(), identi
     res.json(completedOut(l));
   }));
 
-  const profileOut = (r) => ({ facilityName: r.facility_name, location: r.address ?? r.city, serviceAreas: JSON.parse(r.service_areas), contact: r.contact, authNumber: r.auth_number, authorized: !!r.authorized, pickupEnabled: !!r.pickup_enabled });
+  app.post('/transactions/:lotId/rate', R, wrap((req, res) => res.status(201).json(giveRating(recLot(req.params.lotId, req.userId), 'recycler', req.userId, req.body))));
+  const profileOut = (r) => ({ facilityName: r.facility_name, location: r.address ?? r.city, serviceAreas: JSON.parse(r.service_areas), contact: r.contact, authNumber: r.auth_number, authorized: !!r.authorized, pickupEnabled: !!r.pickup_enabled,
+    photoUrl: r.photo_url || undefined, joinedAt: r.created_at, rating: ratingOf('recycler', r.id), reviews: reviewsOf('recycler', r.id) });
   app.get('/recycler/profile', R, wrap((req, res) => res.json(profileOut(recOf(req.userId)))));
   app.patch('/recycler/profile', R, wrap((req, res) => {
-    const { serviceAreas, pickupEnabled, contact } = req.body ?? {};
+    const { serviceAreas, pickupEnabled, contact, facilityName, location, photoUrl } = req.body ?? {};
     if (serviceAreas !== undefined && !Array.isArray(serviceAreas)) throw bad('serviceAreas must be an array');
-    db.prepare('UPDATE recyclers SET service_areas = COALESCE(?, service_areas), pickup_enabled = COALESCE(?, pickup_enabled), contact = COALESCE(?, contact) WHERE id = ?')
-      .run(serviceAreas ? JSON.stringify(serviceAreas) : null, pickupEnabled === undefined ? null : Number(!!pickupEnabled), contact ?? null, req.userId);
+    if (facilityName !== undefined && !String(facilityName).trim()) throw bad('Facility name cannot be empty');
+    const photo = photoUrl === undefined ? null : checkPhoto(photoUrl);
+    db.prepare('UPDATE recyclers SET service_areas = COALESCE(?, service_areas), pickup_enabled = COALESCE(?, pickup_enabled), contact = COALESCE(?, contact), facility_name = COALESCE(?, facility_name), address = COALESCE(?, address), photo_url = COALESCE(?, photo_url) WHERE id = ?')
+      .run(serviceAreas ? JSON.stringify(serviceAreas) : null, pickupEnabled === undefined ? null : Number(!!pickupEnabled), contact ?? null,
+        facilityName === undefined ? null : String(facilityName).trim(), location === undefined || !String(location).trim() ? null : String(location).trim(), photo, req.userId);
     res.json(profileOut(recOf(req.userId)));
   }));
 

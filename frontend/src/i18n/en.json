@@ -238,7 +238,16 @@
     "joined": "Joined",
     "delete": "Delete",
     "deleteConfirm": "Delete {{name}}? This cannot be undone.",
-    "deactivateConfirm": "{{name}} has lots, so it will be deactivated (hidden, login blocked) instead of deleted. Continue?"
+    "deleteCollectorLots": "This will also delete their {{count}} lot(s) and ratings.",
+    "deactivateConfirm": "{{name}} has lots, so it will be deactivated (hidden, login blocked) instead of deleted. Continue?",
+    "help": "Help",
+    "noHelp": "No help requests yet",
+    "markResolved": "Mark resolved",
+    "reopen": "Reopen",
+    "helpStatus": {
+      "open": "Open",
+      "resolved": "Resolved"
+    }
   },
   "clerkAuth": {
     "collector": "Collector",
@@ -295,5 +304,43 @@
   },
   "recyclerList": {
     "away": "away"
+  },
+  "ratings": {
+    "noRatings": "No ratings yet",
+    "reviews": "Reviews",
+    "youRated": "You rated {{name}}",
+    "pickStars": "Choose 1 to 5 stars",
+    "rate": "Rate {{name}}",
+    "comment": "Add a comment (optional, visible to everyone)",
+    "submit": "Submit rating"
+  },
+  "lotDelete": {
+    "button": "Delete Lot",
+    "confirm": "Delete this lot? This cannot be undone."
+  },
+  "login": {
+    "signUpFirst": "Please sign up first",
+    "signUpFirstDesc": "This Google account is not registered yet. Sign up to continue.",
+    "goSignUp": "Sign up"
+  },
+  "profileEdit": {
+    "name": "Name",
+    "phone": "Phone",
+    "changePhoto": "Change photo",
+    "activeSince": "Active since {{date}}",
+    "collectorId": "Collector ID"
+  },
+  "deleteAccount": {
+    "confirmCollector": "Delete your account? All your data, including your lots and ratings, will be permanently removed. This cannot be undone.",
+    "confirmRecycler": "Delete your account? Your profile and rates will be permanently removed. Past deals stay in the collectors' history. This cannot be undone."
+  },
+  "help": {
+    "title": "Help",
+    "intro": "Tell us about your problem and we will look into it.",
+    "subject": "Subject",
+    "description": "Description",
+    "send": "Send",
+    "sent": "Sent. We will get back to you.",
+    "fillBoth": "Please enter a subject and a description"
   }
 }

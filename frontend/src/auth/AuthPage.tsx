@@ -13,12 +13,12 @@ export function AuthPage({ role, kind }: { role: Role; kind: 'login' | 'signup' 
   const setMode = useAuthStore((s) => s.setMode);
 
   useEffect(() => { setMode(role); }, [role, setMode]);
-  useEffect(() => { if (isLoaded && isSignedIn) navigate(`/${role}/setup`, { replace: true }); }, [isLoaded, isSignedIn, role, navigate]);
+  useEffect(() => { if (isLoaded && isSignedIn) navigate(`/${role}/setup?src=${kind}`, { replace: true }); }, [isLoaded, isSignedIn, role, kind, navigate]);
 
   const common = {
     routing: 'path' as const,
-    forceRedirectUrl: `/${role}/setup`,
-    fallbackRedirectUrl: `/${role}/setup`,
+    forceRedirectUrl: `/${role}/setup?src=${kind}`,
+    fallbackRedirectUrl: `/${role}/setup?src=${kind}`,
   };
   const isCollector = role === 'collector';
   const accentColor = isCollector ? 'copper' : 'circuit';
@@ -47,7 +47,7 @@ export function AuthPage({ role, kind }: { role: Role; kind: 'login' | 'signup' 
         </p>
       </div>
       {kind === 'login'
-        ? <SignIn {...common} path={`/${role}/login`} signUpUrl={`/${role}/signup`} appearance={{ elements: { rootBox: 'bg-[var(--color-surface-elevated)] border border-[var(--color-border)]' } }} />
+        ? <SignIn {...common} signUpForceRedirectUrl={`/${role}/setup?src=login`} signUpFallbackRedirectUrl={`/${role}/setup?src=login`} path={`/${role}/login`} signUpUrl={`/${role}/signup`} appearance={{ elements: { rootBox: 'bg-[var(--color-surface-elevated)] border border-[var(--color-border)]' } }} />
         : <SignUp {...common} path={`/${role}/signup`} signInUrl={`/${role}/login`} appearance={{ elements: { rootBox: 'bg-[var(--color-surface-elevated)] border border-[var(--color-border)]' } }} />}
       <button className="mt-6 text-sm text-[var(--color-text-muted)] underline hover:text-[var(--color-text)]" onClick={() => navigate('/mode')}>
         {t('clerkAuth.changeRole', { defaultValue: 'Not a ' + role + '? Change role' })}
