@@ -53,6 +53,16 @@ export function openDb(file = process.env.DB_FILE || 'kabadiwala.db') {
   CREATE TABLE IF NOT EXISTS market (material TEXT PRIMARY KEY, rate REAL, min REAL, max REAL);
   `);
   try { db.exec('ALTER TABLE recyclers ADD COLUMN rejected INTEGER NOT NULL DEFAULT 0'); } catch { /* column exists */ }
+  // Structured India address (state > district > subdistrict + pincode). lat/lon = centre of the chosen district, used for distance.
+  for (const t of ['collectors', 'recyclers']) {
+    for (const c of ['state TEXT', 'district TEXT', 'subdistrict TEXT', 'pincode TEXT']) {
+      try { db.exec(`ALTER TABLE ${t} ADD COLUMN ${c}`); } catch { /* column exists */ }
+    }
+  }
+  try { db.exec('ALTER TABLE collectors ADD COLUMN lat REAL'); } catch { /* column exists */ }
+  try { db.exec('ALTER TABLE collectors ADD COLUMN lon REAL'); } catch { /* column exists */ }
+  // Admin "Delete" on a recycler that has lots: hide it everywhere but keep the row so lot history/receipts stay valid.
+  try { db.exec('ALTER TABLE recyclers ADD COLUMN deleted INTEGER NOT NULL DEFAULT 0'); } catch { /* column exists */ }
   seed(db);
   return db;
 }

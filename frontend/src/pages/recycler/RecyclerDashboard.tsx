@@ -9,6 +9,8 @@ import { StatusChip } from '../../components/shared/StatusChip';
 import type { IncomingLot, CompletedLot } from '../../types';
 import { useState, useEffect } from 'react';
 import { api } from '../../api';
+import { formatKm } from '../../utils/distance';
+import { QrScanner } from '../../components/shared/QrScanner';
 import { LogOut, ChevronDown, RefreshCw, Truck, CheckCircle, XCircle, Shield, History, DollarSign, Settings, Recycle, LogOut as LogOutIcon, Building, AlertTriangle, BarChart2, User, MapPin } from 'lucide-react';
 
 export function RecyclerDashboard() {
@@ -290,6 +292,7 @@ function HandoverModal({ lot, onClose, onDone }: { lot: IncomingLot; onClose: ()
   const [mode, setMode] = useState<'Cash' | 'Digital' | 'Pending'>('Cash');
   const [err, setErr] = useState('');
   const [busy, setBusy] = useState(false);
+  const [scanning, setScanning] = useState(false);
   const submit = async () => {
     setBusy(true); setErr('');
     try {
@@ -306,6 +309,9 @@ function HandoverModal({ lot, onClose, onDone }: { lot: IncomingLot; onClose: ()
         <label className="block text-sm text-[var(--color-text-muted)]">Collector's code
           <input className={field} value={refId} onChange={(e) => setRefId(e.target.value.toUpperCase())} maxLength={6} placeholder="6-character code" />
         </label>
+        {scanning
+          ? <QrScanner onClose={() => setScanning(false)} onCode={(c) => { setRefId(c); setScanning(false); }} />
+          : <Button variant="outline" onClick={() => setScanning(true)}>Scan QR</Button>}
         <label className="block text-sm text-[var(--color-text-muted)]">Final weight (kg, max {(lot.weightKg * 1.2).toFixed(1)})
           <input className={field} type="number" value={weight} onChange={(e) => setWeight(e.target.value)} />
         </label>
@@ -352,7 +358,7 @@ function IncomingLotRow({ lot, onAccept, onDecline, onView }: { lot: IncomingLot
             <span className="flex items-center gap-1 font-medium text-[var(--color-text)] tabular-nums font-mono">{lot.weightKg} kg</span>
             <span className="flex items-center gap-1">
               <MapPin className="w-3.5 h-3.5" />
-              {lot.distanceKm.toFixed(1)} km
+              {formatKm(lot.distanceKm)}
             </span>
             <span className="flex items-center gap-1 font-semibold text-[var(--color-copper)] tabular-nums font-mono">₹{lot.quotedRate}/kg</span>
             {lot.pickupAvailable && (

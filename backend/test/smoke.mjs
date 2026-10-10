@@ -41,7 +41,7 @@ const lotId = created.lotId;
 
 // find recyclers ranked rate desc
 const matches = await call('POST', `/lots/${lotId}/find-recyclers`, null, ct);
-assert(matches.length >= 3); for (let i = 1; i < matches.length; i++) assert(matches[i - 1].ratePerKg >= matches[i].ratePerKg);
+assert(matches.length >= 3); for (let i = 1; i < matches.length; i++) assert(matches[i - 1].distanceKm <= matches[i].distanceKm);
 ok(`find-recyclers (${matches.map((m) => m.id + ':' + m.ratePerKg).join(', ')})`);
 
 // recycler accounts: map seeded demo recyclers to Clerk users so the tests can act as them
@@ -136,7 +136,7 @@ assert.equal(again.authorized, false); ok('admin hard-deletes empty recycler, cl
 // admin delete: recycler WITH lots -> deactivated (hidden from matching, history kept)
 const del2 = await adm('DELETE', `/admin/recyclers/${best.id}`);
 assert.equal(del2.body.mode, 'deactivated');
-assert.equal((await adm('GET', '/admin/recyclers')).body.find((x) => x.id === best.id).status, 'rejected');
+assert(!(await adm('GET', '/admin/recyclers')).body.some((x) => x.id === best.id)); // gone from admin list right away
 const m4 = await call('POST', `/lots/${l2}/find-recyclers`, null, ct); assert(!m4.some((m) => m.id === best.id));
 const rcpt2 = await call('GET', `/receipts/${lotId}`, null, ct); assert.equal(rcpt2.status, 'Paid'); ok('recycler with lots deactivated, not deleted; receipts intact, hidden from matching');
 // admin delete: collector with lots -> blocked; collector without lots -> hard delete
@@ -145,4 +145,20 @@ await call('POST', '/me/collector', { area: 'thane', name: 'Temp C' }, 'tok:user
 const tempId = (await adm('GET', '/admin/collectors')).body.find((x) => x.name === 'Temp C').id;
 assert.equal((await adm('DELETE', `/admin/collectors/${tempId}`)).body.mode, 'deleted');
 assert(!(await adm('GET', '/admin/collectors')).body.some((x) => x.id === tempId)); ok('collector delete: blocked with lots, clean delete without lots');
+// structured address + distance: Delhi collector, Nagpur recycler
+const dc = 'tok:user_delhi:d@x.com';
+await call('POST', '/me/collector', { name: 'Delhi C', state: 'Delhi', district: 'New Delhi', subdistrict: 'Connaught Place', pincode: '110001', lat: 28.61, lon: 77.21 }, dc, 201);
+await call('POST', '/me/recycler', { facilityName: 'Bad Pin', authNumber: 'A', contact: 'C', state: 'Maharashtra', district: 'Nagpur', pincode: '12' }, 'tok:user_nag0:n0@x.com', 400);
+const nag = await call('POST', '/me/recycler', { facilityName: 'Nagpur Recyclers', authNumber: 'MPCB/N', contact: 'N', state: 'Maharashtra', district: 'Nagpur', subdistrict: 'Hingna', pincode: '440016', lat: 21.15, lon: 78.95 }, 'tok:user_nag:n@x.com', 201);
+db.prepare('UPDATE recyclers SET authorized = 1 WHERE id = ?').run(nag.recyclerId);
+const dl = await call('POST', '/lots', { photoUrl: 'data:image/png;base64,AAAA', category: 'PCB', weightKg: 5 }, dc, 201);
+assert(!(await call('POST', `/lots/${dl.lotId}/find-recyclers`, null, dc)).some((m) => m.id === nag.recyclerId)); // small lot: 850 km is out of reach
+await call('POST', `/lots/${dl.lotId}/choose-recycler`, { recyclerId: nag.recyclerId }, dc, 400);
+const big = await call('POST', '/lots', { photoUrl: 'data:image/png;base64,AAAA', category: 'PCB', weightKg: 600 }, dc, 201);
+const dm = await call('POST', `/lots/${big.lotId}/find-recyclers`, null, dc);
+const nm = dm.find((m) => m.id === nag.recyclerId);
+assert(nm && nm.distanceKm > 800 && nm.distanceKm < 900, 'Delhi-Nagpur straight line ~850 km, got ' + nm?.distanceKm);
+for (let i = 1; i < dm.length; i++) assert(dm[i - 1].distanceKm <= dm[i].distanceKm);
+await call('POST', `/lots/${big.lotId}/choose-recycler`, { recyclerId: nag.recyclerId }, dc);
+ok('Delhi collector: 5 kg lot hides Nagpur (>100 km), 600 kg lot shows it at ' + nm.distanceKm + ' km, nearest-first');
 console.log('\nALL PASSED'); server.close();

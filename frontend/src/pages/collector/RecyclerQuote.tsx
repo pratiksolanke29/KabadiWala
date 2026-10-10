@@ -9,6 +9,7 @@ import { useState } from 'react';
 import { api } from '../../api';
 import { ArrowLeft, MapPin, Shield, Truck, Phone, Clock, MapPin as MapPinIcon, QrCode, CheckCircle } from 'lucide-react';
 import { Modal } from '../../components/shared/Modal';
+import { formatKm } from '../../utils/distance';
 
 export function RecyclerQuote() {
   const { t } = useTranslation();
@@ -108,7 +109,7 @@ export function RecyclerQuote() {
                 <InfoItem
                   icon={<MapPinIcon className="w-5 h-5" />}
                   label={t('common.distance', { defaultValue: 'Distance' })}
-                  value={`${distance.toFixed(1)} km`}
+                  value={formatKm(distance)}
                 />
                 <InfoItem
                   icon={<Clock className="w-5 h-5" />}
@@ -142,7 +143,7 @@ export function RecyclerQuote() {
               <QuoteRow label={t('recyclerQuote.rate', { defaultValue: 'Rate per kg' })} value={`₹${quotedRate}`} />
               <QuoteRow label={t('common.weight', { defaultValue: 'Weight' })} value={`${lot?.weightKg || draft.weightKg} kg`} />
               <QuoteRow label={t('recyclerQuote.total', { defaultValue: 'Total Amount' })} value={`₹${quotedTotal.toLocaleString()}`} highlight />
-              <QuoteRow label={t('recyclerQuote.distance', { defaultValue: 'Distance' })} value={`${distance.toFixed(1)} km`} />
+              <QuoteRow label={t('recyclerQuote.distance', { defaultValue: 'Distance' })} value={formatKm(distance)} />
             </div>
 
             <div className="mt-4 p-4 bg-[var(--color-surface-alt)] rounded-xl">

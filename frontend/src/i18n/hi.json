@@ -282,5 +282,17 @@
     "step2": "श्रेणी",
     "step3": "वज़न",
     "step4": "अनुमान"
+  },
+  "address": {
+    "state": "राज्य",
+    "district": "जिला",
+    "subdistrict": "उप-जिला / तहसील",
+    "pincode": "पिनकोड",
+    "selectState": "राज्य चुनें",
+    "selectDistrict": "जिला चुनें",
+    "selectSubdistrict": "उप-जिला चुनें"
+  },
+  "recyclerList": {
+    "away": "दूर"
   }
 }

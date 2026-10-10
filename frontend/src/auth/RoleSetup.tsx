@@ -5,15 +5,9 @@ import { useTranslation } from 'react-i18next';
 import { api } from '../api';
 import { useAuthStore } from '../hooks/useAuthStore';
 import { Button } from '../components/shared/Button';
-import { Input, Select } from '../components/shared/Input';
+import { Input } from '../components/shared/Input';
+import { AddressFields, EMPTY_ADDRESS, addressError, addressLatLon, type AddressValue } from '../components/shared/AddressFields';
 import type { Role } from './AuthPage';
-
-const AREAS = [
-  ['andheri-east', 'Andheri East'], ['andheri-west', 'Andheri West'], ['bandra-east', 'Bandra East'], ['bandra-west', 'Bandra West'],
-  ['dadar', 'Dadar'], ['lower-parel', 'Lower Parel'], ['worli', 'Worli'], ['powai', 'Powai'], ['thane', 'Thane'], ['navi-mumbai', 'Navi Mumbai'],
-].map(([value, label]) => ({ value, label }));
-const CITIES = [['mumbai', 'Mumbai'], ['pune', 'Pune'], ['nashik', 'Nashik'], ['nagpur', 'Nagpur'], ['thane', 'Thane'], ['navi-mumbai', 'Navi Mumbai']]
-  .map(([value, label]) => ({ value, label }));
 
 // Runs after every Clerk sign-in. Asks the backend who this account is:
 //  - already has this role  -> store the profile and go to the app
@@ -29,7 +23,8 @@ export function RoleSetup({ role }: { role: Role }) {
   const [state, setState] = useState<'loading' | 'form' | 'other' | 'error'>('loading');
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
-  const [f, setF] = useState({ name: '', phone: '', area: '', facilityName: '', city: '', address: '', authNumber: '', contact: '' });
+  const [f, setF] = useState({ name: '', phone: '', facilityName: '', address: '', authNumber: '', contact: '' });
+  const [addr, setAddr] = useState<AddressValue>(EMPTY_ADDRESS);
   const set = (k: keyof typeof f) => (e: { target: { value: string } }) => setF((p) => ({ ...p, [k]: e.target.value }));
   const from = (location.state as { from?: string } | null)?.from;
   const home = from ?? (role === 'collector' ? '/collector/home' : '/recycler/dashboard');
@@ -56,10 +51,11 @@ export function RoleSetup({ role }: { role: Role }) {
     e.preventDefault();
     setError('');
     const req = role === 'collector'
-      ? { name: f.name.trim() || undefined, phone: f.phone.trim() || undefined, area: f.area, language }
-      : { facilityName: f.facilityName.trim(), city: f.city, address: f.address.trim(), authNumber: f.authNumber.trim(), contact: f.contact.trim() };
-    if (role === 'collector' && !f.area) return setError(t('auth.areaRequired', { defaultValue: 'Please select your area' }));
-    if (role === 'recycler' && (!f.facilityName.trim() || !f.city || !f.address.trim() || !f.authNumber.trim() || !f.contact.trim()))
+      ? { name: f.name.trim() || undefined, phone: f.phone.trim() || undefined, ...addr, ...addressLatLon(addr), language }
+      : { facilityName: f.facilityName.trim(), city: addr.district, ...addr, ...addressLatLon(addr), address: f.address.trim(), authNumber: f.authNumber.trim(), contact: f.contact.trim() };
+    const addrErr = addressError(addr, t);
+    if (addrErr) return setError(addrErr);
+    if (role === 'recycler' && (!f.facilityName.trim() || !f.address.trim() || !f.authNumber.trim() || !f.contact.trim()))
       return setError(t('clerkAuth.fillAll', { defaultValue: 'Please fill all fields' }));
     setSaving(true);
     try { apply(await api('POST', role === 'collector' ? '/me/collector' : '/me/recycler', req)); }
@@ -93,12 +89,10 @@ export function RoleSetup({ role }: { role: Role }) {
       {role === 'collector' ? (<>
         <Input label={t('clerkAuth.name', { defaultValue: 'Name (optional)' })} value={f.name} onChange={set('name')} />
         <Input label={t('common.phone', { defaultValue: 'Phone Number' }) + ' (optional)'} type="tel" value={f.phone} onChange={set('phone')} placeholder="+91 98765 43210" />
-        <Select label={t('common.area', { defaultValue: 'Area / Village' })} value={f.area} onChange={set('area')} options={AREAS}
-          placeholder={t('common.selectArea', { defaultValue: 'Select your area' })} />
+        <AddressFields value={addr} onChange={setAddr} />
       </>) : (<>
         <Input label={t('recyclerRegister.facilityName', { defaultValue: 'Facility Name' })} value={f.facilityName} onChange={set('facilityName')} />
-        <Select label={t('recyclerRegister.city', { defaultValue: 'City' })} value={f.city} onChange={set('city')} options={CITIES}
-          placeholder={t('recyclerRegister.selectCity', { defaultValue: 'Select your city' })} />
+        <AddressFields value={addr} onChange={setAddr} />
         <Input label={t('recyclerRegister.address', { defaultValue: 'Full Address' })} value={f.address} onChange={set('address')} />
         <Input label={t('recyclerRegister.authNumber', { defaultValue: 'Authorization Number' })} value={f.authNumber} onChange={set('authNumber')}
           helperText={t('recyclerRegister.authNumberHelper', { defaultValue: 'Issued by Pollution Control Board' })} />

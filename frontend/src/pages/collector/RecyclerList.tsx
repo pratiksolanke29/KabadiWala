@@ -6,6 +6,7 @@ import { CategoryIcon } from '../../components/shared/CategoryIcon';
 import type { RecyclerMatch, Lot } from '../../types';
 import { api } from '../../api';
 import { useState, useEffect } from 'react';
+import { formatKm } from '../../utils/distance';
 import { ArrowLeft, MapPin, Shield, Truck } from 'lucide-react';
 
 export function RecyclerList() {
@@ -136,7 +137,7 @@ function RecyclerCard({ recycler, onSelect }: { recycler: RecyclerMatch; onSelec
           <div className="flex flex-wrap items-center gap-3 text-sm text-[var(--color-text-muted)] mb-2">
             <span className="flex items-center gap-1">
               <MapPin className="w-3.5 h-3.5" />
-              {recycler.distanceKm.toFixed(1)} km
+              {formatKm(recycler.distanceKm)} {t('recyclerList.away', { defaultValue: 'away' })}
             </span>
             <span className="flex items-center gap-1 font-semibold text-[var(--color-copper)] tabular-nums font-mono">
               ₹{recycler.ratePerKg}/kg

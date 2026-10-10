@@ -282,5 +282,17 @@
     "step2": "Category",
     "step3": "Weight",
     "step4": "Estimate"
+  },
+  "address": {
+    "state": "State",
+    "district": "District",
+    "subdistrict": "Subdistrict / Taluka",
+    "pincode": "Pincode",
+    "selectState": "Select state",
+    "selectDistrict": "Select district",
+    "selectSubdistrict": "Select subdistrict"
+  },
+  "recyclerList": {
+    "away": "away"
   }
 }

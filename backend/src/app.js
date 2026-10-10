@@ -23,6 +23,18 @@ const haversine = (a, b) => {
   return 2 * R * Math.asin(Math.sqrt(h));
 };
 const round1 = (x) => Math.round(x * 10) / 10;
+// Lots under 500 kg only go to recyclers within 100 km (transport cost); 500 kg and above can go anywhere.
+const MAX_KM_SMALL_LOT = 100, BIG_LOT_KG = 500;
+const withinReach = (lot, km) => lot.weight_kg >= BIG_LOT_KG || km <= MAX_KM_SMALL_LOT;
+const cleanStr = (v) => (v == null ? null : String(v).trim() || null);
+// Address fields sent by the registration form. lat/lon (centre of the chosen district) are optional but must be inside India's bounding box.
+function addressFrom(b) {
+  const a = { state: cleanStr(b.state), district: cleanStr(b.district), subdistrict: cleanStr(b.subdistrict), pincode: cleanStr(b.pincode) };
+  if (a.pincode && !/^[1-9][0-9]{5}$/.test(a.pincode)) throw bad('Pincode must be 6 digits');
+  const lat = Number(b.lat), lon = Number(b.lon);
+  const ok = b.lat != null && b.lon != null && Number.isFinite(lat) && Number.isFinite(lon) && lat >= 6 && lat <= 37.5 && lon >= 68 && lon <= 98;
+  return { ...a, lat: ok ? lat : null, lon: ok ? lon : null };
+}
 
 // Default Clerk token check: verifies the session JWT with CLERK_SECRET_KEY, then looks up the user's primary email.
 // Returns { userId, email }. Tests pass their own `verifyToken` so no Clerk keys are needed.
@@ -90,6 +102,11 @@ export function createApp(db = openDb(), { verifyToken = clerkVerifier(), identi
     if (!l || l.collector_id !== collectorId) throw new HttpError(404, 'Lot not found');
     return l;
   };
+  // Where the collector is, for distance: registered district centre, else the lot's GPS fix, else the old Mumbai area table.
+  const collectorPoint = (col, lot) =>
+    (col.lat != null && col.lon != null) ? [col.lat, col.lon]
+      : (lot?.gps_lat != null && lot?.gps_lon != null) ? [lot.gps_lat, lot.gps_lon]
+      : AREAS[col.area] ?? [19.076, 72.8777];
   const marketRow = (m) => db.prepare('SELECT * FROM market WHERE material = ?').get(m);
 
   // ---------- health ----------
@@ -100,7 +117,8 @@ export function createApp(db = openDb(), { verifyToken = clerkVerifier(), identi
     if (!u) return { role: null };
     if (u.role === 'collector') {
       const c = db.prepare('SELECT * FROM collectors WHERE id = ?').get(u.profile_id);
-      return { role: 'collector', collectorId: c.id, email: c.email, phone: c.phone, name: c.name, area: c.area, language: c.language };
+      return { role: 'collector', collectorId: c.id, email: c.email, phone: c.phone, name: c.name, area: c.area, language: c.language,
+        state: c.state ?? undefined, district: c.district ?? undefined, subdistrict: c.subdistrict ?? undefined, pincode: c.pincode ?? undefined };
     }
     const r = db.prepare('SELECT * FROM recyclers WHERE id = ?').get(u.profile_id);
     return { role: 'recycler', recyclerId: r.id, email: r.email, authorized: !!r.authorized, rejected: !!r.rejected, facilityName: r.facility_name,
@@ -117,13 +135,18 @@ export function createApp(db = openDb(), { verifyToken = clerkVerifier(), identi
   app.post('/me/collector', wrap(async (req, res) => {
     const cu = await clerkUser(req);
     if (db.prepare('SELECT 1 FROM users WHERE clerk_id = ?').get(cu.userId)) throw new HttpError(409, 'Account already has a role');
-    const { area, name, phone } = req.body ?? {};
-    if (!area || !String(area).trim()) throw bad('Area is required');
+    const { name, phone } = req.body ?? {};
+    const addr = addressFrom(req.body ?? {});
+    // New form sends state/district/subdistrict; older clients send an area slug.
+    const area = req.body?.area && String(req.body.area).trim() ? String(req.body.area).trim()
+      : addr.district ? [addr.subdistrict, addr.district].filter(Boolean).join(', ') : '';
+    if (!area) throw bad('Area is required');
     const language = req.body?.language ?? 'mr';
     if (!['mr', 'hi', 'en'].includes(language)) throw bad('Bad language');
     const id = 'COL-' + uuid().slice(0, 8).toUpperCase();
-    db.prepare('INSERT INTO collectors (id,email,phone,name,area,language,created_at) VALUES (?,?,?,?,?,?,?)')
-      .run(id, cu.email ?? null, phone ? String(phone).trim() : null, name ? String(name).trim() : null, area, language, iso());
+    db.prepare('INSERT INTO collectors (id,email,phone,name,area,language,created_at,state,district,subdistrict,pincode,lat,lon) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)')
+      .run(id, cu.email ?? null, phone ? String(phone).trim() : null, name ? String(name).trim() : null, area, language, iso(),
+        addr.state, addr.district, addr.subdistrict, addr.pincode, addr.lat, addr.lon);
     db.prepare('INSERT INTO users VALUES (?,?,?,?,?)').run(cu.userId, 'collector', id, cu.email ?? null, iso());
     res.status(201).json({ email: cu.email ?? null, ...meOut(db.prepare('SELECT * FROM users WHERE clerk_id = ?').get(cu.userId)) });
   }));
@@ -135,11 +158,12 @@ export function createApp(db = openDb(), { verifyToken = clerkVerifier(), identi
     for (const k of ['facilityName', 'authNumber', 'contact']) if (!b[k] || !String(b[k]).trim()) throw bad(`${k} is required`);
     const id = 'r' + uuid().slice(0, 8);
     const areas = Array.isArray(b.serviceAreas) && b.serviceAreas.length ? b.serviceAreas : Object.keys(AREAS);
-    const [lat, lon] = (b.lat && b.lon) ? [b.lat, b.lon] : AREAS[areas[0]] ?? [19.076, 72.8777];
-    db.prepare(`INSERT INTO recyclers (id,facility_name,email,city,address,auth_number,contact,authorized,pickup_enabled,service_areas,lat,lon,created_at)
-      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`)
-      .run(id, b.facilityName, cu.email ?? null, b.city ?? null, b.address ?? b.location ?? null, b.authNumber, b.contact,
-        autoApprove() ? 1 : 0, 1, JSON.stringify(areas), lat, lon, iso());
+    const addr = addressFrom(b);
+    const [lat, lon] = (addr.lat != null) ? [addr.lat, addr.lon] : AREAS[areas[0]] ?? [19.076, 72.8777];
+    db.prepare(`INSERT INTO recyclers (id,facility_name,email,city,address,auth_number,contact,authorized,pickup_enabled,service_areas,lat,lon,created_at,state,district,subdistrict,pincode)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`)
+      .run(id, b.facilityName, cu.email ?? null, b.city ?? addr.district ?? null, b.address ?? b.location ?? null, b.authNumber, b.contact,
+        autoApprove() ? 1 : 0, 1, JSON.stringify(areas), lat, lon, iso(), addr.state, addr.district, addr.subdistrict, addr.pincode);
     const ins = db.prepare('INSERT INTO recycler_rates VALUES (?,?,?,?)');
     for (const m of CATEGORIES) ins.run(id, m, 1, marketRow(m).rate);
     db.prepare('INSERT INTO users VALUES (?,?,?,?,?)').run(cu.userId, 'recycler', id, cu.email ?? null, iso());
@@ -154,7 +178,7 @@ export function createApp(db = openDb(), { verifyToken = clerkVerifier(), identi
 
   app.get('/admin/recyclers', wrap((req, res) => {
     adminOnly(req);
-    const rows = db.prepare('SELECT * FROM recyclers ORDER BY created_at DESC').all();
+    const rows = db.prepare('SELECT * FROM recyclers WHERE deleted = 0 ORDER BY created_at DESC').all();
     res.json(rows.map((r) => ({
       id: r.id, facilityName: r.facility_name, identifier: r.email ?? r.id, city: r.city, address: r.address,
       authNumber: r.auth_number, contact: r.contact, status: recStatus(r), createdAt: r.created_at,
@@ -177,14 +201,14 @@ export function createApp(db = openDb(), { verifyToken = clerkVerifier(), identi
   }));
 
   // Remove a recycler account. No linked lots -> hard delete (row, rates, role mapping; the Clerk user can sign up again).
-  // Has linked lots -> deactivate instead (rejected), so lot history and receipts stay intact. Either way it leaves Nearby Recyclers.
+  // Has linked lots -> soft delete (hidden from admin list, rejected, login blocked), so lot history and receipts stay intact. Either way it disappears from the admin list and Nearby Recyclers.
   app.delete('/admin/recyclers/:id', wrap((req, res) => {
     adminOnly(req);
-    const r = db.prepare('SELECT id FROM recyclers WHERE id = ?').get(req.params.id);
+    const r = db.prepare('SELECT id FROM recyclers WHERE id = ? AND deleted = 0').get(req.params.id);
     if (!r) throw new HttpError(404, 'Recycler not found');
     const lotCount = db.prepare('SELECT COUNT(*) AS n FROM lots WHERE recycler_id = ?').get(r.id).n;
     if (lotCount > 0) {
-      db.prepare('UPDATE recyclers SET authorized = 0, rejected = 1 WHERE id = ?').run(r.id);
+      db.prepare('UPDATE recyclers SET authorized = 0, rejected = 1, deleted = 1 WHERE id = ?').run(r.id);
       return res.json({ success: true, mode: 'deactivated', lotCount });
     }
     db.prepare('DELETE FROM recycler_rates WHERE recycler_id = ?').run(r.id);
@@ -217,7 +241,7 @@ export function createApp(db = openDb(), { verifyToken = clerkVerifier(), identi
         FROM lots WHERE collector_id = ?`).get(c.id);
       return {
         id: c.id, name: c.name ?? null, email: c.email ?? null, phone: c.phone ?? null,
-        area: c.area, language: c.language, createdAt: c.created_at,
+        area: c.area, state: c.state ?? null, district: c.district ?? null, language: c.language, createdAt: c.created_at,
         lotCount: st.n, handedOver: st.done ?? 0, totalEarned: Math.round(st.earned ?? 0),
         lastActiveAt: st.last_active ?? null,
       };
@@ -311,25 +335,25 @@ export function createApp(db = openDb(), { verifyToken = clerkVerifier(), identi
   app.post('/lots/:id/find-recyclers', C, wrap((req, res) => {
     const lot = ownLot(req.params.id, req.userId);
     if (lot.status === 'HandedOver' || lot.status === 'Paid') throw new HttpError(409, 'Lot already handed over');
-    const col = db.prepare('SELECT area FROM collectors WHERE id = ?').get(req.userId);
-    const from = (lot.gps_lat != null && lot.gps_lon != null) ? [lot.gps_lat, lot.gps_lon] : AREAS[col.area] ?? [19.076, 72.8777];
+    const col = db.prepare('SELECT * FROM collectors WHERE id = ?').get(req.userId);
+    const from = collectorPoint(col, lot);
     const declined = new Set(db.prepare('SELECT recycler_id FROM declines WHERE lot_id = ?').all(lot.id).map((d) => d.recycler_id));
     const rows = db.prepare(`SELECT r.*, rr.rate_per_kg FROM recyclers r JOIN recycler_rates rr ON rr.recycler_id = r.id
       WHERE r.authorized = 1 AND rr.material = ? AND rr.accept = 1`).all(lot.category);
     const out = rows
-      .filter((r) => !declined.has(r.id) && JSON.parse(r.service_areas).includes(col.area))
+      .filter((r) => !declined.has(r.id))
       .map((r) => ({ id: r.id, name: r.facility_name, distanceKm: round1(haversine(from, [r.lat, r.lon])), ratePerKg: r.rate_per_kg, verified: !!r.authorized, pickupAvailable: !!r.pickup_enabled }))
-      .sort((a, b) => b.ratePerKg - a.ratePerKg || a.distanceKm - b.distanceKm || Number(b.verified) - Number(a.verified));
+      .filter((r) => withinReach(lot, r.distanceKm))
+      .sort((a, b) => a.distanceKm - b.distanceKm || b.ratePerKg - a.ratePerKg || Number(b.verified) - Number(a.verified));
     res.json(out);
   }));
 
   app.post('/lots/:id/choose-recycler', C, wrap(async (req, res) => {
     const lot = ownLot(req.params.id, req.userId);
     if (lot.status !== 'Draft' && lot.status !== 'Quoted') throw new HttpError(409, 'Lot can no longer change recycler');
-    const col = db.prepare('SELECT area FROM collectors WHERE id = ?').get(req.userId);
     const r = db.prepare(`SELECT r.*, rr.rate_per_kg FROM recyclers r JOIN recycler_rates rr ON rr.recycler_id = r.id
       WHERE r.id = ? AND r.authorized = 1 AND rr.material = ? AND rr.accept = 1`).get(req.body?.recyclerId ?? '', lot.category);
-    if (!r || !JSON.parse(r.service_areas).includes(col.area)) throw bad('Recycler not available for this lot');
+    if (!r || !withinReach(lot, haversine(collectorPoint(db.prepare('SELECT * FROM collectors WHERE id = ?').get(req.userId), lot), [r.lat, r.lon]))) throw bad('Recycler not available for this lot');
     const rate = r.rate_per_kg, total = Math.round(rate * lot.weight_kg);
     const code = code6();
     db.prepare(`UPDATE lots SET status='Quoted', recycler_id=?, recycler_status='Pending', quoted_rate=?, quoted_total=?, handover_code=?, code_used=0, updated_at=? WHERE id=?`)
@@ -400,7 +424,7 @@ export function createApp(db = openDb(), { verifyToken = clerkVerifier(), identi
   const incomingOut = (l) => {
     const col = db.prepare('SELECT * FROM collectors WHERE id = ?').get(l.collector_id);
     const rec = recOf(l.recycler_id);
-    const from = (l.gps_lat != null && l.gps_lon != null) ? [l.gps_lat, l.gps_lon] : AREAS[col.area] ?? [19.076, 72.8777];
+    const from = collectorPoint(col, l);
     return {
       id: l.id, photoUrl: l.photo_url, category: l.category, weightKg: l.weight_kg, collectorId: col.id,
       collectorName: col.name || col.phone || col.email, collectorPhone: col.phone || col.email,

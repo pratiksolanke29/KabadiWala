@@ -156,7 +156,7 @@ export function Profile() {
                 label={t('common.area', { defaultValue: 'Service Area' })}
                 value={area}
                 onChange={(e) => setArea(e.target.value)}
-                options={MOCK_AREAS}
+                options={MOCK_AREAS.some((a) => a.value === area) || !area ? MOCK_AREAS : [{ value: area, label: area }, ...MOCK_AREAS]}
                 placeholder={t('common.selectArea', { defaultValue: 'Select your area' })}
               />
             </div>

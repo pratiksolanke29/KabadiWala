@@ -75,12 +75,13 @@ export function AdminPanel() {
     } catch (e) { setError((e as Error).message); }
   };
 
-  // Delete a recycler: no lots -> removed fully; with lots -> deactivated (kept as Rejected).
+  // Delete a recycler: removed from this list immediately (with lots it is hidden but kept in the DB for history).
   const removeRecycler = async (r: AdminRecycler) => {
     const msg = r.lotCount > 0 ? t('admin.deactivateConfirm', { name: r.facilityName }) : t('admin.deleteConfirm', { name: r.facilityName });
     if (!window.confirm(msg)) return;
     try {
       await adminFetch(key, 'DELETE', `/admin/recyclers/${r.id}`);
+      setRecyclers((prev) => prev.filter((x) => x.id !== r.id));
       await load(key);
     } catch (e) { setError((e as Error).message); }
   };
@@ -89,6 +90,7 @@ export function AdminPanel() {
     if (!window.confirm(t('admin.deleteConfirm', { name: c.name || c.id }))) return;
     try {
       await adminFetch(key, 'DELETE', `/admin/collectors/${c.id}`);
+      setCollectors((prev) => prev.filter((x) => x.id !== c.id));
       await load(key);
     } catch (e) { setError((e as Error).message); }
   };
@@ -145,7 +147,7 @@ export function AdminPanel() {
             {t('admin.recyclers')} ({recyclers.length}){pending > 0 && ` · ${pending} ${t('admin.pendingShort')}`}
           </button>
           <button onClick={() => setTab('collectors')} data-testid="tab-collectors"
-            className={`px-4 py-2 rounded ${tab === 'collectors' ? 'bg-orange-600 text-white' : 'bg-white border'}`}>
+            className={`px-4 py-2 rounded ${tab === 'collectors' ? 'bg-orange-600 text-white' : 'bg-white border text-gray-800'}`}>
             {t('admin.collectors')} ({collectors.length})
           </button>
           <button onClick={() => setTab('lots')} data-testid="tab-lots"
@@ -194,7 +196,7 @@ export function AdminPanel() {
         )}
 
         {tab === 'collectors' && (
-          <div className="bg-white rounded-lg shadow-sm overflow-x-auto">
+          <div className="bg-white rounded-lg shadow-sm overflow-x-auto text-gray-800">
             <table className="w-full text-sm text-left">
               <thead className="bg-gray-100 text-gray-700">
                 <tr>

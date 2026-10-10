@@ -282,5 +282,17 @@
     "step2": "प्रकार",
     "step3": "वजन",
     "step4": "अंदाज"
+  },
+  "address": {
+    "state": "राज्य",
+    "district": "जिल्हा",
+    "subdistrict": "उप-जिल्हा / तालुका",
+    "pincode": "पिनकोड",
+    "selectState": "राज्य निवडा",
+    "selectDistrict": "जिल्हा निवडा",
+    "selectSubdistrict": "तालुका निवडा"
+  },
+  "recyclerList": {
+    "away": "दूर"
   }
 }
