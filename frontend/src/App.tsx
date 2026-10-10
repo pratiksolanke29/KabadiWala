@@ -103,6 +103,9 @@ function App() {
           {/* Catch all */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        <footer className="bg-[var(--color-surface)] text-center text-xs text-[var(--color-text-subtle)] py-3">
+          © 2026 KabadiWala. All rights reserved.
+        </footer>
       </BrowserRouter>
     </QueryClientProvider>
   );

@@ -305,7 +305,7 @@ export function createApp(db = openDb(), { verifyToken = clerkVerifier(), identi
   }
   app.post('/estimate', C, wrap((req, res) => {
     const { category, weightKg } = req.body ?? {};
-    if (!(weightKg > 0 && weightKg <= 1000)) throw bad('Weight must be > 0 and <= 1000 kg');
+    if (!(weightKg >= 1 && weightKg <= 10000)) throw bad('Weight must be between 1 and 10000 kg');
     res.json(estimate(category, Number(weightKg)));
   }));
 
@@ -313,7 +313,7 @@ export function createApp(db = openDb(), { verifyToken = clerkVerifier(), identi
     const { photoUrl, category, gpsLat, gpsLon } = req.body ?? {};
     const weightKg = Number(req.body?.weightKg);
     if (!CATEGORIES.includes(category)) throw bad('Invalid category');
-    if (!(weightKg > 0 && weightKg <= 1000)) throw bad('Weight must be > 0 and <= 1000 kg');
+    if (!(weightKg >= 1 && weightKg <= 10000)) throw bad('Weight must be between 1 and 10000 kg');
     if (!photoUrl) throw bad('Photo is required');
     const { estimateMin, estimateMax } = estimate(category, weightKg);
     const id = uuid(), now = iso();

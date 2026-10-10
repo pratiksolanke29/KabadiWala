@@ -26,7 +26,7 @@ export function CreateLotWeight() {
       // Estimate comes from the backend (market min/max x weight)
       api<{ estimateMin: number; estimateMax: number }>('POST', '/estimate', { category: draft.category, weightKg: numValue })
         .then((e) => setEstimate(e.estimateMin, e.estimateMax))
-        .catch(() => setError('Weight must be between 0 and 1000 kg'));
+        .catch(() => setError('Weight must be between 1 and 10000 kg'));
     }
   };
 
@@ -95,12 +95,12 @@ export function CreateLotWeight() {
               value={weight}
               onChange={handleWeightChange}
               error={error}
-              min={0.1}
-              max={1000}
+              min={1}
+              max={10000}
               step={0.5}
               integerOnly={false}
               showControls={true}
-              helperText={t('createLot.weightHelper', { defaultValue: 'Enter weight between 0.1 and 1000 kg' })}
+              helperText={t('createLot.weightHelper', { defaultValue: 'Enter weight between 1 and 10000 kg' })}
             />
           </div>
 
