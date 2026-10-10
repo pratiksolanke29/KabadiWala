@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
-import { useLotStore } from '../../hooks/useLotStore';
+import { Navigate, useNavigate } from 'react-router-dom';
+import { draftRedirect, useLotStore } from '../../hooks/useLotStore';
 import { CategoryGrid, CategoryIcon } from '../../components/shared/CategoryIcon';
 import { Button } from '../../components/shared/Button';
 import { CATEGORIES, type Category } from '../../types';
@@ -12,7 +12,7 @@ import { ArrowLeft, Sparkles } from 'lucide-react';
 export function CreateLotCategory() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const { draft, setCategory } = useLotStore();
+  const { draft, setCategory, setWeight, setEstimate } = useLotStore();
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(draft.category);
   const [result, setResult] = useState<Identification | null>(null);
   const [loading, setLoading] = useState(false);
@@ -29,9 +29,14 @@ export function CreateLotCategory() {
   }, [draft.photoUrl, language]);
   const aiSuggestion = result?.available ? result.lotCategory ?? undefined : undefined;
 
+  const redirect = draftRedirect(draft, 'category');
+  if (redirect) return <Navigate to={redirect} replace />;
+
   const handleCategorySelect = (category: Category) => {
     setSelectedCategory(category);
     setCategory(category);
+    setWeight(null);
+    setEstimate(null, null);
   };
 
   const handleNext = () => {

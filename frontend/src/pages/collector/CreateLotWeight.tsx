@@ -1,12 +1,12 @@
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
-import { useLotStore } from '../../hooks/useLotStore';
-import { api } from '../../api';
+import { Navigate, useNavigate } from 'react-router-dom';
+import { draftRedirect, useLotStore } from '../../hooks/useLotStore';
+import { api, ApiError } from '../../api';
 import { NumberInput } from '../../components/shared/NumberInput';
 import { Button } from '../../components/shared/Button';
 import { CategoryIcon } from '../../components/shared/CategoryIcon';
 import { CATEGORIES } from '../../types';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
 
 export function CreateLotWeight() {
@@ -15,18 +15,23 @@ export function CreateLotWeight() {
   const { draft, setWeight, setEstimate } = useLotStore();
   const [weight, setWeightState] = useState<number | null>(draft.weightKg);
   const [error, setError] = useState('');
+  const reqId = useRef(0);
 
   const handleWeightChange = (value: string) => {
     const numValue = value === '' ? null : parseFloat(value);
     setWeightState(numValue);
     setError('');
 
+    const id = ++reqId.current; // newest request wins
     if (numValue !== null && numValue > 0) {
       setWeight(numValue);
-      // Estimate comes from the backend (market min/max x weight)
+      // Preview only: estimate page fetches its own authoritative estimate.
       api<{ estimateMin: number; estimateMax: number }>('POST', '/estimate', { category: draft.category, weightKg: numValue })
-        .then((e) => setEstimate(e.estimateMin, e.estimateMax))
-        .catch(() => setError('Weight must be between 1 and 10000 kg'));
+        .then((e) => { if (id === reqId.current) setEstimate(e.estimateMin, e.estimateMax); })
+        .catch((err) => {
+          if (id !== reqId.current) return;
+          setError(err instanceof ApiError && err.message ? err.message : t('createLot.estimateError', { defaultValue: 'Could not get estimate. Please try again.' }));
+        });
     }
   };
 
@@ -43,6 +48,9 @@ export function CreateLotWeight() {
   };
 
   const categoryInfo = draft.category ? CATEGORIES.find(c => c.id === draft.category) : null;
+  const redirect = draftRedirect(draft, 'weight');
+  const category = draft.category;
+  if (redirect || !category) return <Navigate to={redirect ?? '/collector/create-lot/category'} replace />;
 
   return (
     <div className="min-h-screen bg-[var(--color-surface)] copper-accent">
@@ -78,10 +86,10 @@ export function CreateLotWeight() {
         <div className="bg-[var(--color-surface-elevated)] rounded-2xl shadow-xl p-6 border border-[var(--color-border)]">
           {/* Category Summary */}
           <div className="flex items-center gap-4 mb-6 p-4 bg-[var(--color-surface-alt)] rounded-xl">
-            <CategoryIcon category={draft.category!} size="lg" />
+            <CategoryIcon category={category} size="lg" />
             <div>
               <p className="text-sm text-[var(--color-text-muted)]">{t('createLot.category', { defaultValue: 'Category' })}</p>
-              <p className="font-semibold text-[var(--color-text)] text-lg">{draft.category}</p>
+              <p className="font-semibold text-[var(--color-text)] text-lg">{category}</p>
             </div>
           </div>
 

@@ -10,15 +10,27 @@ interface LotDraft {
   estimateMax: number | null;
 }
 
+export type DraftStep = 'category' | 'weight' | 'estimate';
+
+/** Path of the earliest create-lot step whose input is missing, or null if `step` can render. */
+export function draftRedirect(draft: LotDraft, step: DraftStep): string | null {
+  if (!draft.photoUrl) return '/collector/create-lot/photo';
+  if (step === 'category') return null;
+  if (!draft.category) return '/collector/create-lot/category';
+  if (step === 'weight') return null;
+  if (!draft.weightKg || draft.weightKg <= 0) return '/collector/create-lot/weight';
+  return null;
+}
+
 interface LotStore {
   draft: LotDraft;
   setPhoto: (url: string) => void;
   setCategory: (category: Category) => void;
-  setWeight: (weight: number) => void;
-  setEstimate: (min: number, max: number) => void;
+  setWeight: (weight: number | null) => void;
+  setEstimate: (min: number | null, max: number | null) => void;
   resetDraft: () => void;
   isDraftComplete: () => boolean;
-  
+
   // Saved lots (loaded from the backend)
   savedLots: Lot[];
   addSavedLot: (lot: Lot) => void;

@@ -1,13 +1,13 @@
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
-import { useLotStore } from '../../hooks/useLotStore';
+import { Navigate, useNavigate } from 'react-router-dom';
+import { draftRedirect, useLotStore } from '../../hooks/useLotStore';
 import { Button } from '../../components/shared/Button';
 import { CategoryIcon } from '../../components/shared/CategoryIcon';
 import { StatusChip } from '../../components/shared/StatusChip';
-import { CATEGORIES, type Category, type Lot } from '../../types';
-import { useState } from 'react';
+import { type Category, type Lot } from '../../types';
+import { useCallback, useEffect, useState } from 'react';
 import { ArrowLeft, Save, Search, QrCode, Share2, CheckCircle } from 'lucide-react';
-import { api } from '../../api';
+import { api, ApiError } from '../../api';
 import { Modal } from '../../components/shared/Modal';
 
 export function CreateLotEstimate() {
@@ -16,6 +16,28 @@ export function CreateLotEstimate() {
   const { draft, addSavedLot, resetDraft } = useLotStore();
   const [showSaveConfirm, setShowSaveConfirm] = useState(false);
   const [savedLot, setSavedLot] = useState<Lot | null>(null);
+  const [est, setEst] = useState<{ min: number; max: number } | null>(null);
+  const [estFailed, setEstFailed] = useState(false);
+  const [estMsg, setEstMsg] = useState('');
+  const [attempt, setAttempt] = useState(0);
+
+  const { category, weightKg } = draft;
+  useEffect(() => {
+    if (!category || !weightKg) return;
+    let active = true; // ignore stale responses
+    setEst(null);
+    setEstFailed(false);
+    setEstMsg('');
+    api<{ estimateMin: number; estimateMax: number }>('POST', '/estimate', { category, weightKg })
+      .then((e) => { if (active) setEst({ min: e.estimateMin, max: e.estimateMax }); })
+      .catch((err) => {
+        if (!active) return;
+        setEstMsg(err instanceof ApiError ? err.message : '');
+        setEstFailed(true);
+      });
+    return () => { active = false; };
+  }, [category, weightKg, attempt]);
+  const retry = useCallback(() => setAttempt((n) => n + 1), []);
 
   const createOnServer = async (): Promise<Lot | null> => {
     try {
@@ -35,7 +57,6 @@ export function CreateLotEstimate() {
     if (!lot) return;
     setSavedLot(lot);
     setShowSaveConfirm(true);
-    resetDraft();
   };
 
   const handleFindRecycler = async () => {
@@ -52,14 +73,19 @@ export function CreateLotEstimate() {
   const handleDone = () => {
     setShowSaveConfirm(false);
     navigate('/collector/my-lots');
+    resetDraft();
   };
 
   const handleViewLot = () => {
     setShowSaveConfirm(false);
     navigate(`/collector/my-lots/${savedLot?.id}`);
+    resetDraft();
   };
 
-  const categoryInfo = draft.category ? CATEGORIES.find(c => c.id === draft.category) : null;
+  const redirect = draftRedirect(draft, 'estimate');
+  // Draft is cleared only after leaving; while the saved-lot modal is open, never redirect.
+  if (!savedLot && (redirect || !category)) return <Navigate to={redirect ?? '/collector/create-lot/category'} replace />;
+  const estReady = est !== null;
 
   return (
     <div className="min-h-screen bg-[var(--color-surface)] copper-accent">
@@ -96,14 +122,14 @@ export function CreateLotEstimate() {
           {/* Category & Weight Summary */}
           <div className="bg-[var(--color-surface-elevated)] rounded-2xl shadow-xl overflow-hidden border border-[var(--color-border)]">
             <div className="flex items-center gap-4 p-4 bg-[var(--color-surface-alt)] border-b border-[var(--color-border)]">
-              <CategoryIcon category={draft.category!} size="xl" />
+              <CategoryIcon category={category ?? savedLot?.category ?? 'PCB'} size="xl" />
               <div className="flex-1">
                 <p className="text-sm text-[var(--color-text-muted)]">{t('createLot.category', { defaultValue: 'Category' })}</p>
-                <p className="font-semibold text-[var(--color-text)] text-lg">{draft.category}</p>
+                <p className="font-semibold text-[var(--color-text)] text-lg">{category ?? savedLot?.category}</p>
               </div>
               <div className="text-right">
                 <p className="text-sm text-[var(--color-text-muted)]">{t('createLot.weight', { defaultValue: 'Weight' })}</p>
-                <p className="font-semibold text-[var(--color-text)] text-xl tabular-nums font-mono">{draft.weightKg} kg</p>
+                <p className="font-semibold text-[var(--color-text)] text-xl tabular-nums font-mono">{draft.weightKg ?? savedLot?.weightKg} kg</p>
               </div>
             </div>
           </div>
@@ -112,34 +138,47 @@ export function CreateLotEstimate() {
           <div className="bg-[var(--color-surface-elevated)] rounded-2xl shadow-xl p-6 border border-[var(--color-border)]">
             <div className="text-center mb-6">
               <p className="text-sm text-[var(--color-text-muted)] mb-2">{t('createLot.estimatedValue', { defaultValue: 'Estimated Value' })}</p>
-              <div className="flex items-baseline justify-center gap-2">
-                <span className="text-4xl font-bold text-[var(--color-copper)] tabular-nums font-mono">₹{draft.estimateMin!.toLocaleString()}</span>
-                <span className="text-[var(--color-text-subtle)] text-xl">-</span>
-                <span className="text-4xl font-bold text-[var(--color-copper)] tabular-nums font-mono">₹{draft.estimateMax!.toLocaleString()}</span>
-              </div>
-              <p className="text-xs text-[var(--color-text-muted)] mt-2">{t('createLot.perKg', { defaultValue: 'per kg' })}</p>
+              {estFailed ? (
+                <div role="alert" className="space-y-3">
+                  <p className="text-[var(--color-danger,#b91c1c)]">{estMsg || t('createLot.estimateError', { defaultValue: 'Could not get estimate. Please try again.' })}</p>
+                  <Button variant="outline" onClick={retry}>{t('common.retry', { defaultValue: 'Retry' })}</Button>
+                </div>
+              ) : est ? (
+                <>
+                  <div className="flex items-baseline justify-center gap-2">
+                    <span className="text-4xl font-bold text-[var(--color-copper)] tabular-nums font-mono">₹{est.min.toLocaleString()}</span>
+                    <span className="text-[var(--color-text-subtle)] text-xl">-</span>
+                    <span className="text-4xl font-bold text-[var(--color-copper)] tabular-nums font-mono">₹{est.max.toLocaleString()}</span>
+                  </div>
+                  <p className="text-xs text-[var(--color-text-muted)] mt-2">{t('createLot.perKg', { defaultValue: 'per kg' })}</p>
+                </>
+              ) : (
+                <p role="status" className="text-[var(--color-text-muted)]">{t('common.loading', { defaultValue: 'Loading...' })}</p>
+              )}
             </div>
 
+            {est && (
             <div className="p-4 bg-[var(--color-surface-alt)] rounded-xl mb-6">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-[var(--color-text-muted)]">{t('createLot.marketRange', { defaultValue: 'Market Range' })}</span>
-                <span className="font-medium text-[var(--color-text)] tabular-nums font-mono">₹{Math.round(draft.estimateMin! * 0.9).toLocaleString()} - ₹{Math.round(draft.estimateMax! * 1.1).toLocaleString()}</span>
+                <span className="font-medium text-[var(--color-text)] tabular-nums font-mono">₹{Math.round(est.min * 0.9).toLocaleString()} - ₹{Math.round(est.max * 1.1).toLocaleString()}</span>
               </div>
               <div className="flex items-center justify-between text-sm mt-1">
                 <span className="text-[var(--color-text-muted)]">{t('createLot.recyclerOffered', { defaultValue: 'Recycler Offered' })}</span>
-                <span className="font-medium text-[var(--color-verdigris)] tabular-nums font-mono">₹{Math.round((draft.estimateMin! + draft.estimateMax!) / 2).toLocaleString()}</span>
+                <span className="font-medium text-[var(--color-verdigris)] tabular-nums font-mono">₹{Math.round((est.min + est.max) / 2).toLocaleString()}</span>
               </div>
             </div>
+            )}
 
             <p className="text-xs text-[var(--color-text-muted)] text-center mb-6">{t('createLot.estimateDisclaimer', { defaultValue: 'Final price may vary based on actual condition and market rates' })}</p>
 
             {/* Action Buttons */}
             <div className="space-y-3">
-              <Button variant="primary" fullWidth size="lg" onClick={handleFindRecycler}>
+              <Button variant="primary" fullWidth size="lg" onClick={handleFindRecycler} disabled={!estReady}>
                 <Search className="w-5 h-5" />
                 {t('common.findRecycler', { defaultValue: 'Find Recycler' })}
               </Button>
-              <Button variant="secondary" fullWidth size="lg" onClick={handleSaveLot}>
+              <Button variant="secondary" fullWidth size="lg" onClick={handleSaveLot} disabled={!estReady}>
                 <Save className="w-5 h-5" />
                 {t('createLot.saveLot', { defaultValue: 'Save Lot' })}
               </Button>
