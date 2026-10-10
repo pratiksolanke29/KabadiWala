@@ -127,7 +127,8 @@
     "collector": "Collector",
     "location": "Location",
     "areasHelp": "Separate service areas with commas. Use the same area names as collectors, for example andheri-east.",
-    "pickupEnabled": "Pickup available"
+    "pickupEnabled": "Pickup available",
+    "confirmPayment": "Confirm Payment"
   },
   "categories": {
     "CRT": "CRT",

@@ -127,7 +127,8 @@
     "collector": "संकलक",
     "location": "ठिकाण",
     "areasHelp": "सेवा क्षेत्रे स्वल्पविरामाने वेगळी करा. संकलकांप्रमाणेच क्षेत्रांची नावे वापरा, उदा. andheri-east.",
-    "pickupEnabled": "पिकअप उपलब्ध"
+    "pickupEnabled": "पिकअप उपलब्ध",
+    "confirmPayment": "पेमेंट निश्चित करा"
   },
   "categories": {
     "CRT": "CRT",

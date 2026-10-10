@@ -127,7 +127,8 @@
     "collector": "संग्राहक",
     "location": "स्थान",
     "areasHelp": "सेवा क्षेत्रों को कॉमा से अलग करें। संग्राहकों जैसे ही क्षेत्र नाम लिखें, जैसे andheri-east।",
-    "pickupEnabled": "पिकअप उपलब्ध"
+    "pickupEnabled": "पिकअप उपलब्ध",
+    "confirmPayment": "भुगतान की पुष्टि करें"
   },
   "categories": {
     "CRT": "CRT",

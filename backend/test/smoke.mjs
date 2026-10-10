@@ -35,6 +35,10 @@ const pbd = await call('GET', '/price-board/' + encodeURIComponent('Motors/Magne
 
 // create lot
 await call('POST', '/lots', { photoUrl: 'x', category: 'PCB', weightKg: 0 }, ct, 400);
+await call('POST', '/lots', { photoUrl: 'x', category: 'PCB', weightKg: 0.5 }, ct, 400);
+await call('POST', '/lots', { photoUrl: 'x', category: 'PCB', weightKg: 10001 }, ct, 400);
+await call('POST', '/estimate', { category: 'PCB', weightKg: 10000 }, ct, 200);
+await call('POST', '/estimate', { category: 'PCB', weightKg: 10001 }, ct, 400);
 const created = await call('POST', '/lots', { photoUrl: 'data:image/png;base64,AAAA', category: 'PCB', weightKg: 25 }, ct, 201);
 assert.equal(created.estimateMin, 25 * 55); assert.equal(created.estimateMax, 25 * 70); ok('create lot + server estimate');
 const lotId = created.lotId;
@@ -145,6 +149,22 @@ await call('POST', '/me/collector', { area: 'thane', name: 'Temp C' }, 'tok:user
 const tempId = (await adm('GET', '/admin/collectors')).body.find((x) => x.name === 'Temp C').id;
 assert.equal((await adm('DELETE', `/admin/collectors/${tempId}`)).body.mode, 'deleted');
 assert(!(await adm('GET', '/admin/collectors')).body.some((x) => x.id === tempId)); ok('collector delete: blocked with lots, clean delete without lots');
+// pending payment -> recycler confirms later
+{
+  const pl = await call('POST', '/lots', { photoUrl: 'data:image/png;base64,AAAA', category: 'PCB', weightKg: 10 }, ct, 201);
+  const pm = await call('POST', `/lots/${pl.lotId}/find-recyclers`, null, ct);
+  const prid = pm[0].id, ptok = asRecycler(prid);
+  const ch = await call('POST', `/lots/${pl.lotId}/choose-recycler`, { recyclerId: prid }, ct);
+  await call('POST', `/lots/${pl.lotId}/accept`, {}, ptok);
+  await call('POST', `/handover/${pl.lotId}/confirm`, { refId: ch.handoverCode, finalWeightKg: 10, paymentMode: 'Pending' }, ptok);
+  assert.equal((await call('GET', '/transactions', null, ptok)).find((x) => x.lotId === pl.lotId).paymentStatus, 'Pending');
+  await call('POST', `/transactions/${pl.lotId}/confirm-payment`, { paymentMode: 'Bogus' }, ptok, 400);
+  await call('POST', `/transactions/${pl.lotId}/confirm-payment`, { paymentMode: 'Digital' }, ptok);
+  assert.equal((await call('GET', '/transactions', null, ptok)).find((x) => x.lotId === pl.lotId).paymentStatus, 'Paid');
+  assert.equal((await call('GET', `/lots/${pl.lotId}`, null, ct)).status, 'Paid');
+  await call('POST', `/transactions/${pl.lotId}/confirm-payment`, {}, ptok, 409);
+  ok('pending payment can be confirmed once -> Paid');
+}
 // structured address + distance: Delhi collector, Nagpur recycler
 const dc = 'tok:user_delhi:d@x.com';
 await call('POST', '/me/collector', { name: 'Delhi C', state: 'Delhi', district: 'New Delhi', subdistrict: 'Connaught Place', pincode: '110001', lat: 28.61, lon: 77.21 }, dc, 201);

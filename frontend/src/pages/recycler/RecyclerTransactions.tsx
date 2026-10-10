@@ -73,6 +73,7 @@ export function RecyclerTransactions() {
                   row={row}
                   money={money}
                   onView={() => receipt(row.lotId)}
+                  onPaid={load}
                   detailLoading={detailLoading}
                   language={i18n.language}
                 />
@@ -113,14 +114,23 @@ export function RecyclerTransactions() {
   );
 }
 
-function TransactionRow({ row, money, onView, detailLoading, language }: {
+function TransactionRow({ row, money, onView, onPaid, detailLoading, language }: {
   row: TransactionRow;
   money: (amount: number) => string;
   onView: () => void;
+  onPaid: () => void;
   detailLoading: boolean;
   language: string;
 }) {
   const { t } = useTranslation();
+  const [mode, setMode] = useState<'Cash' | 'Digital'>('Cash');
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+  const confirmPayment = async () => {
+    setBusy(true); setErr('');
+    try { await api('POST', `/transactions/${encodeURIComponent(row.lotId)}/confirm-payment`, { paymentMode: mode }); onPaid(); }
+    catch (e) { setErr((e as Error).message); setBusy(false); }
+  };
   const materialLabel = t('categories.' + row.material, { defaultValue: row.material });
   const statusLabel = t('common.' + row.paymentStatus.toLowerCase(), { defaultValue: row.paymentStatus });
 
@@ -142,6 +152,19 @@ function TransactionRow({ row, money, onView, detailLoading, language }: {
           </Button>
         </div>
       </div>
+      {row.paymentStatus === 'Pending' && (
+        <div className="flex items-center justify-end gap-3">
+          <select value={mode} onChange={(e) => setMode(e.target.value as 'Cash' | 'Digital')} disabled={busy} aria-label={t('common.paymentMode', { defaultValue: 'Payment Mode' })}
+            className="border border-[var(--color-border)] rounded-lg px-2 py-1 text-sm bg-[var(--color-surface-elevated)] text-[var(--color-text)]">
+            <option value="Cash">{t('common.cash', { defaultValue: 'Cash' })}</option>
+            <option value="Digital">{t('common.digital', { defaultValue: 'Digital' })}</option>
+          </select>
+          <Button variant="primary" size="sm" onClick={confirmPayment} disabled={busy}>
+            {t('recyclerPages.confirmPayment', { defaultValue: 'Confirm Payment' })}
+          </Button>
+        </div>
+      )}
+      {err && <p role="alert" className="text-sm text-[var(--color-warning)]">{err}</p>}
     </article>
   );
 }

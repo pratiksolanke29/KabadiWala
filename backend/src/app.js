@@ -513,6 +513,16 @@ export function createApp(db = openDb(), { verifyToken = clerkVerifier(), identi
     const rows = db.prepare(`SELECT * FROM lots WHERE recycler_id = ? AND status IN ('HandedOver','Paid') ORDER BY handed_over_at DESC`).all(req.userId);
     res.json(rows.map((l) => ({ lotId: l.id, date: l.handed_over_at, material: l.category, finalAmount: l.final_total, paymentStatus: l.payment_mode === 'Pending' ? 'Pending' : 'Paid' })));
   }));
+  // Recycler marks a "Pending" payment as received: HandedOver -> Paid (collector earnings count it from now).
+  app.post('/transactions/:lotId/confirm-payment', R, wrap((req, res) => {
+    const l = recLot(req.params.lotId, req.userId);
+    const mode = req.body?.paymentMode ?? 'Cash';
+    if (!['Cash', 'Digital'].includes(mode)) throw bad('paymentMode must be Cash or Digital');
+    if (l.status !== 'HandedOver' || l.payment_mode !== 'Pending') throw new HttpError(409, 'No pending payment on this lot');
+    const now = iso();
+    db.prepare(`UPDATE lots SET status='Paid', payment_mode=?, paid_at=?, updated_at=? WHERE id=?`).run(mode, now, now, l.id);
+    res.json({ success: true, paymentStatus: 'Paid', paymentMode: mode });
+  }));
   app.get('/transactions/:lotId', R, wrap((req, res) => {
     const l = db.prepare(`SELECT l.*, c.name AS collector_name, COALESCE(c.phone, c.email) AS collector_phone FROM lots l JOIN collectors c ON c.id = l.collector_id
       WHERE l.id = ? AND l.recycler_id = ? AND l.status IN ('HandedOver','Paid')`).get(req.params.lotId, req.userId);
