@@ -20,6 +20,7 @@ export function CreateLotEstimate() {
   const [estFailed, setEstFailed] = useState(false);
   const [estMsg, setEstMsg] = useState('');
   const [attempt, setAttempt] = useState(0);
+  const [saving, setSaving] = useState(false);
 
   const { category, weightKg } = draft;
   useEffect(() => {
@@ -53,7 +54,10 @@ export function CreateLotEstimate() {
   };
 
   const handleSaveLot = async () => {
+    if (saving) return;
+    setSaving(true);
     const lot = await createOnServer();
+    setSaving(false);
     if (!lot) return;
     setSavedLot(lot);
     setShowSaveConfirm(true);
@@ -174,11 +178,11 @@ export function CreateLotEstimate() {
 
             {/* Action Buttons */}
             <div className="space-y-3">
-              <Button variant="primary" fullWidth size="lg" onClick={handleFindRecycler} disabled={!estReady}>
+              <Button variant="primary" fullWidth size="lg" onClick={handleFindRecycler} disabled={!estReady || saving}>
                 <Search className="w-5 h-5" />
                 {t('common.findRecycler', { defaultValue: 'Find Recycler' })}
               </Button>
-              <Button variant="secondary" fullWidth size="lg" onClick={handleSaveLot} disabled={!estReady}>
+              <Button variant="secondary" fullWidth size="lg" onClick={handleSaveLot} disabled={!estReady || saving}>
                 <Save className="w-5 h-5" />
                 {t('createLot.saveLot', { defaultValue: 'Save Lot' })}
               </Button>
