@@ -1,12 +1,29 @@
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@clerk/clerk-react';
 import { useAuthStore } from '../../hooks/useAuthStore';
 import i18n from '../../i18n';
+import { useEffect } from 'react';
 
 export function LanguageSelect() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const setLanguage = useAuthStore((s) => s.setLanguage);
+  const { isLoaded, isSignedIn } = useAuth();
+  const { collector, recycler, mode } = useAuthStore();
+
+  useEffect(() => {
+    if (isLoaded && isSignedIn) {
+      // User is signed in but doesn't have a profile for their selected mode
+      const hasProfile = mode === 'collector' ? !!collector : !!recycler;
+      if (!hasProfile) {
+        navigate(`/${mode}/setup`, { replace: true });
+        return;
+      }
+      // User has profile, go to their home page
+      navigate(mode === 'collector' ? '/collector/home' : '/recycler/dashboard', { replace: true });
+    }
+  }, [isLoaded, isSignedIn, mode, collector, recycler, navigate]);
 
   const handleLanguageSelect = (lang: 'mr' | 'hi' | 'en') => {
     setLanguage(lang);
@@ -14,6 +31,14 @@ export function LanguageSelect() {
     localStorage.setItem('kabadiwala-language', lang);
     navigate('/mode');
   };
+
+  if (!isLoaded) {
+    return (
+      <div className="min-h-screen bg-[var(--color-surface)] flex items-center justify-center p-4">
+        <p className="text-center text-[var(--color-text-muted)]">{t('common.loading', { defaultValue: 'Loading...' })}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[var(--color-surface)] flex items-center justify-center p-4">
