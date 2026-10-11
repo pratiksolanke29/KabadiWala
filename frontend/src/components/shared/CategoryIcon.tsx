@@ -131,29 +131,29 @@ interface CategoryGridProps {
 
 export function CategoryGrid({ categories, selected, onSelect, aiSuggestion, disabled = false }: CategoryGridProps) {
   return (
-    <div className="grid grid-cols-4 gap-3 sm:grid-cols-7">
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
       {categories.map((cat) => (
         <button
           key={cat}
           onClick={() => !disabled && onSelect(cat)}
           disabled={disabled}
           className={`
-            relative p-3 rounded-xl border-2 transition-all duration-200
+            relative p-3 rounded-card border transition-colors duration-150
             ${selected === cat
-              ? 'border-[var(--color-copper)] bg-[var(--color-copper-light)]/10 dark:bg-[var(--color-copper)]/10'
-              : 'border-[var(--color-border)] hover:border-[var(--color-copper)] dark:hover:border-[var(--color-copper-light)]'
+              ? 'border-accent bg-panel '
+              : 'border-line hover:border-accent '
             }
             ${aiSuggestion === cat && selected !== cat
-              ? 'ring-2 ring-[var(--color-verdigris)]'
+              ? 'border-success'
               : ''
             }
             ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
-            focus-ring-collector
+            focus-visible:ring-2 ring-accent ring-offset-2
           `}
         >
           <CategoryIcon category={cat} size="md" showLabel />
           {aiSuggestion === cat && selected !== cat && (
-            <span className="absolute -top-1 -right-1 bg-[var(--color-verdigris)] text-white text-[var(--text-step--1)] px-1.5 rounded-full font-medium">
+            <span className="absolute -top-1 -right-1 bg-success text-on-success text-xs px-1.5 rounded-full font-medium">
               AI
             </span>
           )}

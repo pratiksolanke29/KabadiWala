@@ -98,7 +98,7 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
     return (
       <div className={fullWidth ? 'w-full' : ''}>
         {label && (
-          <label htmlFor={inputId} className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+          <label htmlFor={inputId} className="block text-sm font-medium text-foreground  mb-1.5">
             {label}
           </label>
         )}
@@ -108,7 +108,7 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
               type="button"
               onClick={decrement}
               disabled={disabled || (localValue !== '' && parseFloat(localValue) <= min)}
-              className="absolute left-0 top-0 bottom-0 w-12 flex items-center justify-center text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 disabled:opacity-50 disabled:cursor-not-allowed border-r border-gray-200 dark:border-gray-700"
+              className="absolute left-0 top-0 bottom-0 w-12 flex items-center justify-center text-muted hover:text-foreground   disabled:opacity-50 disabled:cursor-not-allowed border-r border-line "
               aria-label={t('common.decrease', { defaultValue: 'Decrease' })}
             >
               <Minus className="w-5 h-5" />
@@ -124,13 +124,13 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
             disabled={disabled}
             inputMode="decimal"
             className={`
-              w-full rounded-lg border transition-colors duration-200 text-center text-lg font-medium
+              w-full rounded-lg border transition-colors duration-150 text-center text-base font-medium
               ${showControls ? 'pl-12 pr-12' : 'pl-4 pr-4'} py-3
               ${error
-                ? 'border-red-500 focus:ring-red-500 focus:border-red-500'
-                : 'border-gray-300 focus:ring-orange-500 focus:border-orange-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white'
+                ? 'border-danger focus-visible:ring-2 ring-danger ring-offset-2 focus:border-danger'
+                : 'border-line focus-visible:ring-2 ring-accent ring-offset-2 focus:border-accent   '
               }
-              disabled:bg-gray-100 dark:disabled:bg-gray-800
+              disabled:bg-surface-alt 
             `}
             aria-invalid={error ? 'true' : 'false'}
             aria-describedby={error ? `${inputId}-error` : helperText ? `${inputId}-helper` : undefined}
@@ -141,7 +141,7 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
               type="button"
               onClick={increment}
               disabled={disabled || (localValue !== '' && parseFloat(localValue) >= max)}
-              className="absolute right-0 top-0 bottom-0 w-12 flex items-center justify-center text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 disabled:opacity-50 disabled:cursor-not-allowed border-l border-gray-200 dark:border-gray-700"
+              className="absolute right-0 top-0 bottom-0 w-12 flex items-center justify-center text-muted hover:text-foreground   disabled:opacity-50 disabled:cursor-not-allowed border-l border-line "
               aria-label={t('common.increase', { defaultValue: 'Increase' })}
             >
               <Plus className="w-5 h-5" />
@@ -149,12 +149,12 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
           )}
         </div>
         {error && (
-          <p id={`${inputId}-error`} className="mt-1.5 text-sm text-red-600 dark:text-red-400" role="alert">
+          <p id={`${inputId}-error`} className="mt-1.5 text-sm text-danger " role="alert">
             {error}
           </p>
         )}
         {helperText && !error && (
-          <p id={`${inputId}-helper`} className="mt-1.5 text-sm text-gray-500 dark:text-gray-400">
+          <p id={`${inputId}-helper`} className="mt-1.5 text-sm text-muted ">
             {helperText}
           </p>
         )}

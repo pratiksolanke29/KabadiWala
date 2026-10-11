@@ -9,6 +9,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { ArrowLeft, Save, Search, QrCode, Share2, CheckCircle } from 'lucide-react';
 import { api, ApiError } from '../../api';
 import { Modal } from '../../components/shared/Modal';
+import { StepProgress } from '../../components/shared/primitives';
 
 export function CreateLotEstimate() {
   const { t } = useTranslation();
@@ -92,18 +93,18 @@ export function CreateLotEstimate() {
   const estReady = est !== null;
 
   return (
-    <div className="min-h-screen bg-[var(--color-surface)] copper-accent">
+    <div className="min-h-screen bg-surface ">
       {/* Header */}
-      <header className="bg-[var(--color-surface-elevated)] border-b border-[var(--color-border)] sticky top-0 z-40">
+      <header className="bg-panel border-b border-line sticky top-0 z-40">
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
           <button
             onClick={handleBack}
-            className="p-2 rounded-lg hover:bg-[var(--color-surface-alt)] transition-colors focus-ring-collector"
+            className="p-2 rounded-lg hover:bg-surface-alt transition-colors focus-visible:ring-2 ring-accent ring-offset-2"
             aria-label={t('common.back', { defaultValue: 'Back' })}
           >
-            <ArrowLeft className="w-5 h-5 text-[var(--color-text)]" />
+            <ArrowLeft className="w-5 h-5 text-foreground" />
           </button>
-          <h1 className="text-lg font-semibold text-[var(--color-text)] font-display">
+          <h1 className="text-base font-semibold text-foreground font-sans">
             {t('createLot.title', { defaultValue: 'Create Lot' })}
           </h1>
           <div className="w-10" />
@@ -111,70 +112,65 @@ export function CreateLotEstimate() {
       </header>
 
       {/* Progress Indicator */}
-      <div className="max-w-6xl mx-auto px-4 py-4">
-        <div className="flex items-center justify-between">
-          <ProgressStep step={1} total={4} label={t('createLot.step1', { defaultValue: 'Photo' })} completed />
-          <ProgressStep step={2} total={4} label={t('createLot.step2', { defaultValue: 'Category' })} completed />
-          <ProgressStep step={3} total={4} label={t('createLot.step3', { defaultValue: 'Weight' })} completed />
-          <ProgressStep step={4} total={4} label={t('createLot.step4', { defaultValue: 'Estimate' })} active completed />
-        </div>
+      <div className="mx-auto w-full max-w-[640px] px-4 py-4 md:px-6">
+        <StepProgress current={4} labels={[t('createLot.step1', { defaultValue: 'Photo' }), t('createLot.step2', { defaultValue: 'Category' }), t('createLot.step3', { defaultValue: 'Weight' }), t('createLot.step4', { defaultValue: 'Estimate' })]} />
       </div>
 
       {/* Main Content */}
       <main className="max-w-6xl mx-auto px-4 pb-24">
         <div className="space-y-6">
           {/* Category & Weight Summary */}
-          <div className="bg-[var(--color-surface-elevated)] rounded-2xl shadow-xl overflow-hidden border border-[var(--color-border)]">
-            <div className="flex items-center gap-4 p-4 bg-[var(--color-surface-alt)] border-b border-[var(--color-border)]">
+          <div className="surface-card overflow-hidden">
+            <div className="flex items-center gap-4 p-4 bg-surface-alt border-b border-line">
               <CategoryIcon category={category ?? savedLot?.category ?? 'PCB'} size="xl" />
               <div className="flex-1">
-                <p className="text-sm text-[var(--color-text-muted)]">{t('createLot.category', { defaultValue: 'Category' })}</p>
-                <p className="font-semibold text-[var(--color-text)] text-lg">{category ?? savedLot?.category}</p>
+                <p className="text-sm text-muted">{t('createLot.category', { defaultValue: 'Category' })}</p>
+                <p className="font-semibold text-foreground text-base">{category ?? savedLot?.category}</p>
               </div>
               <div className="text-right">
-                <p className="text-sm text-[var(--color-text-muted)]">{t('createLot.weight', { defaultValue: 'Weight' })}</p>
-                <p className="font-semibold text-[var(--color-text)] text-xl tabular-nums font-mono">{draft.weightKg ?? savedLot?.weightKg} kg</p>
+                <p className="text-sm text-muted">{t('createLot.weight', { defaultValue: 'Weight' })}</p>
+                <p className="font-semibold text-foreground text-xl tabular-nums ">{draft.weightKg ?? savedLot?.weightKg} kg</p>
               </div>
             </div>
           </div>
 
           {/* Estimate Card */}
-          <div className="bg-[var(--color-surface-elevated)] rounded-2xl shadow-xl p-6 border border-[var(--color-border)]">
+          <div className="surface-card p-6">
             <div className="text-center mb-6">
-              <p className="text-sm text-[var(--color-text-muted)] mb-2">{t('createLot.estimatedValue', { defaultValue: 'Estimated Value' })}</p>
+              <p className="text-sm text-muted mb-2">{t('createLot.estimatedValue', { defaultValue: 'Estimated Value' })}</p>
               {estFailed ? (
                 <div role="alert" className="space-y-3">
-                  <p className="text-[var(--color-danger,#b91c1c)]">{estMsg || t('createLot.estimateError', { defaultValue: 'Could not get estimate. Please try again.' })}</p>
+                  <p className="text-danger">{estMsg || t('createLot.estimateError', { defaultValue: 'Could not get estimate. Please try again.' })}</p>
                   <Button variant="outline" onClick={retry}>{t('common.retry', { defaultValue: 'Retry' })}</Button>
                 </div>
               ) : est ? (
                 <>
                   <div className="flex items-baseline justify-center gap-2">
-                    <span className="text-4xl font-bold text-[var(--color-copper)] tabular-nums font-mono">₹{est.min.toLocaleString()}</span>
-                    <span className="text-[var(--color-text-subtle)] text-xl">-</span>
-                    <span className="text-4xl font-bold text-[var(--color-copper)] tabular-nums font-mono">₹{est.max.toLocaleString()}</span>
+                    <span className="text-2xl font-semibold text-accent tabular-nums ">₹{est.min.toLocaleString()}</span>
+                    <span className="text-subtle text-xl">-</span>
+                    <span className="text-2xl font-semibold text-accent tabular-nums ">₹{est.max.toLocaleString()}</span>
                   </div>
-                  <p className="text-xs text-[var(--color-text-muted)] mt-2">{t('createLot.perKg', { defaultValue: 'per kg' })}</p>
+                  <p className="text-xs text-muted mt-2">{t('createLot.perKg', { defaultValue: 'per kg' })}</p>
                 </>
               ) : (
-                <p role="status" className="text-[var(--color-text-muted)]">{t('common.loading', { defaultValue: 'Loading...' })}</p>
+                <p role="status" className="text-muted">{t('common.loading', { defaultValue: 'Loading...' })}</p>
               )}
             </div>
 
             {est && (
-            <div className="p-4 bg-[var(--color-surface-alt)] rounded-xl mb-6">
+            <div className="p-4 bg-surface-alt rounded-card mb-6">
               <div className="flex items-center justify-between text-sm">
-                <span className="text-[var(--color-text-muted)]">{t('createLot.marketRange', { defaultValue: 'Market Range' })}</span>
-                <span className="font-medium text-[var(--color-text)] tabular-nums font-mono">₹{Math.round(est.min * 0.9).toLocaleString()} - ₹{Math.round(est.max * 1.1).toLocaleString()}</span>
+                <span className="text-muted">{t('createLot.marketRange', { defaultValue: 'Market Range' })}</span>
+                <span className="font-medium text-foreground tabular-nums ">₹{Math.round(est.min * 0.9).toLocaleString()} - ₹{Math.round(est.max * 1.1).toLocaleString()}</span>
               </div>
               <div className="flex items-center justify-between text-sm mt-1">
-                <span className="text-[var(--color-text-muted)]">{t('createLot.recyclerOffered', { defaultValue: 'Recycler Offered' })}</span>
-                <span className="font-medium text-[var(--color-verdigris)] tabular-nums font-mono">₹{Math.round((est.min + est.max) / 2).toLocaleString()}</span>
+                <span className="text-muted">{t('createLot.recyclerOffered', { defaultValue: 'Recycler Offered' })}</span>
+                <span className="font-medium text-success tabular-nums ">₹{Math.round((est.min + est.max) / 2).toLocaleString()}</span>
               </div>
             </div>
             )}
 
-            <p className="text-xs text-[var(--color-text-muted)] text-center mb-6">{t('createLot.estimateDisclaimer', { defaultValue: 'Final price may vary based on actual condition and market rates' })}</p>
+            <p className="text-xs text-muted text-center mb-6">{t('createLot.estimateDisclaimer', { defaultValue: 'Final price may vary based on actual condition and market rates' })}</p>
 
             {/* Action Buttons */}
             <div className="space-y-3">
@@ -190,12 +186,12 @@ export function CreateLotEstimate() {
           </div>
 
           {/* Info Card */}
-          <div className="bg-[var(--color-circuit-muted)] border border-[var(--color-circuit-light)] rounded-xl p-4">
+          <div className="bg-accent-soft border border-accent rounded-card p-4">
             <div className="flex items-start gap-3">
-              <div className="w-8 h-8 rounded-full bg-[var(--color-circuit-light)]/20 flex items-center justify-center flex-shrink-0">
-                <svg className="w-4 h-4 text-[var(--color-circuit)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+              <div className="w-8 h-8 rounded-full bg-accent-soft/20 flex items-center justify-center flex-shrink-0">
+                <svg className="w-4 h-4 text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
               </div>
-              <div className="text-sm text-[var(--color-circuit)]">
+              <div className="text-sm text-accent">
                 <p className="font-medium mb-1">{t('createLot.nextSteps', { defaultValue: 'What happens next?' })}</p>
                 <ul className="list-disc list-inside space-y-1">
                   <li>{t('createLot.stepFind', { defaultValue: 'Find Recycler: Browse nearby recyclers with best rates' })}</li>
@@ -216,26 +212,26 @@ export function CreateLotEstimate() {
         size="md"
       >
         <div className="text-center">
-          <div className="w-16 h-16 mx-auto mb-4 bg-[var(--color-verdigris-muted)] rounded-full flex items-center justify-center">
-            <CheckCircle className="w-8 h-8 text-[var(--color-verdigris)]" />
+          <div className="w-16 h-16 mx-auto mb-4 bg-success-soft rounded-full flex items-center justify-center">
+            <CheckCircle className="w-8 h-8 text-success" />
           </div>
-          <h3 className="text-lg font-semibold text-[var(--color-text)] mb-2 font-display">{t('createLot.lotSaved', { defaultValue: 'Your lot has been saved as Draft' })}</h3>
+          <h3 className="text-base font-semibold text-foreground mb-2 font-sans">{t('createLot.lotSaved', { defaultValue: 'Your lot has been saved as Draft' })}</h3>
           {savedLot && (
-            <div className="bg-[var(--color-surface-alt)] rounded-xl p-4 mb-4 text-left">
+            <div className="bg-surface-alt rounded-card p-4 mb-4 text-left">
               <div className="flex justify-between text-sm mb-2">
-                <span className="text-[var(--color-text-muted)]">{t('common.lotId', { defaultValue: 'Lot ID' })}</span>
-                <span className="font-mono font-medium text-[var(--color-text)] tabular-nums">{savedLot.id.slice(-8).toUpperCase()}</span>
+                <span className="text-muted">{t('common.lotId', { defaultValue: 'Lot ID' })}</span>
+                <span className=" font-medium text-foreground tabular-nums">{savedLot.id.slice(-8).toUpperCase()}</span>
               </div>
               <div className="flex justify-between text-sm mb-2">
-                <span className="text-[var(--color-text-muted)]">{t('common.category', { defaultValue: 'Category' })}</span>
-                <span className="font-medium text-[var(--color-text)]">{savedLot.category}</span>
+                <span className="text-muted">{t('common.category', { defaultValue: 'Category' })}</span>
+                <span className="font-medium text-foreground">{savedLot.category}</span>
               </div>
               <div className="flex justify-between text-sm mb-2">
-                <span className="text-[var(--color-text-muted)]">{t('common.weight', { defaultValue: 'Weight' })}</span>
-                <span className="font-medium text-[var(--color-text)] tabular-nums">{savedLot.weightKg} kg</span>
+                <span className="text-muted">{t('common.weight', { defaultValue: 'Weight' })}</span>
+                <span className="font-medium text-foreground tabular-nums">{savedLot.weightKg} kg</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-[var(--color-text-muted)]">{t('common.status', { defaultValue: 'Status' })}</span>
+                <span className="text-muted">{t('common.status', { defaultValue: 'Status' })}</span>
                 <StatusChip status={savedLot.status} size="sm" />
               </div>
             </div>
@@ -253,27 +249,3 @@ export function CreateLotEstimate() {
   );
 }
 
-function ProgressStep({ step, total, label, active, completed }: { step: number; total: number; label: string; active?: boolean; completed?: boolean }) {
-  const lineColor = completed ? 'bg-[var(--color-verdigris)]' : active ? 'bg-[var(--color-copper)]' : 'bg-[var(--color-border)]';
-  const circleBg = completed ? 'bg-[var(--color-verdigris)] border-[var(--color-verdigris)]' : active ? 'bg-[var(--color-copper)] border-[var(--color-copper)]' : 'bg-[var(--color-surface-elevated)] border-[var(--color-border)]';
-  const circleText = completed || active ? 'text-white' : 'text-[var(--color-text-muted)]';
-  const labelColor = completed ? 'text-[var(--color-verdigris)]' : active ? 'text-[var(--color-copper)]' : 'text-[var(--color-text-muted)]';
-
-  return (
-    <div className="flex flex-col items-center flex-1 relative">
-      {step < total && (
-        <div className={`absolute top-3 left-1/2 w-full h-1.5 -translate-x-1/2 z-0 ${lineColor}`} />
-      )}
-      <div className={`relative z-10 w-6 h-6 rounded-full border-2 flex items-center justify-center ${circleBg} ${circleText}`}>
-        {completed ? (
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
-        ) : active ? (
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
-        ) : (
-          <span className="text-sm font-bold">{step}</span>
-        )}
-      </div>
-      <p className={`mt-2 text-xs text-center font-medium ${labelColor}`}>{label}</p>
-    </div>
-  );
-}

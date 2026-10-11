@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { Suspense, lazy } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useAuth } from '@clerk/clerk-react';
 import { AuthPage } from './auth/AuthPage';
@@ -31,7 +32,9 @@ import { RecyclerProfile } from './pages/recycler/RecyclerProfile';
 import { RecyclerLayout } from './components/collector/RecyclerLayout';
 import { AdminPanel } from './pages/admin/AdminPanel';
 import './i18n';
-import './styles/globals.css';
+
+// Landing is code-split so the marketing page never bloats the app bundle.
+const Landing = lazy(() => import('./pages/Landing'));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -58,9 +61,12 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <AuthBridge />
+        <Suspense fallback={null}>
         <Routes>
-          {/* Language Select - Entry Point */}
-          <Route path="/" element={<LanguageSelect />} />
+          {/* Public landing page; signed-in users with a loaded profile are redirected inside Landing */}
+          <Route path="/" element={<Landing />} />
+          {/* Language select - kept at /start for deep links */}
+          <Route path="/start" element={<LanguageSelect />} />
           <Route path="/mode" element={<ModeSelect />} />
           
           {/* Collector Routes */}
@@ -107,9 +113,10 @@ function App() {
           {/* Catch all */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
-        <footer className="bg-[var(--color-surface)] text-center text-xs text-[var(--color-text-subtle)] py-3">
+        <footer className="bg-surface text-center text-xs text-subtle py-3">
           © 2026 KabadiWala. All rights reserved.
         </footer>
+        </Suspense>
       </BrowserRouter>
     </QueryClientProvider>
   );

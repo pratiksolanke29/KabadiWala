@@ -31,8 +31,8 @@ export function QrScanner({ onCode, onClose }: { onCode: (code: string) => void;
   return (
     <div className="space-y-2">
       <div id="handover-qr-reader" className="w-full overflow-hidden rounded-lg" />
-      {error && <p className="text-sm text-[var(--color-warning)]">{error}</p>}
-      <button type="button" onClick={onClose} className="text-sm text-[var(--color-text-muted)] underline">Close scanner</button>
+      {error && <p className="text-sm text-danger">{error}</p>}
+      <button type="button" onClick={onClose} className="text-sm text-muted underline">Close scanner</button>
     </div>
   );
 }

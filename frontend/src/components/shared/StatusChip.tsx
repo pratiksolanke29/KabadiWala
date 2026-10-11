@@ -8,78 +8,43 @@ interface StatusChipProps {
   context?: 'collector' | 'recycler';
 }
 
-export function StatusChip({ status, size = 'md', className = '', context = 'collector' }: StatusChipProps) {
-  const { t } = useTranslation();
+type Tone = 'neutral' | 'success' | 'warning' | 'danger' | 'info';
 
-  const isCollector = context === 'collector';
-  const successColor = isCollector
-    ? 'bg-[var(--color-collector-success-light)] text-[var(--color-collector-success)] dark:bg-[var(--color-collector-success)]/20 dark:text-[var(--color-collector-success-light)]'
-    : 'bg-[var(--color-recycler-success-light)] text-[var(--color-recycler-success)] dark:bg-[var(--color-recycler-success)]/20 dark:text-[var(--color-recycler-success-light)]';
-
-  const warningColor = 'bg-[var(--color-warning-light)] text-[var(--color-warning)] dark:bg-[var(--color-warning)]/20 dark:text-[var(--color-warning-light)]';
-  const dangerColor = 'bg-[var(--color-warning-light)] text-[var(--color-warning)] dark:bg-[var(--color-warning)]/20 dark:text-[var(--color-warning-light)]';
-  const neutralColor = 'bg-[var(--color-surface-alt)] text-[var(--color-text-muted)]';
-  const primaryColor = isCollector
-    ? 'bg-[var(--color-collector-primary-light)] text-[var(--color-collector-primary)] dark:bg-[var(--color-collector-primary)]/20 dark:text-[var(--color-collector-primary-light)]'
-    : 'bg-[var(--color-recycler-primary-light)] text-[var(--color-recycler-primary)] dark:bg-[var(--color-recycler-primary)]/20 dark:text-[var(--color-recycler-primary-light)]';
-
-  const statusConfig: Record<string, { bg: string; label: string }> = {
-    Draft: { bg: neutralColor, label: t('common.draft', { defaultValue: 'Draft' }) },
-    Quoted: { bg: primaryColor, label: t('common.quoted', { defaultValue: 'Quoted' }) },
-    HandedOver: { bg: warningColor, label: t('common.handedOver', { defaultValue: 'Handed Over' }) },
-    Paid: { bg: successColor, label: t('common.paid', { defaultValue: 'Paid' }) },
-    Pending: { bg: primaryColor, label: t('common.pending', { defaultValue: 'Pending' }) },
-    Accepted: { bg: successColor, label: t('common.accepted', { defaultValue: 'Accepted' }) },
-    Declined: { bg: dangerColor, label: t('common.declined', { defaultValue: 'Declined' }) },
+function Chip({ label, tone, size = 'md', className = '' }: { label: string; tone: Tone; size?: 'sm' | 'md' | 'lg'; className?: string }) {
+  const tones: Record<Tone, string> = {
+    neutral: 'bg-surface-alt text-muted',
+    success: 'bg-success-soft text-success',
+    warning: 'bg-warning-soft text-warning',
+    danger: 'bg-danger-soft text-danger',
+    info: 'bg-info-soft text-info',
   };
-
-  const config = statusConfig[status] || statusConfig.Draft;
-
-  const sizeStyles = {
-    sm: 'px-2 py-0.5 text-xs',
-    md: 'px-3 py-1 text-sm',
-    lg: 'px-4 py-1.5 text-base',
-  };
-
-  return (
-    <span className={`${config.bg} font-medium rounded-full ${sizeStyles[size]} ${className}`}>
-      {config.label}
-    </span>
-  );
+  const sizes = { sm: 'px-2 py-0.5 text-xs', md: 'px-2.5 py-1 text-xs', lg: 'px-3 py-1.5 text-sm' };
+  return <span className={`inline-flex items-center gap-1.5 rounded-full font-medium ${tones[tone]} ${sizes[size]} ${className}`}><span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-current" />{label}</span>;
 }
 
-interface PaymentStatusChipProps {
-  status: 'Paid' | 'Pending' | 'Partial';
-  size?: 'sm' | 'md' | 'lg';
-  context?: 'collector' | 'recycler';
+export function StatusChip({ status, size = 'md', className = '' }: StatusChipProps) {
+  const { t } = useTranslation();
+  const config: Record<string, { tone: Tone; label: string }> = {
+    Draft: { tone: 'neutral', label: t('common.draft', { defaultValue: 'Draft' }) },
+    Quoted: { tone: 'info', label: t('common.quoted', { defaultValue: 'Quoted' }) },
+    HandedOver: { tone: 'warning', label: t('common.handedOver', { defaultValue: 'Handed Over' }) },
+    Paid: { tone: 'success', label: t('common.paid', { defaultValue: 'Paid' }) },
+    Pending: { tone: 'warning', label: t('common.pending', { defaultValue: 'Pending' }) },
+    Accepted: { tone: 'success', label: t('common.accepted', { defaultValue: 'Accepted' }) },
+    Declined: { tone: 'danger', label: t('common.declined', { defaultValue: 'Declined' }) },
+  };
+  const item = config[status] ?? config.Draft;
+  return <Chip tone={item.tone} label={item.label} size={size} className={className} />;
 }
 
-export function PaymentStatusChip({ status, size = 'md', context = 'collector' }: PaymentStatusChipProps) {
+interface PaymentStatusChipProps { status: 'Paid' | 'Pending' | 'Partial'; size?: 'sm' | 'md' | 'lg'; context?: 'collector' | 'recycler' }
+export function PaymentStatusChip({ status, size = 'md' }: PaymentStatusChipProps) {
   const { t } = useTranslation();
-  const isCollector = context === 'collector';
-
-  const successColor = isCollector
-    ? 'bg-[var(--color-collector-success-light)] text-[var(--color-collector-success)] dark:bg-[var(--color-collector-success)]/20 dark:text-[var(--color-collector-success-light)]'
-    : 'bg-[var(--color-recycler-success-light)] text-[var(--color-recycler-success)] dark:bg-[var(--color-recycler-success)]/20 dark:text-[var(--color-recycler-success-light)]';
-
-  const warningColor = 'bg-[var(--color-warning-light)] text-[var(--color-warning)] dark:bg-[var(--color-warning)]/20 dark:text-[var(--color-warning-light)]';
-  const dangerColor = 'bg-[var(--color-warning-light)] text-[var(--color-warning)] dark:bg-[var(--color-warning)]/20 dark:text-[var(--color-warning-light)]';
-
-  const config = {
-    Paid: { bg: successColor, label: t('common.paid', { defaultValue: 'Paid' }) },
-    Pending: { bg: warningColor, label: t('common.pending', { defaultValue: 'Pending' }) },
-    Partial: { bg: dangerColor, label: 'Partial' },
-  }[status];
-
-  const sizeStyles = {
-    sm: 'px-2 py-0.5 text-xs',
-    md: 'px-3 py-1 text-sm',
-    lg: 'px-4 py-1.5 text-base',
+  const config: Record<PaymentStatusChipProps['status'], { tone: Tone; label: string }> = {
+    Paid: { tone: 'success', label: t('common.paid', { defaultValue: 'Paid' }) },
+    Pending: { tone: 'warning', label: t('common.pending', { defaultValue: 'Pending' }) },
+    Partial: { tone: 'info', label: 'Partial' },
   };
-
-  return (
-    <span className={`${config.bg} font-medium rounded-full ${sizeStyles[size]}`}>
-      {config.label}
-    </span>
-  );
+  const item = config[status];
+  return <Chip tone={item.tone} label={item.label} size={size} />;
 }

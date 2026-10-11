@@ -1,72 +1,38 @@
-import { useTranslation } from 'react-i18next';
-const _useTranslation = useTranslation;
+import type { ButtonHTMLAttributes, ReactNode } from 'react';
 
-interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'outline' | 'danger' | 'ghost' | 'trust';
-  size?: 'sm' | 'md' | 'lg' | 'xl';
+interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?: 'primary' | 'secondary' | 'outline' | 'danger' | 'ghost';
+  size?: 'md' | 'lg';
   loading?: boolean;
   fullWidth?: boolean;
-  leftIcon?: React.ReactNode;
-  rightIcon?: React.ReactNode;
-  children: React.ReactNode;
+  leftIcon?: ReactNode;
+  rightIcon?: ReactNode;
+  children: ReactNode;
   context?: 'collector' | 'recycler';
 }
 
 export function Button({
-  variant = 'primary',
-  size = 'md',
-  loading = false,
-  fullWidth = false,
-  leftIcon,
-  rightIcon,
-  children,
-  disabled,
-  className = '',
-  context = 'collector',
-  ...props
+  variant = 'primary', size = 'md', loading = false, fullWidth = false,
+  leftIcon, rightIcon, children, disabled, className = '', ...props
 }: ButtonProps) {
-  const baseStyles = `
-    inline-flex items-center justify-center font-medium
-    transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2
-    disabled:opacity-50 disabled:cursor-not-allowed
-    ${fullWidth ? 'w-full' : ''}
-  `;
-
-  const isCollector = context === 'collector';
-  const focusRingClass = isCollector ? 'focus-ring-collector' : 'focus-ring-recycler';
-
-  const variantStyles = {
-    primary: isCollector
-      ? 'bg-[var(--color-collector-primary)] text-[var(--color-collector-primary-on)] hover:bg-[var(--color-collector-primary-hover)] focus:ring-[var(--focus-ring-collector)]'
-      : 'bg-[var(--color-recycler-primary)] text-[var(--color-recycler-primary-on)] hover:bg-[var(--color-recycler-primary-hover)] focus:ring-[var(--focus-ring-recycler)]',
-    secondary: 'bg-[var(--color-surface-alt)] text-[var(--color-text)] hover:bg-[var(--color-border)] focus:ring-[var(--color-border-focus)]',
-    outline: isCollector
-      ? 'border-2 border-[var(--color-collector-primary)] text-[var(--color-collector-primary)] hover:bg-[var(--color-collector-primary-light)]/10 focus:ring-[var(--focus-ring-collector)]'
-      : 'border-2 border-[var(--color-recycler-primary)] text-[var(--color-recycler-primary)] hover:bg-[var(--color-recycler-primary-light)]/10 focus:ring-[var(--focus-ring-recycler)]',
-    danger: 'bg-[var(--color-warning)] text-white hover:bg-[var(--color-warning-dark)] focus:ring-[var(--focus-ring-warning)]',
-    ghost: 'text-[var(--color-text-muted)] hover:bg-[var(--color-surface-alt)] focus:ring-[var(--color-border-focus)]',
-    trust: 'bg-[var(--color-trust)] text-[var(--color-cable)] hover:bg-[var(--color-trust-dark)] focus:ring-[var(--color-trust-light)]',
-  };
-
-  const sizeStyles = {
-    sm: 'px-3 py-1.5 text-sm gap-1.5 rounded-md',
-    md: 'px-4 py-2 text-base gap-2 rounded-lg',
-    lg: 'px-6 py-3 text-lg gap-2 rounded-xl',
-    xl: 'px-8 py-4 text-xl gap-3 rounded-2xl',
-  };
-
+  const normalizedVariant = variant === 'outline' ? 'secondary' : variant;
+  const variants = {
+    primary: 'border border-accent bg-accent text-on-accent hover:bg-accent-hover hover:border-accent-hover',
+    secondary: 'border border-line bg-panel text-foreground hover:bg-surface-alt',
+    danger: 'border border-danger bg-danger text-on-danger hover:opacity-90',
+    ghost: 'border border-transparent bg-transparent text-muted hover:bg-surface-alt hover:text-foreground',
+  } as const;
+  const sizes = {
+    md: 'min-h-11 px-4 text-sm gap-2 rounded-lg',
+    lg: 'min-h-12 px-5 text-base gap-2 rounded-lg',
+  } as const;
   return (
     <button
-      className={`${baseStyles} ${variantStyles[variant]} ${sizeStyles[size]} ${focusRingClass} ${className}`}
+      className={`inline-flex items-center justify-center font-medium transition-colors duration-150 focus-visible:ring-2 ring-accent ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${fullWidth ? 'w-full' : ''} ${variants[normalizedVariant]} ${sizes[size]} ${className}`}
       disabled={disabled || loading}
       {...props}
     >
-      {loading ? (
-        <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-        </svg>
-      ) : leftIcon}
+      {loading ? <span role="status" aria-label="Loading" className="h-4 w-4 animate-spin rounded-full border border-current border-r-transparent" /> : leftIcon}
       {children}
       {!loading && rightIcon}
     </button>

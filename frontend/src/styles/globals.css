@@ -1,86 +1,129 @@
-/* KabadiWala Global Styles
- * Import font-face.css FIRST so fonts are available
- * Then tokens.css BEFORE tailwindcss so CSS custom properties are available
- */
-
-@import "./font-face.css";
-@import "./tokens.css";
 @import "tailwindcss";
 
-/* No @theme block needed — tokens.css defines all custom properties */
+@theme {
+  /* Neutral scale: 11 dependable steps */
+  --color-neutral-50: #fafafa;
+  --color-neutral-100: #f4f4f5;
+  --color-neutral-200: #e4e4e7;
+  --color-neutral-300: #d4d4d8;
+  --color-neutral-400: #a1a1aa;
+  --color-neutral-500: #71717a;
+  --color-neutral-600: #52525b;
+  --color-neutral-700: #3f3f46;
+  --color-neutral-800: #27272a;
+  --color-neutral-900: #18181b;
+  --color-neutral-950: #09090b;
 
-/* Font faces are loaded via @font-face in index.html or via the font-face CSS */
-/* See templates/font-face-devanagari.css for the rules */
+  /* Semantic tokens exposed as native Tailwind v4 utilities */
+  --color-surface: #f7f8f3;
+  --color-panel: #fffefa;
+  --color-surface-alt: #edf1e9;
+  --color-foreground: #202820;
+  --color-muted: #4b574e;
+  --color-subtle: #667267;
+  --color-line: #dfe5dc;
+  --color-accent: #356b4a;
+  --color-accent-hover: #28563a;
+  --color-accent-soft: #e2eee3;
+  --color-on-accent: #ffffff;
+  --color-on-success: #ffffff;
+  --color-on-danger: #ffffff;
+  --color-on-info: #ffffff;
+  --color-success: #166534;
+  --color-success-soft: #dcfce7;
+  --color-warning: #92400e;
+  --color-warning-soft: #fef3c7;
+  --color-danger: #b91c1c;
+  --color-danger-soft: #fee2e2;
+  --color-info: #1d4ed8;
+  --color-info-soft: #dbeafe;
 
-@layer utilities {
-  /* Utility classes that don't need custom properties */
-  .animate-in { animation: animateIn var(--transition-normal); }
-  .fade-in { animation: fadeIn var(--transition-fast); }
-  .zoom-in-95 { animation: zoomIn var(--transition-fast); }
-  .slide-in-from-bottom-4 { animation: slideInFromBottom var(--transition-normal); }
-
-  @keyframes animateIn { from { opacity: 0; } to { opacity: 1; } }
-  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-  @keyframes zoomIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
-  @keyframes slideInFromBottom { from { opacity: 0; transform: translateY(1rem); } to { opacity: 1; transform: translateY(0); } }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-
-  .animate-spin { animation: spin 1s linear infinite; }
-  .animate-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
-
-  /* Handover code reveal — the ONE orchestrated moment */
-  @keyframes codeReveal {
-    0% { opacity: 0; transform: scale(0.9) translateY(0.5rem); }
-    50% { opacity: 0.5; transform: scale(1.02) translateY(-0.1rem); }
-    100% { opacity: 1; transform: scale(1) translateY(0); }
-  }
-  .animate-code-reveal { animation: codeReveal 400ms ease-out; }
-
-  /* Copper accent line — collector identity */
-  .copper-accent {
-    position: relative;
-  }
-  .copper-accent::before {
-    content: "";
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    height: 3px;
-    background: linear-gradient(90deg, var(--color-copper), var(--color-copper-light));
-    border-radius: 0 0 var(--radius-xl) var(--radius-xl);
-  }
-
-  /* Circuit accent line — recycler identity */
-  .circuit-accent {
-    position: relative;
-  }
-  .circuit-accent::before {
-    content: "";
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    height: 3px;
-    background: linear-gradient(90deg, var(--color-circuit), var(--color-circuit-light));
-    border-radius: 0 0 var(--radius-xl) var(--radius-xl);
-  }
+  --font-sans: "Inter", "Noto Sans Devanagari", system-ui, sans-serif;
+  --font-display: "Inter", "Noto Sans Devanagari", system-ui, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --text-display: clamp(3rem, 4vw, 3.5rem);
+  --text-display--line-height: 1.05;
+  --radius-card: 12px;
 }
 
+:root {
+  color-scheme: light;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --color-surface: #191e1a;
+  --color-panel: #222923;
+  --color-surface-alt: #2a332c;
+  --color-foreground: #f4f6f1;
+  --color-muted: #c4cec4;
+  --color-subtle: #a3b0a4;
+  --color-line: #3a463c;
+  --color-accent: #9bc9a3;
+  --color-accent-hover: #b5d9ba;
+  --color-accent-soft: #2d4833;
+  --color-on-accent: #17251a;
+  --color-on-success: #052e16;
+  --color-on-danger: #450a0a;
+  --color-on-info: #172554;
+  --color-success: #86efac;
+  --color-success-soft: #14532d;
+  --color-warning: #fcd34d;
+  --color-warning-soft: #78350f;
+  --color-danger: #fca5a5;
+  --color-danger-soft: #7f1d1d;
+  --color-info: #93c5fd;
+  --color-info-soft: #1e3a8a;
+}
+
+@layer base {
+  * { box-sizing: border-box; }
+  html { min-width: 320px; background: var(--color-surface); }
+  body {
+    margin: 0;
+    min-width: 320px;
+    background: var(--color-surface);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 1.6;
+  }
+
+  /* Keep script-specific line-height in base so Tailwind utilities can override it. */
+  :lang(mr), :lang(hi) { line-height: 1.6; }
+  button, input, select, textarea { font: inherit; }
+  input:not([type="checkbox"]):not([type="radio"]), select, textarea { min-height: 44px; }
+  button { min-width: 44px; min-height: 44px; -webkit-tap-highlight-color: transparent; }
+  button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible,
+  textarea:focus-visible, [tabindex]:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+  a { color: inherit; }
+  svg.lucide { stroke-width: 1.75; }
+  img, svg { flex-shrink: 0; }
+}
+
+
+@utility surface-card {
+  @apply rounded-card border border-line bg-panel;
+}
+
+@utility surface-popover {
+  @apply rounded-lg border border-line bg-panel;
+}
+
+/* Minimal shared effects: only the handover code gets a reveal animation. */
+@keyframes codeReveal {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-code-reveal { animation: codeReveal 180ms ease-out; }
 @media (prefers-reduced-motion: reduce) {
-  .animate-in,
-  .fade-in,
-  .zoom-in-95,
-  .slide-in-from-bottom-4,
-  .animate-spin,
-  .animate-pulse,
-  .animate-code-reveal { animation: none !important; }
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
 }
-
-/* Print styles */
-@media print {
-  .no-print {
-    display: none !important;
-  }
-}
+@media print { .no-print { display: none !important; } }

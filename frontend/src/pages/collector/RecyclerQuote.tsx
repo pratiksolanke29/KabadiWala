@@ -66,18 +66,18 @@ export function RecyclerQuote() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--color-surface)] copper-accent">
+    <div className="min-h-screen bg-surface ">
       {/* Header */}
-      <header className="bg-[var(--color-surface-elevated)] border-b border-[var(--color-border)] sticky top-0 z-40">
+      <header className="bg-panel border-b border-line sticky top-0 z-40">
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
           <button
             onClick={handleBack}
-            className="p-2 rounded-lg hover:bg-[var(--color-surface-alt)] transition-colors focus-ring-collector"
+            className="p-2 rounded-lg hover:bg-surface-alt transition-colors focus-visible:ring-2 ring-accent ring-offset-2"
             aria-label={t('common.back', { defaultValue: 'Back' })}
           >
-            <ArrowLeft className="w-5 h-5 text-[var(--color-text)]" />
+            <ArrowLeft className="w-5 h-5 text-foreground" />
           </button>
-          <h1 className="text-lg font-semibold text-[var(--color-text)] font-display">
+          <h1 className="text-base font-semibold text-foreground font-sans">
             {t('recyclerQuote.title', { defaultValue: 'Recycler Quote' })}
           </h1>
           <div className="w-10" />
@@ -88,15 +88,15 @@ export function RecyclerQuote() {
       <main className="max-w-6xl mx-auto px-4 pb-24">
         <div className="space-y-6">
           {/* Recycler Info Card */}
-          <div className="bg-[var(--color-surface-elevated)] rounded-2xl shadow-xl overflow-hidden border border-[var(--color-border)]">
-            <div className="p-4 bg-[var(--color-verdigris-muted)] border-b border-[var(--color-verdigris-light)] flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-[var(--color-verdigris-light)]/20 flex items-center justify-center">
-                <Shield className="w-6 h-6 text-[var(--color-verdigris)]" />
+          <div className="surface-card overflow-hidden">
+            <div className="p-4 bg-success-soft border-b border-success flex items-center gap-3">
+              <div className="w-12 h-12 rounded-card bg-success-soft/20 flex items-center justify-center">
+                <Shield className="w-6 h-6 text-success" />
               </div>
               <div>
-                <h2 className="font-bold text-[var(--color-text)]">{recycler.name}</h2>
+                <h2 className="font-semibold text-foreground">{recycler.name}</h2>
                 {recycler.verified && (
-                  <span className="flex items-center gap-1 text-[var(--color-trust)] text-sm">
+                  <span className="flex items-center gap-1 text-muted text-sm">
                     <Shield className="w-3.5 h-3.5" />
                     {t('common.verified', { defaultValue: 'Verified Recycler' })}
                   </span>
@@ -123,21 +123,21 @@ export function RecyclerQuote() {
                   icon={<Truck className="w-5 h-5" />}
                   label={t('common.pickup', { defaultValue: 'Pickup' })}
                   value={recycler.pickupAvailable ? t('common.available', { defaultValue: 'Available' }) : t('common.notAvailable', { defaultValue: 'Not Available' })}
-                  valueColor={recycler.pickupAvailable ? 'text-[var(--color-verdigris)]' : 'text-[var(--color-warning)]'}
+                  valueColor={recycler.pickupAvailable ? 'text-success' : 'text-danger'}
                 />
                 <InfoItem
                   icon={<Phone className="w-5 h-5" />}
                   label={t('common.call', { defaultValue: 'Call' })}
                   value={t('recyclerQuote.callNow', { defaultValue: 'Call Now' })}
-                  valueColor="text-[var(--color-copper)]"
+                  valueColor="text-accent"
                 />
               </div>
             </div>
           </div>
 
           {/* Quote Details */}
-          <div className="bg-[var(--color-surface-elevated)] rounded-2xl shadow-xl p-6 border border-[var(--color-border)]">
-            <h3 className="text-lg font-semibold text-[var(--color-text)] mb-4 font-display">{t('recyclerQuote.quoteDetails', { defaultValue: 'Quote Details' })}</h3>
+          <div className="surface-card p-6">
+            <h3 className="text-base font-semibold text-foreground mb-4 font-sans">{t('recyclerQuote.quoteDetails', { defaultValue: 'Quote Details' })}</h3>
 
             <div className="space-y-3">
               <QuoteRow label={t('recyclerQuote.rate', { defaultValue: 'Rate per kg' })} value={`₹${quotedRate}`} />
@@ -146,8 +146,8 @@ export function RecyclerQuote() {
               <QuoteRow label={t('recyclerQuote.distance', { defaultValue: 'Distance' })} value={formatKm(distance)} />
             </div>
 
-            <div className="mt-4 p-4 bg-[var(--color-surface-alt)] rounded-xl">
-              <p className="text-sm text-[var(--color-text-muted)]">{t('recyclerQuote.quoteNote', { defaultValue: 'This is a firm quote. Final amount may vary slightly based on actual weight verification at handover.' })}</p>
+            <div className="mt-4 p-4 bg-surface-alt rounded-card">
+              <p className="text-sm text-muted">{t('recyclerQuote.quoteNote', { defaultValue: 'This is a firm quote. Final amount may vary slightly based on actual weight verification at handover.' })}</p>
             </div>
           </div>
 
@@ -167,20 +167,20 @@ export function RecyclerQuote() {
         size="lg"
       >
         <div className="text-center">
-          <div className="w-16 h-16 mx-auto mb-4 bg-[var(--color-copper-light)]/10 rounded-full flex items-center justify-center">
-            <QrCode className="w-8 h-8 text-[var(--color-copper)]" />
+          <div className="w-16 h-16 mx-auto mb-4 bg-accent-soft/10 rounded-full flex items-center justify-center">
+            <QrCode className="w-8 h-8 text-accent" />
           </div>
-          <h3 className="text-lg font-semibold text-[var(--color-text)] mb-2 font-display">{t('recyclerQuote.handoverGenerated', { defaultValue: 'Handover code generated' })}</h3>
-          <p className="text-[var(--color-text-muted)] mb-6">{t('recyclerQuote.showCode', { defaultValue: 'Show this code to the recycler at handover' })}</p>
+          <h3 className="text-base font-semibold text-foreground mb-2 font-sans">{t('recyclerQuote.handoverGenerated', { defaultValue: 'Handover code generated' })}</h3>
+          <p className="text-muted mb-6">{t('recyclerQuote.showCode', { defaultValue: 'Show this code to the recycler at handover' })}</p>
 
-          <div className="bg-[var(--color-surface-alt)] rounded-xl p-6 mb-6 animate-code-reveal">
-            <div className="text-4xl font-mono font-bold tracking-widest text-[var(--color-copper)] mb-2">{handoverCode}</div>
-            <p className="text-sm text-[var(--color-text-muted)]">{t('recyclerQuote.refId', { defaultValue: 'Reference ID' })}</p>
+          <div className="bg-surface-alt rounded-card p-6 mb-6 animate-code-reveal">
+            <div className="text-2xl font-semibold font-mono tracking-widest text-accent mb-2">{handoverCode}</div>
+            <p className="text-sm text-muted">{t('recyclerQuote.refId', { defaultValue: 'Reference ID' })}</p>
             {lot && <QrImage lotId={lot.id} className="mx-auto mt-4 w-40 h-40" />}
           </div>
 
-          <div className="p-4 bg-[var(--color-circuit-muted)] border border-[var(--color-circuit-light)] rounded-xl mb-6">
-            <p className="text-sm text-[var(--color-circuit)]">{t('recyclerQuote.nextSteps', { defaultValue: 'Next: Meet the recycler, show this code, verify weight, receive payment.' })}</p>
+          <div className="p-4 bg-accent-soft border border-accent rounded-card mb-6">
+            <p className="text-sm text-accent">{t('recyclerQuote.nextSteps', { defaultValue: 'Next: Meet the recycler, show this code, verify weight, receive payment.' })}</p>
           </div>
 
           <Button fullWidth size="lg" onClick={handleHandoverDone}>{t('common.done', { defaultValue: 'Done' })}</Button>
@@ -195,11 +195,11 @@ export function RecyclerQuote() {
         size="md"
       >
         <div className="text-center">
-          <div className="w-16 h-16 mx-auto mb-4 bg-[var(--color-verdigris-muted)] rounded-full flex items-center justify-center">
-            <CheckCircle className="w-8 h-8 text-[var(--color-verdigris)]" />
+          <div className="w-16 h-16 mx-auto mb-4 bg-success-soft rounded-full flex items-center justify-center">
+            <CheckCircle className="w-8 h-8 text-success" />
           </div>
-          <h3 className="text-lg font-semibold text-[var(--color-text)] mb-2 font-display">{t('recyclerQuote.awaitingHandover', { defaultValue: 'Awaiting handover with recycler' })}</h3>
-          <p className="text-[var(--color-text-muted)] mb-6">{t('recyclerQuote.lotStatusUpdate', { defaultValue: 'Your lot status is now "Quoted". You can track it in My Lots.' })}</p>
+          <h3 className="text-base font-semibold text-foreground mb-2 font-sans">{t('recyclerQuote.awaitingHandover', { defaultValue: 'Awaiting handover with recycler' })}</h3>
+          <p className="text-muted mb-6">{t('recyclerQuote.lotStatusUpdate', { defaultValue: 'Your lot status is now "Quoted". You can track it in My Lots.' })}</p>
           <Button fullWidth onClick={handleModalClose}>{t('common.done', { defaultValue: 'Done' })}</Button>
         </div>
       </Modal>
@@ -207,12 +207,12 @@ export function RecyclerQuote() {
   );
 }
 
-function InfoItem({ icon, label, value, valueColor = 'text-[var(--color-text)]' }: { icon: React.ReactNode; label: string; value: string; valueColor?: string }) {
+function InfoItem({ icon, label, value, valueColor = 'text-foreground' }: { icon: React.ReactNode; label: string; value: string; valueColor?: string }) {
   return (
-    <div className="flex items-center gap-3 p-3 bg-[var(--color-surface-alt)] rounded-xl">
-      <div className="w-10 h-10 rounded-lg bg-[var(--color-surface-elevated)] flex items-center justify-center text-[var(--color-text-muted)]">{icon}</div>
+    <div className="flex items-center gap-3 p-3 bg-surface-alt rounded-card">
+      <div className="w-10 h-10 rounded-lg bg-panel flex items-center justify-center text-muted">{icon}</div>
       <div>
-        <p className="text-xs text-[var(--color-text-muted)]">{label}</p>
+        <p className="text-xs text-muted">{label}</p>
         <p className={`font-medium ${valueColor}`}>{value}</p>
       </div>
     </div>
@@ -221,9 +221,9 @@ function InfoItem({ icon, label, value, valueColor = 'text-[var(--color-text)]' 
 
 function QuoteRow({ label, value, highlight = false }: { label: string; value: string; highlight?: boolean }) {
   return (
-    <div className="flex justify-between items-center py-2 border-b border-[var(--color-border)] last:border-0">
-      <span className="text-[var(--color-text-muted)]">{label}</span>
-      <span className={`font-semibold ${highlight ? 'text-xl text-[var(--color-copper)]' : 'text-[var(--color-text)]'}`} tabular-nums font-mono>{value}</span>
+    <div className="flex justify-between items-center py-2 border-b border-line last:border-0">
+      <span className="text-muted">{label}</span>
+      <span className={`font-semibold ${highlight ? 'text-xl text-accent' : 'text-foreground'}`} tabular-nums >{value}</span>
     </div>
   );
 }

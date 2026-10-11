@@ -3,9 +3,9 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useLotStore } from '../../hooks/useLotStore';
 import { Button } from '../../components/shared/Button';
-import { CategoryIcon } from '../../components/shared/CategoryIcon';
 import { StatusChip } from '../../components/shared/StatusChip';
-import { Recycle, BarChart2, Package, IndianRupee, Shield, ChevronRight } from 'lucide-react';
+import { Card, ListRow, SectionTitle, Stat } from '../../components/shared/primitives';
+import { ChevronRight, CircleHelp, Package, Recycle, ShieldCheck, Wallet } from 'lucide-react';
 
 export function CollectorHomePage() {
   const { t } = useTranslation();
@@ -13,155 +13,67 @@ export function CollectorHomePage() {
   const { savedLots, loadLots } = useLotStore();
   useEffect(() => { loadLots().catch(() => {}); }, [loadLots]);
 
-  const tiles = [
-    {
-      key: 'createLot',
-      Icon: Recycle,
-      title: t('common.createLot', { defaultValue: 'Create Lot' }),
-      subtitle: t('common.createLotDesc', { defaultValue: 'Photo → Category → Weight → Estimate' }),
-      onClick: () => navigate('/collector/create-lot/photo')
-    },
-    {
-      key: 'priceBoard',
-      Icon: BarChart2,
-      title: t('common.priceBoard', { defaultValue: 'Price Board' }),
-      subtitle: t('common.priceBoardDesc', { defaultValue: "Today's rates & trends" }),
-      onClick: () => navigate('/collector/price-board')
-    },
-    {
-      key: 'myLots',
-      Icon: Package,
-      title: t('common.myLots', { defaultValue: 'My Lots' }),
-      subtitle: t('common.myLotsDesc', { defaultValue: 'Track all your lots' }),
-      onClick: () => navigate('/collector/my-lots')
-    },
-    {
-      key: 'earnings',
-      Icon: IndianRupee,
-      title: t('common.earnings', { defaultValue: 'Earnings' }),
-      subtitle: t('common.earningsDesc', { defaultValue: 'Total earned & pending' }),
-      onClick: () => navigate('/collector/earnings')
-    },
-    {
-      key: 'safety',
-      Icon: Shield,
-      title: t('common.safety', { defaultValue: 'Safety' }),
-      subtitle: t('common.safetyDesc', { defaultValue: 'Guidelines & best practices' }),
-      onClick: () => navigate('/collector/safety')
-    },
+  const totalEarned = savedLots.filter((lot) => lot.status === 'Paid').reduce((sum, lot) => sum + (lot.finalTotal || 0), 0);
+  const totalPending = savedLots.filter((lot) => lot.status === 'HandedOver' || lot.status === 'Quoted').reduce((sum, lot) => sum + (lot.quotedTotal || lot.estimateMax || 0), 0);
+  const recentLots = [...savedLots].sort((a, b) => new Date(b.updatedAt || b.createdAt).getTime() - new Date(a.updatedAt || a.createdAt).getTime()).slice(0, 3);
+
+  const links = [
+    { label: t('common.earnings', { defaultValue: 'Earnings' }), icon: Wallet, onClick: () => navigate('/collector/earnings') },
+    { label: t('common.safety', { defaultValue: 'Safety' }), icon: ShieldCheck, onClick: () => navigate('/collector/safety') },
+    { label: t('common.help', { defaultValue: 'Help' }), icon: CircleHelp, onClick: () => navigate('/collector/help') },
   ];
 
-  // Calculate earnings summary
-  const totalEarned = savedLots
-    .filter(l => l.status === 'Paid')
-    .reduce((sum, l) => sum + (l.finalTotal || 0), 0);
-  const totalPending = savedLots
-    .filter(l => l.status === 'HandedOver' || l.status === 'Quoted')
-    .reduce((sum, l) => sum + (l.quotedTotal || l.estimateMax || 0), 0);
-
   return (
-    <div className="space-y-8">
-      {/* Welcome Section */}
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold text-[var(--color-text)] font-display mb-1">
-          {t('home.welcome', { defaultValue: 'Welcome back' })}!
-        </h2>
-        <p className="text-[var(--color-text-muted)]">
-          {t('home.chooseAction', { defaultValue: 'Choose an action to get started' })}
-        </p>
+    <div className="grid gap-6 py-4 lg:grid-cols-[minmax(0,1.65fr)_minmax(280px,0.85fr)] lg:items-start lg:gap-8 lg:py-8">
+      <div className="min-w-0 space-y-6 lg:col-start-1">
+      <div className="space-y-3">
+        <h2 className="text-2xl font-semibold leading-snug text-foreground lg:text-3xl">{t('home.welcome', { defaultValue: 'Welcome back' })}</h2>
+        <p className="mt-1 text-sm text-muted">{t('home.chooseAction', { defaultValue: 'Manage your scrap lots and earnings' })}</p>
       </div>
 
-      {/* Earnings Summary Card */}
-      <div className="grid grid-cols-2 gap-4 mb-8">
-        <div className="bg-[var(--color-surface-elevated)] rounded-xl p-4 shadow-sm border border-[var(--color-border)]">
-          <p className="text-sm text-[var(--color-text-muted)] mb-1">
-            {t('common.totalEarned', { defaultValue: 'Total Earned' })}
-          </p>
-          <p className="text-2xl font-bold text-[var(--color-verdigris)] tabular-nums font-mono">
-            ₹{totalEarned.toLocaleString()}
-          </p>
-        </div>
-        <div className="bg-[var(--color-surface-elevated)] rounded-xl p-4 shadow-sm border border-[var(--color-border)]">
-          <p className="text-sm text-[var(--color-text-muted)] mb-1">
-            {t('common.pending', { defaultValue: 'Pending' })}
-          </p>
-          <p className="text-2xl font-bold text-[var(--color-copper)] tabular-nums font-mono">
-            ₹{totalPending.toLocaleString()}
-          </p>
-        </div>
+      <Button fullWidth size="lg" className="justify-between lg:max-w-sm" onClick={() => navigate('/collector/create-lot/photo')} leftIcon={<Recycle size={20} strokeWidth={1.75} />} rightIcon={<ChevronRight size={20} strokeWidth={1.75} />}>
+        {t('common.createLot', { defaultValue: 'Create lot' })}
+      </Button>
+
+      <div className="grid grid-cols-2 gap-6 border-b border-line pb-5 lg:gap-10">
+        <Stat label={t('common.totalEarned', { defaultValue: 'Earned' })} value={`₹${totalEarned.toLocaleString()}`} />
+        <Stat label={t('common.pending', { defaultValue: 'Pending' })} value={`₹${totalPending.toLocaleString()}`} />
       </div>
 
-      {/* Action Tiles */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {tiles.map((tile) => (
-          <button
-            key={tile.key}
-            onClick={tile.onClick}
-            className={`
-              relative p-6 rounded-2xl bg-[var(--color-surface-elevated)] border border-[var(--color-border)]
-              text-[var(--color-text)]
-              shadow-sm hover:shadow-lg transition-all duration-200
-              hover:-translate-y-1 active:translate-y-0
-              focus:outline-none focus:ring-4 focus:ring-[var(--focus-ring-collector)]/30
-              flex flex-col items-center text-center group copper-accent
-            `}
-          >
-            <div className="w-16 h-16 rounded-xl bg-[var(--color-copper-light)]/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform text-[var(--color-copper)]">
-              <tile.Icon className="w-8 h-8" />
+      <section aria-labelledby="recent-lots-heading" className="min-w-0">
+        <SectionTitle action={<button type="button" onClick={() => navigate('/collector/my-lots')} className="min-h-11 rounded-lg px-2 text-sm font-medium text-accent hover:bg-surface-alt">{t('common.viewAll', { defaultValue: 'View all' })}</button>}>
+          <span id="recent-lots-heading">{t('home.recentLots', { defaultValue: 'Recent lots' })}</span>
+        </SectionTitle>
+        <Card className="px-4">
+          {recentLots.length === 0 ? (
+            <div className="py-7 text-center">
+              <Package className="mx-auto mb-2 text-subtle" size={24} strokeWidth={1.75} aria-hidden="true" />
+              <p className="text-sm text-muted">{t('myLots.noLots', { defaultValue: 'No lots yet' })}</p>
             </div>
-            <h3 className="text-lg sm:text-xl font-bold mb-1">{tile.title}</h3>
-            <p className="text-sm text-[var(--color-text-muted)] text-center max-w-xs">{tile.subtitle}</p>
-            <ChevronRight className="w-5 h-5 text-[var(--color-text-subtle)] mt-auto group-hover:text-[var(--color-copper)] transition-colors" />
-          </button>
-        ))}
+          ) : recentLots.map((lot) => (
+            <ListRow
+              key={lot.id}
+              title={t(`categories.${lot.category}`, { defaultValue: lot.category })}
+              meta={`${lot.weightKg} kg · ${new Date(lot.updatedAt || lot.createdAt).toLocaleDateString()}`}
+              trailing={<div className="flex shrink-0 flex-col items-end gap-1.5"><StatusChip status={lot.status} size="sm" /><span className="text-sm font-medium tabular-nums text-foreground">₹{(lot.finalTotal || lot.quotedTotal || lot.estimateMax || 0).toLocaleString()}</span></div>}
+              onClick={() => navigate(`/collector/my-lots/${lot.id}`)}
+            />
+          ))}
+        </Card>
+      </section>
       </div>
 
-      {/* Quick Stats */}
-      <div className="mt-10">
-        <h3 className="text-lg font-semibold text-[var(--color-text)] mb-4">
-          {t('home.quickStats', { defaultValue: 'Quick Stats' })}
-        </h3>
-        <div className="grid grid-cols-2 gap-4">
-          <StatCard
-            label={t('common.draft', { defaultValue: 'Draft' })}
-            value={savedLots.filter(l => l.status === 'Draft').length}
-            icon={<Package className="w-6 h-6" />}
-            color="text-[var(--color-text-muted)]"
-            bg="bg-[var(--color-surface-alt)]"
-          />
-          <StatCard
-            label={t('common.quoted', { defaultValue: 'Quoted' })}
-            value={savedLots.filter(l => l.status === 'Quoted').length}
-            icon={<BarChart2 className="w-6 h-6" />}
-            color="text-[var(--color-copper)]"
-            bg="bg-[var(--color-copper-light)]/10"
-          />
-          <StatCard
-            label={t('common.handedOver', { defaultValue: 'Handed Over' })}
-            value={savedLots.filter(l => l.status === 'HandedOver').length}
-            icon={<Recycle className="w-6 h-6" />}
-            color="text-[var(--color-warning)]"
-            bg="bg-[var(--color-warning-muted)]"
-          />
-          <StatCard
-            label={t('common.paid', { defaultValue: 'Paid' })}
-            value={savedLots.filter(l => l.status === 'Paid').length}
-            icon={<Shield className="w-6 h-6" />}
-            color="text-[var(--color-verdigris)]"
-            bg="bg-[var(--color-verdigris-muted)]"
-          />
+      <section aria-label={t('common.more', { defaultValue: 'More' })} className="min-w-0 lg:col-start-2 lg:row-start-1 lg:rounded-xl lg:border lg:border-line lg:bg-panel lg:p-5">
+        <div className="divide-y divide-line border-y border-line">
+          {links.map(({ label, icon: Icon, onClick }) => (
+            <button key={label} type="button" onClick={onClick} className="flex min-h-14 w-full items-center gap-3 py-3 text-left text-foreground hover:bg-surface-alt/60">
+              <Icon size={20} strokeWidth={1.75} className="text-muted" />
+              <span className="min-w-0 flex-1 font-medium">{label}</span>
+              <ChevronRight size={18} className="text-subtle" />
+            </button>
+          ))}
         </div>
-      </div>
-    </div>
-  );
-}
-
-function StatCard({ label, value, icon, color, bg }: { label: string; value: number; icon: React.ReactNode; color: string; bg: string }) {
-  return (
-    <div className={`rounded-xl p-4 ${bg} text-center border border-[var(--color-border)]`}>
-      <span className={`${color} mb-2 block`}>{icon}</span>
-      <p className="text-3xl font-bold text-[var(--color-text)] tabular-nums font-mono">{value}</p>
-      <p className="text-sm text-[var(--color-text-muted)] mt-1">{label}</p>
+      </section>
     </div>
   );
 }

@@ -12,7 +12,7 @@ import { api } from '../../api';
 import { formatKm } from '../../utils/distance';
 import { QrScanner } from '../../components/shared/QrScanner';
 import { RatingBadge } from '../../components/shared/Ratings';
-import { LogOut, ChevronDown, RefreshCw, Truck, CheckCircle, XCircle, Shield, History, DollarSign, Settings, Recycle, LogOut as LogOutIcon, Building, AlertTriangle, BarChart2, User, MapPin } from 'lucide-react';
+import { LogOut, ChevronDown, RefreshCw, Truck, CheckCircle, XCircle, Shield, History, DollarSign, Settings, Recycle, LogOut as LogOutIcon, Building, AlertTriangle, BarChart2, User, MapPin, PackageOpen } from 'lucide-react';
 
 export function RecyclerDashboard() {
   const { t } = useTranslation();
@@ -61,16 +61,16 @@ export function RecyclerDashboard() {
 
   if (!recycler?.authorized) {
     return (
-      <div className="min-h-screen bg-[var(--color-surface)] circuit-accent flex items-center justify-center p-4">
+      <div className="min-h-screen bg-surface  flex items-center justify-center p-4">
         <div className="max-w-md w-full text-center">
-          <div className="bg-[var(--color-surface-elevated)] rounded-2xl shadow-xl p-8 border border-[var(--color-border)]">
-            <div className="w-20 h-20 mx-auto mb-6 bg-[var(--color-warning-muted)] rounded-full flex items-center justify-center">
-              <AlertTriangle className="w-10 h-10 text-[var(--color-warning)]" />
+          <div className="surface-card p-8">
+            <div className="w-20 h-20 mx-auto mb-6 bg-danger-soft rounded-full flex items-center justify-center">
+              <AlertTriangle className="w-10 h-10 text-danger" />
             </div>
-            <h2 className="text-2xl font-bold text-[var(--color-text)] mb-3 font-display">
+            <h2 className="text-2xl font-semibold text-foreground mb-3 font-sans">
               {t('dashboard.approvalPending', { defaultValue: 'Approval Pending' })}
             </h2>
-            <p className="text-[var(--color-text-muted)] mb-6">
+            <p className="text-muted mb-6">
               {t('dashboard.approvalMessage', { defaultValue: 'Your recycler application is under review. You will be able to access the dashboard once approved by admin.' })}
             </p>
             <Button variant="outline" onClick={handleLogout}>
@@ -83,19 +83,17 @@ export function RecyclerDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--color-surface)] circuit-accent">
+    <div className="min-h-screen bg-surface ">
       {/* Header */}
-      <header className="bg-[var(--color-surface-elevated)] border-b border-[var(--color-border)] sticky top-0 z-40">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+      <header className="bg-panel border-b border-line sticky top-0 z-40">
+        <div className="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-3 px-4 py-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[var(--color-circuit)] flex items-center justify-center">
-              <Recycle className="w-6 h-6 text-white" />
-            </div>
-            <h1 className="text-xl font-bold text-[var(--color-text)] font-display">Kabadiwala Recycler</h1>
+            <Recycle className="h-6 w-6 shrink-0 text-accent" strokeWidth={1.75} />
+            <h1 className="text-xl font-semibold text-foreground font-sans">Kabadiwala Recycler</h1>
           </div>
          
           {/* Nav Tabs - desktop */}
-          <nav className="hidden md:flex items-center gap-1 bg-[var(--color-surface-alt)] rounded-lg p-1">
+          <nav className="hidden">
             {[
               { key: 'dashboard', label: t('common.dashboard', { defaultValue: 'Dashboard' }), icon: BarChart2 },
               { key: 'rates', label: t('common.rates', { defaultValue: 'Rates' }), icon: DollarSign },
@@ -105,7 +103,7 @@ export function RecyclerDashboard() {
               <button
                 key={tab.key}
                 onClick={() => navigate('/recycler/' + tab.key)}
-                className="px-4 py-2 rounded-lg text-sm font-medium text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-elevated)] transition-colors flex items-center gap-1 focus-ring-recycler"
+                className="px-4 py-2 rounded-lg text-sm font-medium text-muted hover:text-foreground hover:bg-panel transition-colors flex items-center gap-1 focus-visible:ring-2 ring-accent ring-offset-2"
               >
                 <tab.icon className="w-4 h-4" />
                 <span>{tab.label}</span>
@@ -117,33 +115,33 @@ export function RecyclerDashboard() {
           <div className="relative">
             <button
               onClick={() => setShowProfileMenu(!showProfileMenu)}
-              className="flex items-center gap-2 p-2 rounded-lg hover:bg-[var(--color-surface-alt)] transition-colors focus-ring-recycler"
+              className="flex items-center gap-2 p-2 rounded-lg hover:bg-surface-alt transition-colors focus-visible:ring-2 ring-accent ring-offset-2"
             >
-              <div className="w-8 h-8 rounded-full bg-[var(--color-circuit-muted)] flex items-center justify-center">
-                <Building className="w-5 h-5 text-[var(--color-circuit)]" />
+              <div className="w-8 h-8 rounded-full bg-accent-soft flex items-center justify-center">
+                <Building className="w-5 h-5 text-accent" />
               </div>
-              <span className="text-sm font-medium text-[var(--color-text)] hidden sm:block">
+              <span className="text-sm font-medium text-foreground hidden sm:block">
                 {recycler?.facilityName}
               </span>
-              <ChevronDown className="w-4 h-4 text-[var(--color-text-muted)]" />
+              <ChevronDown className="w-4 h-4 text-muted" />
             </button>
            
             {showProfileMenu && (
-              <div className="absolute right-0 mt-2 w-48 bg-[var(--color-surface-elevated)] rounded-lg shadow-xl border border-[var(--color-border)] py-1 z-50 animate-in fade-in zoom-in-95">
-                <div className="px-4 py-2 border-b border-[var(--color-border)]">
-                  <p className="text-xs text-[var(--color-text-muted)]">{t('common.facility', { defaultValue: 'Facility' })}</p>
-                  <p className="font-medium text-[var(--color-text)] truncate">{recycler?.facilityName}</p>
+              <div className="absolute right-0 mt-2 w-48 surface-popover py-1 z-50   ">
+                <div className="px-4 py-2 border-b border-line">
+                  <p className="text-xs text-muted">{t('common.facility', { defaultValue: 'Facility' })}</p>
+                  <p className="font-medium text-foreground break-words">{recycler?.facilityName}</p>
                 </div>
                 <button
                   onClick={() => { setShowProfileMenu(false); navigate('/recycler/profile'); }}
-                  className="w-full px-4 py-2 text-left text-sm text-[var(--color-text)] hover:bg-[var(--color-surface-alt)] transition-colors flex items-center gap-2"
+                  className="w-full px-4 py-2 text-left text-sm text-foreground hover:bg-surface-alt transition-colors flex items-center gap-2"
                 >
                   <User className="w-4 h-4" />
                   {t('common.profile', { defaultValue: 'Profile' })}
                 </button>
                 <button
                   onClick={handleLogout}
-                  className="w-full px-4 py-2 text-left text-sm text-[var(--color-warning)] hover:bg-[var(--color-surface-alt)] transition-colors flex items-center gap-2"
+                  className="w-full px-4 py-2 text-left text-sm text-danger hover:bg-surface-alt transition-colors flex items-center gap-2"
                 >
                   <LogOutIcon className="w-4 h-4" />
                   {t('common.logout', { defaultValue: 'Logout' })}
@@ -155,8 +153,8 @@ export function RecyclerDashboard() {
       </header>
 
       {/* Mobile nav tabs */}
-      <nav aria-label={t('recyclerPages.navigation')} className="md:hidden flex flex-wrap gap-2 px-4 py-3 bg-[var(--color-surface-elevated)] border-b border-[var(--color-border)]">
-        {['dashboard', 'rates', 'transactions', 'profile'].map(key => <button key={key} className="px-3 py-2 rounded-lg bg-[var(--color-surface-alt)] text-sm text-[var(--color-text-muted)]" onClick={() => navigate('/recycler/' + key)}>{t('common.' + key)}</button>)}
+      <nav aria-label={t('recyclerPages.navigation')} className="hidden">
+        {['dashboard', 'rates', 'transactions', 'profile'].map(key => <button key={key} className="px-3 py-2 rounded-lg bg-surface-alt text-sm text-muted" onClick={() => navigate('/recycler/' + key)}>{t('common.' + key)}</button>)}
       </nav>
 
       {/* Main Content */}
@@ -165,10 +163,10 @@ export function RecyclerDashboard() {
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h2 className="text-2xl font-bold text-[var(--color-text)] font-display">
+              <h2 className="text-2xl font-semibold text-foreground font-sans">
                 {t('dashboard.welcome', { defaultValue: 'Welcome back' })}!
               </h2>
-              <p className="text-[var(--color-text-muted)]">
+              <p className="text-muted">
                 {t('dashboard.manageLots', { defaultValue: 'Manage your incoming lots and transactions' })}
               </p>
             </div>
@@ -182,46 +180,38 @@ export function RecyclerDashboard() {
             <StatCard
               label={t('dashboard.pendingLots', { defaultValue: 'Pending Lots' })}
               value={incomingLots.filter(l => l.status === 'Pending').length}
-              icon={<svg className="w-6 h-6 text-[var(--color-circuit)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" /></svg>}
-              color="text-[var(--color-circuit)]"
-              bg="bg-[var(--color-circuit-muted)]"
+              icon={<svg className="w-6 h-6 text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" /></svg>}
             />
             <StatCard
               label={t('dashboard.acceptedLots', { defaultValue: 'Accepted Lots' })}
               value={incomingLots.filter(l => l.status === 'Accepted').length}
-              icon={<CheckCircle className="w-6 h-6 text-[var(--color-verdigris)]" />}
-              color="text-[var(--color-verdigris)]"
-              bg="bg-[var(--color-verdigris-muted)]"
+              icon={<CheckCircle className="w-6 h-6 text-muted" />}
             />
             <StatCard
               label={t('dashboard.completedToday', { defaultValue: 'Completed Today' })}
               value={completedLots.filter(l => new Date(l.handedOverAt).toDateString() === new Date().toDateString()).length}
-              icon={<Truck className="w-6 h-6 text-[var(--color-copper)]" />}
-              color="text-[var(--color-copper)]"
-              bg="bg-[var(--color-copper-light)]/10"
+              icon={<Truck className="w-6 h-6 text-accent" />}
             />
             <StatCard
               label={t('dashboard.totalCompleted', { defaultValue: 'Total Completed' })}
               value={completedLots.length}
-              icon={<History className="w-6 h-6 text-[var(--color-text-muted)]" />}
-              color="text-[var(--color-text-muted)]"
-              bg="bg-[var(--color-surface-alt)]"
+              icon={<History className="w-6 h-6 text-muted" />}
             />
           </div>
         </div>
 
         {/* Incoming Lots */}
-        <div className="bg-[var(--color-surface-elevated)] rounded-2xl shadow-xl overflow-hidden border border-[var(--color-border)]">
-          <div className="p-4 border-b border-[var(--color-border)] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <h3 className="font-semibold text-[var(--color-text)] flex items-center gap-2 font-display">
-              <svg className="w-5 h-5 text-[var(--color-circuit)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" /></svg>
+        <div className="surface-card overflow-hidden">
+          <div className="p-4 border-b border-line flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <h3 className="font-semibold text-foreground flex items-center gap-2 font-sans">
+              <svg className="w-5 h-5 text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" /></svg>
               {t('dashboard.incomingLots', { defaultValue: 'Incoming Lots' })}
             </h3>
             <div className="flex items-center gap-2">
               <select
                 value={filter}
                 onChange={(e) => setFilter(e.target.value as any)}
-                className="px-3 py-2 border border-[var(--color-border)] rounded-lg bg-[var(--color-surface-elevated)] text-sm text-[var(--color-text)] focus:ring-2 focus:ring-[var(--focus-ring-recycler)]"
+                className="px-3 py-2 border border-line rounded-lg bg-panel text-sm text-foreground focus-visible:ring-2 ring-accent ring-offset-2"
               >
                 <option value="pending">{t('dashboard.pending', { defaultValue: 'Pending' })}</option>
                 <option value="accepted">{t('dashboard.accepted', { defaultValue: 'Accepted' })}</option>
@@ -232,20 +222,20 @@ export function RecyclerDashboard() {
 
           {filteredIncoming.length === 0 ? (
             <div className="p-12 text-center">
-              <div className="text-6xl mb-4">📭</div>
-              <h4 className="text-lg font-medium text-[var(--color-text)] mb-2">
+              <PackageOpen size={28} strokeWidth={1.75} className="mx-auto mb-4 text-subtle" aria-hidden="true" />
+              <h4 className="text-base font-medium text-foreground mb-2">
                 {filter === 'pending' ? t('dashboard.noPending', { defaultValue: 'No pending lots' }) : 
                  filter === 'accepted' ? t('dashboard.noAccepted', { defaultValue: 'No accepted lots' }) :
                  t('dashboard.noLots', { defaultValue: 'No lots found' })}
               </h4>
-              <p className="text-[var(--color-text-muted)]">
+              <p className="text-muted">
                 {filter === 'pending' ? t('dashboard.noPendingDesc', { defaultValue: 'New collector lots will appear here' }) :
                  filter === 'accepted' ? t('dashboard.noAcceptedDesc', { defaultValue: 'Accepted lots await handover' }) :
                  t('dashboard.noLotsDesc', { defaultValue: 'No lots match your filter' })}
               </p>
             </div>
           ) : (
-            <div className="divide-y divide-[var(--color-border)]">
+            <div className="divide-y divide-line">
               {filteredIncoming.map((lot) => (
                 <IncomingLotRow
                   key={lot.id}
@@ -259,14 +249,14 @@ export function RecyclerDashboard() {
           )}
 
           {/* Completed Lots Section */}
-          <div className="p-4 border-t border-[var(--color-border)]">
-            <h4 className="font-semibold text-[var(--color-text)] mb-4 flex items-center gap-2 font-display">
-              <CheckCircle className="w-5 h-5 text-[var(--color-verdigris)]" />
+          <div className="p-4 border-t border-line">
+            <h4 className="font-semibold text-foreground mb-4 flex items-center gap-2 font-sans">
+              <CheckCircle className="w-5 h-5 text-success" />
               {t('dashboard.completedLots', { defaultValue: 'Recently Completed' })}
             </h4>
            
             {completedLots.length === 0 ? (
-              <div className="p-8 text-center text-[var(--color-text-muted)]">
+              <div className="p-8 text-center text-muted">
                 {t('dashboard.noCompleted', { defaultValue: 'No completed transactions yet' })}
               </div>
             ) : (
@@ -301,30 +291,30 @@ function HandoverModal({ lot, onClose, onDone }: { lot: IncomingLot; onClose: ()
       onDone();
     } catch (e) { setErr(e instanceof Error ? e.message : 'Failed'); setBusy(false); }
   };
-  const field = 'w-full border border-[var(--color-border)] rounded-lg p-2 bg-[var(--color-surface-elevated)] text-[var(--color-text)] focus:ring-[var(--focus-ring-recycler)] focus:border-[var(--color-border-focus)]';
+  const field = 'w-full border border-line rounded-lg p-2 bg-panel text-foreground focus-visible:ring-2 ring-accent ring-offset-2 focus:border-accent';
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-      <div className="bg-[var(--color-surface-elevated)] rounded-2xl p-6 w-full max-w-md space-y-3 border border-[var(--color-border)]">
-        <h3 className="text-lg font-bold text-[var(--color-text)] font-display">Confirm handover - {lot.collectorName}</h3>
-        <p className="text-sm text-[var(--color-text-muted)]">{lot.category}, quoted {lot.weightKg} kg @ ₹{lot.quotedRate}/kg</p>
-        <label className="block text-sm text-[var(--color-text-muted)]">Collector's code
+      <div className="surface-card p-6 w-full max-w-md space-y-3">
+        <h3 className="text-base font-semibold text-foreground font-sans">Confirm handover - {lot.collectorName}</h3>
+        <p className="text-sm text-muted">{lot.category}, quoted {lot.weightKg} kg @ ₹{lot.quotedRate}/kg</p>
+        <label className="block text-sm text-muted">Collector's code
           <input className={field} value={refId} onChange={(e) => setRefId(e.target.value.toUpperCase())} maxLength={6} placeholder="6-character code" />
         </label>
         {scanning
           ? <QrScanner onClose={() => setScanning(false)} onCode={(c) => { setRefId(c); setScanning(false); }} />
           : <Button variant="outline" onClick={() => setScanning(true)}>Scan QR</Button>}
-        <label className="block text-sm text-[var(--color-text-muted)]">Final weight (kg, max {(lot.weightKg * 1.2).toFixed(1)})
+        <label className="block text-sm text-muted">Final weight (kg, max {(lot.weightKg * 1.2).toFixed(1)})
           <input className={field} type="number" value={weight} onChange={(e) => setWeight(e.target.value)} />
         </label>
-        <label className="block text-sm text-[var(--color-text-muted)]">Final rate (₹/kg, ±10%)
+        <label className="block text-sm text-muted">Final rate (₹/kg, ±10%)
           <input className={field} type="number" value={rate} onChange={(e) => setRate(e.target.value)} />
         </label>
-        <label className="block text-sm text-[var(--color-text-muted)]">Payment
+        <label className="block text-sm text-muted">Payment
           <select className={field} value={mode} onChange={(e) => setMode(e.target.value as 'Cash' | 'Digital' | 'Pending')}>
             <option>Cash</option><option>Digital</option><option>Pending</option>
           </select>
         </label>
-        {err && <p className="text-sm text-[var(--color-warning)]">{err}</p>}
+        {err && <p className="text-sm text-danger">{err}</p>}
         <div className="flex gap-2 justify-end">
           <Button variant="outline" onClick={onClose}>Cancel</Button>
           <Button variant="primary" disabled={busy || refId.length < 6} onClick={submit}>Confirm</Button>
@@ -338,9 +328,9 @@ function IncomingLotRow({ lot, onAccept, onDecline, onView }: { lot: IncomingLot
   const { t } = useTranslation();
 
   return (
-    <div className="p-4 hover:bg-[var(--color-surface-alt)] transition-colors">
+    <div className="p-4 hover:bg-surface-alt transition-colors">
       <div className="flex items-start gap-4">
-        <div className="w-16 h-16 rounded-xl bg-[var(--color-surface-alt)] flex items-center justify-center flex-shrink-0 overflow-hidden">
+        <div className="w-16 h-16 rounded-card bg-surface-alt flex items-center justify-center flex-shrink-0 overflow-hidden">
           <img
             src={lot.photoUrl}
             alt={t('dashboard.lotPhoto', { defaultValue: 'Lot photo' })}
@@ -352,40 +342,40 @@ function IncomingLotRow({ lot, onAccept, onDecline, onView }: { lot: IncomingLot
             <CategoryIcon category={lot.category} size="sm" />
             <StatusChip status={lot.status} size="sm" context="recycler" />
           </div>
-          <p className="font-semibold text-[var(--color-text)] truncate mb-1">
+          <p className="font-semibold text-foreground break-words mb-1">
             {t('dashboard.lotId', { defaultValue: 'Lot' })}: {lot.id.slice(-8).toUpperCase()}
           </p>
-          <div className="flex flex-wrap items-center gap-3 text-sm text-[var(--color-text-muted)] mb-2">
-            <span className="flex items-center gap-1 font-medium text-[var(--color-text)] tabular-nums font-mono">{lot.weightKg} kg</span>
+          <div className="flex flex-wrap items-center gap-3 text-sm text-muted mb-2">
+            <span className="flex items-center gap-1 font-medium text-foreground tabular-nums ">{lot.weightKg} kg</span>
             <span className="flex items-center gap-1">
               <MapPin className="w-3.5 h-3.5" />
               {formatKm(lot.distanceKm)}
             </span>
-            <span className="flex items-center gap-1 font-semibold text-[var(--color-copper)] tabular-nums font-mono">₹{lot.quotedRate}/kg</span>
+            <span className="flex items-center gap-1 font-semibold text-accent tabular-nums ">₹{lot.quotedRate}/kg</span>
             {lot.pickupAvailable && (
-              <span className="flex items-center gap-1 text-[var(--color-circuit)]">
+              <span className="flex items-center gap-1 text-accent">
                 <Truck className="w-3.5 h-3.5" />
                 {t('common.pickup', { defaultValue: 'Pickup' })}
               </span>
             )}
           </div>
-          <p className="text-xs text-[var(--color-text-subtle)]">
-            {t('dashboard.collector', { defaultValue: 'Collector' })}: {lot.collectorName} (<RatingBadge rating={lot.collectorRating} />) • {t('dashboard.total', { defaultValue: 'Total' })}: <span className="tabular-nums font-mono">₹{lot.quotedTotal.toLocaleString()}</span>
+          <p className="text-xs text-subtle">
+            {t('dashboard.collector', { defaultValue: 'Collector' })}: {lot.collectorName} (<RatingBadge rating={lot.collectorRating} />) • {t('dashboard.total', { defaultValue: 'Total' })}: <span className="tabular-nums ">₹{lot.quotedTotal.toLocaleString()}</span>
           </p>
         </div>
         <div className="flex flex-col items-end gap-2">
           {lot.status === 'Pending' && (
             <>
-              <Button variant="primary" size="sm" onClick={() => onAccept(lot)} leftIcon={<CheckCircle className="w-4 h-4" />}>
+              <Button variant="primary" size="md" onClick={() => onAccept(lot)} leftIcon={<CheckCircle className="w-4 h-4" />}>
                 {t('common.accept', { defaultValue: 'Accept' })}
               </Button>
-              <Button variant="danger" size="sm" onClick={() => onDecline(lot)} leftIcon={<XCircle className="w-4 h-4" />}>
+              <Button variant="danger" size="md" onClick={() => onDecline(lot)} leftIcon={<XCircle className="w-4 h-4" />}>
                 {t('common.decline', { defaultValue: 'Decline' })}
               </Button>
             </>
           )}
           {lot.status === 'Accepted' && (
-            <Button variant="outline" size="sm" onClick={onView} fullWidth>
+            <Button variant="outline" size="md" onClick={onView} fullWidth>
               {t('dashboard.viewHandover', { defaultValue: 'Handover' })}
             </Button>
           )}
@@ -401,32 +391,32 @@ function CompletedLotRow({ lot, onView }: { lot: CompletedLot; onView: () => voi
   return (
     <button
       onClick={onView}
-      className="w-full p-4 hover:bg-[var(--color-surface-alt)] transition-colors text-left flex items-center justify-between"
+      className="w-full p-4 hover:bg-surface-alt transition-colors text-left flex items-center justify-between"
     >
       <div className="flex items-center gap-4">
         <CategoryIcon category={lot.category} size="md" />
         <div>
-          <p className="font-medium text-[var(--color-text)]">
+          <p className="font-medium text-foreground">
             {t('dashboard.lotId', { defaultValue: 'Lot' })}: {lot.id.slice(-8).toUpperCase()}
           </p>
-          <p className="text-sm text-[var(--color-text-muted)]">
+          <p className="text-sm text-muted">
             {lot.collectorName} • {formatDate(lot.handedOverAt)}
           </p>
         </div>
       </div>
       <div className="text-right">
-        <p className="font-bold text-[var(--color-verdigris)] tabular-nums font-mono">₹{lot.finalTotal.toLocaleString()}</p>
-        <p className="text-xs text-[var(--color-text-muted)]">{lot.paymentMode}</p>
+        <p className="font-semibold text-success tabular-nums ">₹{lot.finalTotal.toLocaleString()}</p>
+        <p className="text-xs text-muted">{lot.paymentMode}</p>
       </div>
     </button>
   );
 }
 
-function StatCard({ label, value, icon, color, bg }: { label: string; value: number; icon: React.ReactNode; color: string; bg: string }) {
+function StatCard({ label, value, icon }: { label: string; value: number; icon: React.ReactNode }) {
   return (
-    <div className={`bg-[var(--color-surface-elevated)] rounded-xl p-4 shadow-sm border border-[var(--color-border)] ${bg} ${color} text-center`}>
+    <div className="surface-card p-4 text-center">
       <span className="mb-1 block">{icon}</span>
-      <p className="text-2xl font-bold tabular-nums font-mono">{value}</p>
+      <p className="text-2xl font-semibold tabular-nums ">{value}</p>
       <p className="text-sm mt-1">{label}</p>
     </div>
   );

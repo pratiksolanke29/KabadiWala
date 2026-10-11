@@ -1,7 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { ClerkProvider } from '@clerk/clerk-react'
-import './index.css'
+import './styles/globals.css'
 import App from './App.tsx'
 
 // Clerk publishable key (public, safe in the frontend). Put it in frontend/.env - see README.
@@ -14,11 +14,21 @@ createRoot(document.getElementById('root')!).render(
         <App />
       </ClerkProvider>
     ) : (
-      <div style={{ padding: 24, fontFamily: 'sans-serif' }}>
+      <div className="min-h-screen bg-surface p-6 text-foreground">
         <h2>Clerk key missing</h2>
-        <p>Create <code>frontend/.env</code> with:</p>
+        <p>
+          The dev server bakes env vars in at startup, so if it was started <em>before</em>{' '}
+          <code>frontend/.env</code> existed, saving files (HMR) will keep showing this screen.
+        </p>
+        <p>
+          Create <code>frontend/.env</code> with:
+        </p>
         <pre>VITE_CLERK_PUBLISHABLE_KEY=pk_test_...</pre>
-        <p>Then restart <code>npm run dev</code>.</p>
+        <p>
+          Then fully stop the server (<code>Ctrl+C</code>) and run <code>npm run dev</code> again
+          from the <code>frontend/</code> folder — and open the URL the server prints (check the
+          port, e.g. <code>:5173</code> vs <code>:5174</code>).
+        </p>
       </div>
     )}
   </StrictMode>,

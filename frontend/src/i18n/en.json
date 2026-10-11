@@ -1,4 +1,89 @@
 {
+  "landing": {
+    "meta": {
+      "title": "KabadiWala — Collect e-waste, sell to authorized recyclers",
+      "description": "Photograph e-waste, weigh it, get a transparent estimate, quotes from nearby authorized recyclers, and QR-verified handover with immediate payment."
+    },
+    "skipToContent": "Skip to main content",
+    "hero": {
+      "badge": "For collectors and recyclers",
+      "title": "Fair value for e-waste, minus the guesswork",
+      "subtitle": "Photograph your lot, weigh it, get a transparent estimate, and close the deal with a QR-verified handover to a nearby authorized recycler.",
+      "collectorCta": "I'm a collector",
+      "recyclerCta": "I'm a recycler",
+      "screenAlt": "Illustration of the KabadiWala app estimate screen",
+      "phoneFrameLabel": "App preview"
+    },
+    "how": {
+      "title": "How it works",
+      "steps": [
+        {
+          "title": "Photo",
+          "desc": "Photograph the e-waste you collected."
+        },
+        {
+          "title": "Weight",
+          "desc": "Weigh it and get an instant estimate."
+        },
+        {
+          "title": "Quotes",
+          "desc": "Receive rates from nearby authorized recyclers."
+        },
+        {
+          "title": "Handover & pay",
+          "desc": "Hand over via QR code and get paid."
+        }
+      ]
+    },
+    "roles": {
+      "title": "Built for both sides",
+      "collector": {
+        "title": "For collectors",
+        "benefits": [
+          "Clear, instant estimate on every lot",
+          "Authorized recyclers and their rates in your area",
+          "QR-verified receipt for every handover"
+        ]
+      },
+      "recycler": {
+        "title": "For recyclers",
+        "benefits": [
+          "Set your own rates and quote lots",
+          "Ready lots with photo and weight attached",
+          "Transaction trail with QR-verified handover"
+        ]
+      }
+    },
+    "trust": {
+      "title": "Trust and safety",
+      "subtitle": "Every deal stays transparent behind the scenes.",
+      "items": [
+        {
+          "title": "Authorized recyclers",
+          "desc": "Recyclers provide an authorization number (PCC) at onboarding, shown in the app."
+        },
+        {
+          "title": "Safe handling",
+          "desc": "Safety guidance for batteries, CRTs and other risky parts is built into the app."
+        },
+        {
+          "title": "QR-verified payment trail",
+          "desc": "Every handover has a QR-verified code and reference ID on which the receipt is generated."
+        }
+      ]
+    },
+    "cta": {
+      "line": "Start your first lot today.",
+      "collector": "Get started as a collector",
+      "recycler": "Get started as a recycler"
+    },
+    "footer": {
+      "help": "Help",
+      "safety": "Safety",
+      "contact": "Contact: coming soon",
+      "rights": "© {{year}} KabadiWala. All rights reserved."
+    }
+  },
   "language": {
     "marathi": "Marathi",
     "hindi": "Hindi",

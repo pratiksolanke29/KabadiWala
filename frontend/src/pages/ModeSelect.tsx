@@ -2,6 +2,8 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@clerk/clerk-react';
 import { useAuthStore } from '../hooks/useAuthStore';
+import { ChevronRight, Recycle, Building2 } from 'lucide-react';
+import { Container } from '../components/shared/primitives';
 
 export function ModeSelect() {
   const { t } = useTranslation();
@@ -14,86 +16,28 @@ export function ModeSelect() {
     navigate(isSignedIn ? `/${mode}/setup` : `/${mode}/login`);
   };
 
+  const roles = [
+    { role: 'collector' as const, icon: Recycle, label: t('modeSelect.collector', { defaultValue: 'Collector' }), description: t('modeSelect.collectorDesc', { defaultValue: 'I collect e-waste and sell lots' }) },
+    { role: 'recycler' as const, icon: Building2, label: t('modeSelect.recycler', { defaultValue: 'Recycler' }), description: t('modeSelect.recyclerDesc', { defaultValue: 'I run a recycling facility' }) },
+  ];
+
   return (
-    <div className="min-h-screen bg-[var(--color-surface)] flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        {/* Logo/Title */}
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center justify-center w-24 h-24 rounded-2xl mb-6">
-            <div className="w-full h-full rounded-2xl bg-gradient-to-br from-[var(--color-copper)] to-[var(--color-circuit)] flex items-center justify-center">
-              <svg className="w-10 h-10 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M7 11a5 5 0 0 1 10 0" />
-                <path d="M11 7a5 5 0 0 1 0 10" />
-                <path d="M3 15a5 5 0 0 1 10 0" />
-                <path d="M15 3a5 5 0 0 1 0 10" />
-              </svg>
-            </div>
-          </div>
-          <h1 className="text-3xl font-bold text-[var(--color-text)] mb-2 font-display">Kabadiwala</h1>
-          <p className="text-[var(--color-text-muted)]">
-            {t('modeSelect.whoAreYou', { defaultValue: 'Are you a collector or a recycler?' })}
-          </p>
+    <div className="flex min-h-screen items-center justify-center bg-surface px-4 py-8">
+      <Container width="narrow" className="mx-auto">
+        <header className="mb-8 text-center">
+          <div className="mb-4 inline-flex items-center gap-2 text-accent"><Recycle size={22} strokeWidth={1.75} /><span className="text-xl font-semibold text-foreground">KabadiWala</span></div>
+          <h1 className="text-2xl font-semibold leading-snug text-foreground">{t('modeSelect.whoAreYou', { defaultValue: 'Are you a collector or a recycler?' })}</h1>
+        </header>
+        <div className="divide-y divide-line surface-card px-4">
+          {roles.map(({ role, icon: Icon, label, description }) => (
+            <button key={role} type="button" onClick={() => handleSelect(role)} className="flex min-h-[84px] w-full items-center gap-4 py-4 text-left focus-visible:ring-2 ring-accent ring-offset-2">
+              <Icon size={22} strokeWidth={1.75} className="shrink-0 text-accent" aria-hidden="true" />
+              <span className="min-w-0 flex-1"><span className="block font-medium text-foreground">{label}</span><span className="mt-0.5 block text-sm text-muted">{description}</span></span>
+              <ChevronRight size={18} strokeWidth={1.75} className="text-subtle" aria-hidden="true" />
+            </button>
+          ))}
         </div>
-
-        {/* Mode Options */}
-        <div className="space-y-4">
-          <button
-            onClick={() => handleSelect('collector')}
-            className="w-full relative p-6 rounded-xl border-2 border-[var(--color-border)] bg-[var(--color-surface-elevated)] hover:border-[var(--color-copper)] dark:hover:border-[var(--color-copper-light)] transition-all duration-200 hover:shadow-lg flex items-center gap-4 text-left group focus-ring-collector"
-          >
-            <div className="w-14 h-14 rounded-xl bg-[var(--color-copper-light)]/10 flex items-center justify-center">
-              <svg className="w-8 h-8 text-[var(--color-copper)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
-                <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
-                <line x1="12" y1="22.08" x2="12" y2="12" />
-              </svg>
-            </div>
-            <div className="flex-1">
-              <p className="text-xl font-semibold text-[var(--color-text)] font-display">
-                {t('modeSelect.collector', { defaultValue: 'Collector' })}
-              </p>
-              <p className="text-sm text-[var(--color-text-muted)]">
-                {t('modeSelect.collectorDesc', { defaultValue: 'I collect e-waste and sell lots' })}
-              </p>
-            </div>
-            <svg className="w-6 h-6 text-[var(--color-text-subtle)] group-hover:text-[var(--color-copper)] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
-
-          <button
-            onClick={() => handleSelect('recycler')}
-            className="w-full relative p-6 rounded-xl border-2 border-[var(--color-border)] bg-[var(--color-surface-elevated)] hover:border-[var(--color-circuit)] dark:hover:border-[var(--color-circuit-light)] transition-all duration-200 hover:shadow-lg flex items-center gap-4 text-left group focus-ring-recycler"
-          >
-            <div className="w-14 h-14 rounded-xl bg-[var(--color-circuit-muted)] flex items-center justify-center">
-              <svg className="w-8 h-8 text-[var(--color-circuit)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <circle cx="12" cy="12" r="8" />
-                <circle cx="12" cy="12" r="4" />
-                <path d="M12 4v4M12 16v4M4 12h4M16 12h4" />
-                <path d="M6.34 6.34l2.83 2.83M14.83 14.83l2.83 2.83" />
-                <path d="M6.34 17.66l2.83-2.83M14.83 9.17l2.83-2.83" />
-              </svg>
-            </div>
-            <div className="flex-1">
-              <p className="text-xl font-semibold text-[var(--color-text)] font-display">
-                {t('modeSelect.recycler', { defaultValue: 'Recycler' })}
-              </p>
-              <p className="text-sm text-[var(--color-text-muted)]">
-                {t('modeSelect.recyclerDesc', { defaultValue: 'I run a recycling facility' })}
-              </p>
-            </div>
-            <svg className="w-6 h-6 text-[var(--color-text-subtle)] group-hover:text-[var(--color-circuit)] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
-        </div>
-
-        {/* App Info */}
-        <div className="mt-12 text-center text-sm text-[var(--color-text-muted)] space-y-2">
-          <p>Kabadiwala - E-Waste Collection Platform</p>
-          <p className="text-xs">Connecting collectors with recyclers</p>
-        </div>
-      </div>
+      </Container>
     </div>
   );
 }

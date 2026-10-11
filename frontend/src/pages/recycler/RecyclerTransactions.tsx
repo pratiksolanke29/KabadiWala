@@ -51,7 +51,7 @@ export function RecyclerTransactions() {
   return (
     <RecyclerShell>
       <div className="flex justify-between items-center gap-4 mb-6">
-        <h2 className="text-2xl font-bold text-[var(--color-text)] font-display">{t('common.transactions', { defaultValue: 'Transactions' })}</h2>
+        <h2 className="text-2xl font-semibold text-foreground font-sans">{t('common.transactions', { defaultValue: 'Transactions' })}</h2>
         <Button variant="outline" onClick={load} disabled={loading} leftIcon={<Download className="w-4 h-4" />}>
           {t('recyclerPages.refresh', { defaultValue: 'Refresh' })}
         </Button>
@@ -63,7 +63,7 @@ export function RecyclerTransactions() {
         <div className={cardClass}>
           {rows.length === 0 ? (
             <div className="py-12 text-center">
-              <p className="text-[var(--color-text-muted)] mb-4">{t('recyclerPages.noTransactions', { defaultValue: 'No transactions yet. Confirm a handover to see it here.' })}</p>
+              <p className="text-muted mb-4">{t('recyclerPages.noTransactions', { defaultValue: 'No transactions yet. Confirm a handover to see it here.' })}</p>
               <Button onClick={load} leftIcon={<Download className="w-4 h-4" />}>{t('recyclerPages.refresh', { defaultValue: 'Refresh' })}</Button>
             </div>
           ) : (
@@ -84,13 +84,13 @@ export function RecyclerTransactions() {
         </div>
       )}
 
-      {detailLoading && <p role="status" className="mt-4 text-center text-[var(--color-text-muted)]">{t('common.loading', { defaultValue: 'Loading...' })}</p>}
-      {detailError && <p role="alert" className="mt-4 text-center text-[var(--color-warning)]">{detailError}</p>}
+      {detailLoading && <p role="status" className="mt-4 text-center text-muted">{t('common.loading', { defaultValue: 'Loading...' })}</p>}
+      {detailError && <p role="alert" className="mt-4 text-center text-danger">{detailError}</p>}
       {detail && (
-        <section aria-label={t('common.receipt', { defaultValue: 'Receipt' })} className={cardClass + ' mt-6 animate-in fade-in'}>
+        <section aria-label={t('common.receipt', { defaultValue: 'Receipt' })} className={cardClass + ' mt-6  '}>
           <div className="flex justify-between mb-4">
-            <h3 className="text-xl font-semibold text-[var(--color-text)] font-display">{t('common.receipt', { defaultValue: 'Receipt' })}</h3>
-            <Button variant="ghost" size="sm" onClick={() => setDetail(null)}>{t('common.close', { defaultValue: 'Close' })}</Button>
+            <h3 className="text-xl font-semibold text-foreground font-sans">{t('common.receipt', { defaultValue: 'Receipt' })}</h3>
+            <Button variant="ghost" size="md" onClick={() => setDetail(null)}>{t('common.close', { defaultValue: 'Close' })}</Button>
           </div>
           <dl className="grid sm:grid-cols-2 gap-4">
             {[
@@ -104,8 +104,8 @@ export function RecyclerTransactions() {
               [t('common.paymentMode', { defaultValue: 'Payment Mode' }), t('common.' + detail.paymentMode.toLowerCase(), { defaultValue: detail.paymentMode })]
             ].map(([key, value]) => (
               <div key={key}>
-                <dt className="text-sm text-[var(--color-text-muted)]">{key}</dt>
-                <dd className="font-medium text-[var(--color-text)] break-all tabular-nums font-mono">{value}</dd>
+                <dt className="text-sm text-muted">{key}</dt>
+                <dd className="font-medium text-foreground break-all tabular-nums ">{value}</dd>
               </div>
             ))}
           </dl>
@@ -139,19 +139,19 @@ function TransactionRow({ row, money, onView, onPaid, detailLoading, language }:
   const statusLabel = t('common.' + row.paymentStatus.toLowerCase(), { defaultValue: row.paymentStatus });
 
   return (
-    <article className="border border-[var(--color-border)] rounded-xl p-4 space-y-3 bg-[var(--color-surface-elevated)] hover:bg-[var(--color-surface-alt)] transition-colors">
+    <article className="p-4 space-y-3 surface-card hover:bg-surface-alt transition-colors">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <CategoryIcon category={row.material} size="md" />
           <div>
-            <p className="font-semibold text-[var(--color-text)]">{materialLabel}</p>
-            <p className="text-sm text-[var(--color-text-muted)] tabular-nums font-mono">{money(row.finalAmount)}</p>
+            <p className="font-semibold text-foreground">{materialLabel}</p>
+            <p className="text-sm text-muted tabular-nums ">{money(row.finalAmount)}</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-sm text-[var(--color-text-muted)]">{new Date(row.date).toLocaleString(language)}</span>
+          <span className="text-sm text-muted">{new Date(row.date).toLocaleString(language)}</span>
           <StatusChip status={row.paymentStatus as any} size="sm" context="recycler" />
-          <Button variant="outline" size="sm" onClick={onView} disabled={detailLoading} leftIcon={<Eye className="w-4 h-4" />}>
+          <Button variant="outline" size="md" onClick={onView} disabled={detailLoading} leftIcon={<Eye className="w-4 h-4" />}>
             {t('common.view', { defaultValue: 'View' })}
           </Button>
         </div>
@@ -159,16 +159,16 @@ function TransactionRow({ row, money, onView, onPaid, detailLoading, language }:
       {row.paymentStatus === 'Pending' && (
         <div className="flex items-center justify-end gap-3">
           <select value={mode} onChange={(e) => setMode(e.target.value as 'Cash' | 'Digital')} disabled={busy} aria-label={t('common.paymentMode', { defaultValue: 'Payment Mode' })}
-            className="border border-[var(--color-border)] rounded-lg px-2 py-1 text-sm bg-[var(--color-surface-elevated)] text-[var(--color-text)]">
+            className="border border-line rounded-lg px-2 py-1 text-sm bg-panel text-foreground">
             <option value="Cash">{t('common.cash', { defaultValue: 'Cash' })}</option>
             <option value="Digital">{t('common.digital', { defaultValue: 'Digital' })}</option>
           </select>
-          <Button variant="primary" size="sm" onClick={confirmPayment} disabled={busy}>
+          <Button variant="primary" size="md" onClick={confirmPayment} disabled={busy}>
             {t('recyclerPages.confirmPayment', { defaultValue: 'Confirm Payment' })}
           </Button>
         </div>
       )}
-      {err && <p role="alert" className="text-sm text-[var(--color-warning)]">{err}</p>}
+      {err && <p role="alert" className="text-sm text-danger">{err}</p>}
     </article>
   );
 }

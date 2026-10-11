@@ -58,7 +58,7 @@ export function RecyclerRates() {
   return (
     <RecyclerShell>
       <div className="flex justify-between items-center gap-4 mb-6">
-        <h2 className="text-2xl font-bold text-[var(--color-text)] font-display">{t('common.rates', { defaultValue: 'Rates' })}</h2>
+        <h2 className="text-2xl font-semibold text-foreground font-sans">{t('common.rates', { defaultValue: 'Rates' })}</h2>
         <Button variant="outline" onClick={load} disabled={loading} leftIcon={
           <svg className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M21 12a9 9 0 1 1-2.64-6.36" />
@@ -74,7 +74,7 @@ export function RecyclerRates() {
       {!loading && !error && (
         <div className="space-y-4">
           <div className={cardClass}>
-            <p className="text-sm text-[var(--color-text-muted)] mb-4">{t('recyclerPages.ratesHelp', { defaultValue: 'Choose the materials you accept and set your offered prices. These are your facility rates, not live market prices.' })}</p>
+            <p className="text-sm text-muted mb-4">{t('recyclerPages.ratesHelp', { defaultValue: 'Choose the materials you accept and set your offered prices. These are your facility rates, not live market prices.' })}</p>
             <div className="space-y-3">
               {CATEGORIES.map(cat => (
                 <RateRow
@@ -86,7 +86,7 @@ export function RecyclerRates() {
                 />
               ))}
             </div>
-            {message && <p className="mt-4 text-sm text-[var(--color-verdigris)]" role="status">{message}</p>}
+            {message && <p className="mt-4 text-sm text-success" role="status">{message}</p>}
           </div>
         </div>
       )}
@@ -105,26 +105,26 @@ function RateRow({ material, currentRate, onAcceptChange, onRateChange }: {
   const rate = currentRate?.ratePerKg ?? 0;
 
   return (
-    <div className={`bg-[var(--color-surface-alt)] rounded-xl p-4 border transition-colors ${accept ? 'border-[var(--color-circuit-light)]' : 'border-[var(--color-border)]'}`}>
+    <div className={`bg-surface-alt rounded-card p-4 border transition-colors ${accept ? 'border-accent' : 'border-line'}`}>
       <div className="flex items-center gap-4 mb-4">
         <CategoryIcon category={material} size="md" />
         <div className="flex-1">
-          <p className="font-semibold text-[var(--color-text)]">{t('categories.' + material, { defaultValue: material })}</p>
+          <p className="font-semibold text-foreground">{t('categories.' + material, { defaultValue: material })}</p>
         </div>
         <label className="flex items-center gap-2 cursor-pointer">
           <input
             type="checkbox"
             checked={accept}
             onChange={e => onAcceptChange(material, e.target.checked)}
-            className="w-5 h-5 accent-[var(--color-circuit)]"
+            className="w-5 h-5 accent-accent"
           />
-          <span className="text-sm font-medium text-[var(--color-text)]">{t('recyclerPages.acceptMaterial', { defaultValue: 'Accept this material' })}</span>
+          <span className="text-sm font-medium text-foreground">{t('recyclerPages.acceptMaterial', { defaultValue: 'Accept this material' })}</span>
         </label>
       </div>
       {accept && (
         <div className="flex items-center gap-3">
           <label className="flex items-center gap-2 flex-1">
-            <span className="text-sm text-[var(--color-text-muted)] w-28">{t('recyclerPages.ratePerKg', { defaultValue: 'Rate (₹/kg)' })}</span>
+            <span className="text-sm text-muted w-28">{t('recyclerPages.ratePerKg', { defaultValue: 'Rate (₹/kg)' })}</span>
             <input
               type="number"
               defaultValue={rate}
@@ -135,7 +135,7 @@ function RateRow({ material, currentRate, onAcceptChange, onRateChange }: {
               }}
               min={0}
               step={1}
-              className="flex-1 w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-elevated)] text-[var(--color-text)] p-2 tabular-nums font-mono focus:ring-[var(--focus-ring-recycler)] focus:border-[var(--color-border-focus)]"
+              className="flex-1 w-full rounded-lg border border-line bg-panel text-foreground p-2 tabular-nums  focus-visible:ring-2 ring-accent ring-offset-2 focus:border-accent"
             />
           </label>
         </div>

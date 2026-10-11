@@ -64,24 +64,24 @@ export function RoleSetup({ role }: { role: Role }) {
   };
 
   const shell = (children: React.ReactNode) => (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-amber-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 space-y-5">{children}</div>
+    <div className="min-h-screen bg-surface     flex items-center justify-center p-4">
+      <div className="w-full max-w-md surface-card p-6 space-y-5">{children}</div>
     </div>
   );
 
-  if (state === 'loading') return shell(<p className="text-center text-gray-500">{t('common.loading', { defaultValue: 'Loading...' })}</p>);
+  if (state === 'loading') return shell(<p className="text-center text-muted">{t('common.loading', { defaultValue: 'Loading...' })}</p>);
   if (state === 'error') return shell(<>
-    <p className="text-red-600 text-sm">{error}</p>
+    <p className="text-danger text-sm">{error}</p>
     <Button fullWidth onClick={() => window.location.reload()}>{t('clerkAuth.retry', { defaultValue: 'Try again' })}</Button>
     <Button fullWidth variant="outline" onClick={() => signOut({ redirectUrl: '/' })}>{t('common.logout', { defaultValue: 'Logout' })}</Button>
   </>);
   if (state === 'notRegistered') return shell(<>
-    <h2 className="text-xl font-bold text-gray-900 dark:text-white">{t('login.signUpFirst', { defaultValue: 'Please sign up first' })}</h2>
-    <p className="text-gray-800 dark:text-gray-200">{t('login.signUpFirstDesc', { defaultValue: 'This Google account is not registered yet. Sign up to continue.' })}</p>
+    <h2 className="text-xl font-semibold text-foreground ">{t('login.signUpFirst', { defaultValue: 'Please sign up first' })}</h2>
+    <p className="text-foreground ">{t('login.signUpFirstDesc', { defaultValue: 'This Google account is not registered yet. Sign up to continue.' })}</p>
     <Button fullWidth onClick={() => signOut({ redirectUrl: `/${role}/signup` })}>{t('login.goSignUp', { defaultValue: 'Sign up' })}</Button>
   </>);
   if (state === 'other') return shell(<>
-    <p className="text-gray-800 dark:text-gray-200">
+    <p className="text-foreground ">
       {t('clerkAuth.otherRole', { defaultValue: 'This account is already registered as the other role. Sign in with a different email to use this role.' })}
     </p>
     <Button fullWidth onClick={() => signOut({ redirectUrl: '/mode' })}>{t('common.logout', { defaultValue: 'Logout' })}</Button>
@@ -89,7 +89,7 @@ export function RoleSetup({ role }: { role: Role }) {
 
   return shell(
     <form onSubmit={submit} className="space-y-5">
-      <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+      <h2 className="text-xl font-semibold text-foreground ">
         {role === 'collector' ? t('clerkAuth.collectorSetup', { defaultValue: 'Set up your collector profile' }) : t('clerkAuth.recyclerSetup', { defaultValue: 'Set up your recycling facility' })}
       </h2>
       {role === 'collector' ? (<>
@@ -104,7 +104,7 @@ export function RoleSetup({ role }: { role: Role }) {
           helperText={t('recyclerRegister.authNumberHelper', { defaultValue: 'Issued by Pollution Control Board' })} />
         <Input label={t('recyclerRegister.contact', { defaultValue: 'Contact Person' })} value={f.contact} onChange={set('contact')} />
       </>)}
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="text-sm text-danger">{error}</p>}
       <Button type="submit" fullWidth size="lg" loading={saving}>{t('clerkAuth.continue', { defaultValue: 'Continue' })}</Button>
       <Button type="button" fullWidth variant="ghost" onClick={() => signOut({ redirectUrl: '/mode' })}>{t('common.logout', { defaultValue: 'Logout' })}</Button>
     </form>

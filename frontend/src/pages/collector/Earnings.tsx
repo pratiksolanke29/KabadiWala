@@ -28,18 +28,18 @@ export function Earnings() {
   const totalPending = totals.totalPending;
 
   return (
-    <div className="min-h-screen bg-[var(--color-surface)] copper-accent">
+    <div className="min-h-screen bg-surface ">
       {/* Header */}
-      <header className="bg-[var(--color-surface-elevated)] border-b border-[var(--color-border)] sticky top-0 z-40">
+      <header className="bg-panel border-b border-line sticky top-0 z-40">
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
           <button
             onClick={handleBack}
-            className="p-2 rounded-lg hover:bg-[var(--color-surface-alt)] transition-colors focus-ring-collector"
+            className="p-2 rounded-lg hover:bg-surface-alt transition-colors focus-visible:ring-2 ring-accent ring-offset-2"
             aria-label={t('common.back', { defaultValue: 'Back' })}
           >
-            <ArrowLeft className="w-5 h-5 text-[var(--color-text)]" />
+            <ArrowLeft className="w-5 h-5 text-foreground" />
           </button>
-          <h1 className="text-lg font-semibold text-[var(--color-text)] font-display">
+          <h1 className="text-base font-semibold text-foreground font-sans">
             {t('common.earnings', { defaultValue: 'Earnings' })}
           </h1>
           <div className="w-10" />
@@ -52,28 +52,28 @@ export function Earnings() {
           <SummaryCard
             label={t('earnings.totalEarned', { defaultValue: 'Total Earned' })}
             value={`₹${totalEarned.toLocaleString()}`}
-            icon={<svg className="w-6 h-6 text-[var(--color-verdigris)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></svg>}
-            color="bg-[var(--color-verdigris-muted)]"
+            icon={<svg className="w-6 h-6 text-success" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></svg>}
+            color="bg-success-soft"
           />
           <SummaryCard
             label={t('earnings.pending', { defaultValue: 'Pending' })}
             value={`₹${totalPending.toLocaleString()}`}
-            icon={<svg className="w-6 h-6 text-[var(--color-warning)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>}
-            color="bg-[var(--color-warning-muted)]"
+            icon={<svg className="w-6 h-6 text-danger" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>}
+            color="bg-danger-soft"
           />
         </div>
       </div>
 
       {/* Earnings List */}
       <main className="max-w-6xl mx-auto px-4 pb-24">
-        <div className="bg-[var(--color-surface-elevated)] rounded-2xl shadow-xl overflow-hidden border border-[var(--color-border)]">
-          <div className="p-4 border-b border-[var(--color-border)]">
-            <h2 className="font-semibold text-[var(--color-text)] font-display">
+        <div className="surface-card overflow-hidden">
+          <div className="p-4 border-b border-line">
+            <h2 className="font-semibold text-foreground font-sans">
               {t('earnings.transactionHistory', { defaultValue: 'Transaction History' })}
             </h2>
           </div>
 
-          <div className="divide-y divide-[var(--color-border)]">
+          <div className="divide-y divide-line">
             {earnings.map((earning) => (
               <EarningRowComponent
                 key={earning.lotId}
@@ -87,7 +87,7 @@ export function Earnings() {
 
           {earnings.length === 0 && (
             <div className="p-12 text-center">
-              <p className="text-[var(--color-text-muted)] mb-4">{t('earnings.noTransactions', { defaultValue: 'No transactions yet' })}</p>
+              <p className="text-muted mb-4">{t('earnings.noTransactions', { defaultValue: 'No transactions yet' })}</p>
               <Button onClick={() => navigate('/collector/create-lot/photo')}>{t('earnings.createFirstLot', { defaultValue: 'Create Your First Lot' })}</Button>
             </div>
           )}
@@ -99,10 +99,10 @@ export function Earnings() {
 
 function SummaryCard({ label, value, icon, color }: { label: string; value: string; icon: React.ReactNode; color: string }) {
   return (
-    <div className={`rounded-xl p-4 ${color} text-center border border-[var(--color-border)]`}>
+    <div className={`rounded-card p-4 ${color} text-center border border-line`}>
       <span className="mb-1 block">{icon}</span>
-      <p className="text-2xl font-bold text-[var(--color-text)] tabular-nums font-mono">{value}</p>
-      <p className="text-sm text-[var(--color-text-muted)] mt-1">{label}</p>
+      <p className="text-2xl font-semibold text-foreground tabular-nums ">{value}</p>
+      <p className="text-sm text-muted mt-1">{label}</p>
     </div>
   );
 }
@@ -116,14 +116,14 @@ function EarningRowComponent({ earning, isExpanded, onToggle, onViewReceipt }: {
   const { t } = useTranslation();
 
   return (
-    <div className="bg-[var(--color-surface-elevated)]">
+    <div className="bg-panel">
       <button
         onClick={onToggle}
-        className="w-full p-4 flex items-center justify-between hover:bg-[var(--color-surface-alt)] transition-colors text-left"
+        className="w-full p-4 flex items-center justify-between hover:bg-surface-alt transition-colors text-left"
       >
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-[var(--color-circuit-muted)] flex items-center justify-center">
-            <svg className="w-6 h-6 text-[var(--color-circuit)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <div className="w-12 h-12 rounded-card bg-accent-soft flex items-center justify-center">
+            <svg className="w-6 h-6 text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <circle cx="12" cy="12" r="8" />
               <circle cx="12" cy="12" r="4" />
               <path d="M12 4v4M12 16v4M4 12h4M16 12h4" />
@@ -132,19 +132,19 @@ function EarningRowComponent({ earning, isExpanded, onToggle, onViewReceipt }: {
             </svg>
           </div>
           <div>
-            <p className="font-medium text-[var(--color-text)]">{earning.recyclerName}</p>
-            <p className="text-sm text-[var(--color-text-muted)]">{formatDate(earning.date)}</p>
+            <p className="font-medium text-foreground">{earning.recyclerName}</p>
+            <p className="text-sm text-muted">{formatDate(earning.date)}</p>
           </div>
         </div>
         <div className="flex items-center gap-4">
-          <span className="font-bold text-lg text-[var(--color-text)] tabular-nums font-mono">₹{earning.amount.toLocaleString()}</span>
+          <span className="font-semibold text-base text-foreground tabular-nums ">₹{earning.amount.toLocaleString()}</span>
           <PaymentStatusChip status={earning.status} size="sm" />
-          <span className="text-[var(--color-text-subtle)]">{isExpanded ? '▲' : '▼'}</span>
+          <span className="text-subtle">{isExpanded ? '▲' : '▼'}</span>
         </div>
       </button>
 
       {isExpanded && (
-        <div className="px-4 pb-4 bg-[var(--color-surface-alt)] animate-in fade-in">
+        <div className="px-4 pb-4 bg-surface-alt  ">
           <div className="grid grid-cols-2 gap-4 mb-4">
             <DetailItem label={t('earnings.date', { defaultValue: 'Date' })} value={formatDate(earning.date)} />
             <DetailItem label={t('earnings.recycler', { defaultValue: 'Recycler' })} value={earning.recyclerName} />
@@ -164,9 +164,9 @@ function PaymentStatusChip({ status, size = 'md' }: { status: 'Paid' | 'Pending'
   const { t } = useTranslation();
 
   const config = {
-    Paid: { bg: 'bg-[var(--color-verdigris-muted)] text-[var(--color-verdigris)]', label: t('common.paid', { defaultValue: 'Paid' }) },
-    Pending: { bg: 'bg-[var(--color-warning-muted)] text-[var(--color-warning)]', label: t('common.pending', { defaultValue: 'Pending' }) },
-    Partial: { bg: 'bg-[var(--color-copper-light)]/10 text-[var(--color-copper)]', label: 'Partial' },
+    Paid: { bg: 'bg-success-soft text-success', label: t('common.paid', { defaultValue: 'Paid' }) },
+    Pending: { bg: 'bg-danger-soft text-danger', label: t('common.pending', { defaultValue: 'Pending' }) },
+    Partial: { bg: 'bg-accent-soft/10 text-accent', label: 'Partial' },
   }[status];
 
   const sizeStyles = {
@@ -182,9 +182,9 @@ function PaymentStatusChip({ status, size = 'md' }: { status: 'Paid' | 'Pending'
 
 function DetailItem({ label, value }: { label: string; value: string }) {
   return (
-    <div className="p-3 bg-[var(--color-surface-elevated)] rounded-lg border border-[var(--color-border)]">
-      <p className="text-xs text-[var(--color-text-muted)] mb-1">{label}</p>
-      <p className="font-medium text-[var(--color-text)]">{value}</p>
+    <div className="surface-card p-3">
+      <p className="text-xs text-muted mb-1">{label}</p>
+      <p className="font-medium text-foreground">{value}</p>
     </div>
   );
 }

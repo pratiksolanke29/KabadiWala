@@ -77,7 +77,7 @@ export function PinInput({ value, onChange, length = 4, error, label, disabled =
   return (
     <div className={label ? 'w-full' : ''}>
       {label && (
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+        <label className="block text-sm font-medium text-foreground  mb-1.5">
           {label}
         </label>
       )}
@@ -96,14 +96,14 @@ export function PinInput({ value, onChange, length = 4, error, label, disabled =
             disabled={disabled}
             autoFocus={autoFocus && i === 0}
             className={`
-              w-12 h-14 sm:w-14 sm:h-16 text-center text-2xl sm:text-3xl font-mono font-bold
-              rounded-lg border-2 transition-all duration-200
+              w-12 h-14 sm:w-14 sm:h-16 text-center text-2xl sm:text-2xl font-semibold font-mono
+              rounded-lg border transition-colors duration-150
               ${error
-                ? 'border-red-500 focus:ring-red-500 focus:border-red-500'
-                : 'border-gray-300 focus:ring-orange-500 focus:border-orange-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white'
+                ? 'border-danger focus-visible:ring-2 ring-danger ring-offset-2 focus:border-danger'
+                : 'border-line focus-visible:ring-2 ring-accent ring-offset-2 focus:border-accent   '
               }
-              disabled:bg-gray-100 dark:disabled:bg-gray-800
-              placeholder:text-gray-300 dark:placeholder:text-gray-600
+              disabled:bg-surface-alt 
+              placeholder:text-subtle 
             `}
             aria-label={`${t('common.pin', { defaultValue: 'PIN' })} digit ${i + 1}`}
             aria-invalid={error ? 'true' : 'false'}
@@ -111,7 +111,7 @@ export function PinInput({ value, onChange, length = 4, error, label, disabled =
         ))}
       </div>
       {error && (
-        <p className="mt-1.5 text-sm text-red-600 dark:text-red-400" role="alert">
+        <p className="mt-1.5 text-sm text-danger " role="alert">
           {error}
         </p>
       )}

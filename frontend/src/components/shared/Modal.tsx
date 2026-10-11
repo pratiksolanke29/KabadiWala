@@ -30,21 +30,21 @@ export function Modal({ isOpen, onClose, title, children, size = 'md', showClose
         />
         <div
           className={`
-            relative w-full ${sizeStyles[size]} bg-[var(--color-surface-elevated)] rounded-xl shadow-xl
-            animate-in fade-in zoom-in-95
+            relative w-full ${sizeStyles[size]} bg-panel rounded-card 
+              
           `}
         >
           {(title || showCloseButton) && (
-            <div className="flex items-center justify-between p-4 border-b border-[var(--color-border)]">
+            <div className="flex items-center justify-between p-4 border-b border-line">
               {title && (
-                <h2 id="modal-title" className="text-lg font-semibold text-[var(--color-text)]">
+                <h2 id="modal-title" className="text-base font-semibold text-foreground">
                   {title}
                 </h2>
               )}
               {showCloseButton && (
                 <button
                   onClick={onClose}
-                  className="p-1 rounded-lg text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-alt)] transition-colors focus-ring-collector"
+                  className="p-1 rounded-lg text-muted hover:text-foreground hover:bg-surface-alt transition-colors focus-visible:ring-2 ring-accent ring-offset-2"
                   aria-label="Close"
                 >
                   <X className="w-5 h-5" />
@@ -67,10 +67,10 @@ interface ToastProps {
 
 export function Toast({ message, type = 'info', onClose }: ToastProps) {
   const typeStyles = {
-    success: 'bg-[var(--color-verdigris)] text-[var(--color-verdigris-on)]',
-    error: 'bg-[var(--color-warning)] text-white',
-    warning: 'bg-[var(--color-warning)] text-white',
-    info: 'bg-[var(--color-circuit)] text-[var(--color-circuit-on)]',
+    success: 'bg-success text-on-accent',
+    error: 'bg-danger text-on-danger',
+    warning: 'bg-danger text-on-danger',
+    info: 'bg-accent text-on-accent',
   };
 
   const icons = {
@@ -84,7 +84,7 @@ export function Toast({ message, type = 'info', onClose }: ToastProps) {
     <div
       className={`
         fixed bottom-4 right-4 z-50 flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg
-        animate-in slide-in-from-bottom-4 fade-in ${typeStyles[type]}
+           ${typeStyles[type]}
       `}
       role="alert"
       aria-live="polite"
@@ -93,7 +93,7 @@ export function Toast({ message, type = 'info', onClose }: ToastProps) {
       <p className="text-sm font-medium">{message}</p>
       <button
         onClick={onClose}
-        className="ml-2 flex-shrink-0 p-1 rounded hover:bg-white/20 transition-colors"
+        className="ml-2 flex-shrink-0 p-1 rounded-lg hover:bg-panel/20 transition-colors"
         aria-label="Close"
       >
         <X className="w-4 h-4" />

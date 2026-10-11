@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { useRef, useEffect, useState, useCallback } from 'react';
-import { X, RotateCcw } from 'lucide-react';
+import { X, RotateCcw, Camera } from 'lucide-react';
 
 interface CameraCaptureProps {
   onCapture: (dataUrl: string) => void;
@@ -117,21 +117,21 @@ export function CameraCapture({
   }, [startCamera, stopCamera]);
 
   const loadingView = !hasPermission ? (
-      <div className="flex flex-col items-center justify-center h-full min-h-[400px] bg-gray-100 dark:bg-gray-800 rounded-xl">
+      <div className="flex flex-col items-center justify-center h-full min-h-[400px] bg-surface-alt  rounded-card">
         {error ? (
           <div className="text-center p-8">
-            <div className="text-6xl mb-4">📷</div>
-            <p className="text-red-600 dark:text-red-400 mb-4">{error}</p>
+            <Camera size={32} strokeWidth={1.75} className="mb-4 text-muted" aria-hidden="true" />
+            <p className="text-danger  mb-4">{error}</p>
             <button
               onClick={startCamera}
-              className="px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+              className="px-6 py-3 bg-accent text-on-accent rounded-lg hover:bg-accent-hover transition-colors"
             >
               {t('camera.retry', { defaultValue: 'Retry' })}
             </button>
             {onClose && (
               <button
                 onClick={closeCamera}
-                className="mt-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                className="mt-4 text-muted hover:text-foreground  "
               >
                 {t('common.cancel', { defaultValue: 'Cancel' })}
               </button>
@@ -139,8 +139,8 @@ export function CameraCapture({
           </div>
         ) : (
           <div className="text-center">
-            <div className="animate-spin text-4xl text-orange-600 mb-4">📷</div>
-            <p className="text-gray-600 dark:text-gray-400">{t('camera.loading', { defaultValue: 'Starting camera...' })}</p>
+            <Camera size={32} strokeWidth={1.75} className="mb-4 text-accent" aria-hidden="true" />
+            <p className="text-muted ">{t('camera.loading', { defaultValue: 'Starting camera...' })}</p>
           </div>
         )}
       </div>
@@ -150,7 +150,7 @@ export function CameraCapture({
     <div className="relative w-full">
       {loadingView}
       <div className={hasPermission ? '' : 'hidden'}>
-        <div className="relative bg-black rounded-xl overflow-hidden">
+        <div className="relative bg-black rounded-card overflow-hidden">
           <video
             ref={videoRef}
             autoPlay
@@ -190,7 +190,7 @@ export function CameraCapture({
           {onClose && (
             <button
               onClick={closeCamera}
-              className="px-6 py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors font-medium"
+              className="px-6 py-3 text-foreground  hover:bg-surface-alt  rounded-lg transition-colors font-medium"
             >
               {t('common.cancel', { defaultValue: 'Cancel' })}
             </button>
@@ -198,18 +198,18 @@ export function CameraCapture({
           <button
             onClick={capturePhoto}
             disabled={isCapturing || !hasPermission}
-            className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-full border-4 border-white bg-orange-500 hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center"
+            className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-full border border-white bg-accent hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150 flex items-center justify-center"
             aria-label={t('camera.capture', { defaultValue: 'Capture photo' })}
           >
-            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white" />
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-panel" />
             {isCapturing && (
-              <div className="absolute inset-0 rounded-full border-4 border-white/50 animate-pulse" />
+              <div className="absolute inset-0 rounded-full border border-white/50 " />
             )}
           </button>
           <div className="w-16 h-16 sm:w-20 sm:h-20" /> {/* spacer for alignment */}
         </div>
 
-        <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-2">
+        <p className="text-center text-sm text-muted  mt-2">
           {t('camera.instruction', { defaultValue: 'Position the item in the frame and tap the button to capture' })}
         </p>
       </div>
@@ -232,19 +232,19 @@ export function PhotoPreview({ dataUrl, onRetake, onConfirm }: PhotoPreviewProps
         <img
           src={dataUrl}
           alt={t('camera.captured', { defaultValue: 'Captured photo' })}
-          className="w-full rounded-xl shadow-lg"
+          className="w-full rounded-card"
         />
       </div>
       <div className="flex gap-4 w-full max-w-md">
         <button
           onClick={onRetake}
-          className="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 dark:border-gray-600 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors font-medium"
+          className="flex-1 px-6 py-3 border border-line text-foreground   rounded-lg hover:bg-surface-alt  transition-colors font-medium"
         >
           {t('camera.retake', { defaultValue: 'Retake' })}
         </button>
         <button
           onClick={onConfirm}
-          className="flex-1 px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors font-medium"
+          className="flex-1 px-6 py-3 bg-accent text-on-accent rounded-lg hover:bg-accent-hover transition-colors font-medium"
         >
           {t('common.next', { defaultValue: 'Next' })}
         </button>

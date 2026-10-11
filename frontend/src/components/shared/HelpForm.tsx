@@ -20,16 +20,16 @@ export function HelpForm() {
     finally { setBusy(false); }
   };
   return (
-    <form onSubmit={submit} className="bg-[var(--color-surface-elevated)] rounded-2xl shadow-xl p-6 border border-[var(--color-border)] space-y-4">
-      <p className="text-[var(--color-text-muted)]">{t('help.intro', { defaultValue: 'Tell us about your problem and we will look into it.' })}</p>
+    <form onSubmit={submit} className="surface-card p-6 space-y-4">
+      <p className="text-muted">{t('help.intro', { defaultValue: 'Tell us about your problem and we will look into it.' })}</p>
       <Input label={t('help.subject', { defaultValue: 'Subject' })} value={subject} maxLength={200} onChange={(e) => { setSent(false); setSubject(e.target.value); }} />
       <label className="block">
-        <span className="block text-sm font-medium text-[var(--color-text-muted)] mb-1.5">{t('help.description', { defaultValue: 'Description' })}</span>
+        <span className="block text-sm font-medium text-muted mb-1.5">{t('help.description', { defaultValue: 'Description' })}</span>
         <textarea rows={5} maxLength={2000} value={message} onChange={(e) => { setSent(false); setMessage(e.target.value); }}
-          className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-elevated)] text-[var(--color-text)] p-3" />
+          className="w-full rounded-lg border border-line bg-panel text-foreground p-3" />
       </label>
-      {error && <p role="alert" className="text-sm text-[var(--color-warning)]">{error}</p>}
-      {sent && <p role="status" className="text-sm text-[var(--color-verdigris)]">{t('help.sent', { defaultValue: 'Sent. We will get back to you.' })}</p>}
+      {error && <p role="alert" className="text-sm text-danger">{error}</p>}
+      {sent && <p role="status" className="text-sm text-success">{t('help.sent', { defaultValue: 'Sent. We will get back to you.' })}</p>}
       <Button type="submit" fullWidth size="lg" loading={busy}>{t('help.send', { defaultValue: 'Send' })}</Button>
     </form>
   );
