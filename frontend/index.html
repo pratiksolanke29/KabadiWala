@@ -50,15 +50,8 @@
       (() => {
         try {
           const saved = localStorage.getItem("kabadiwala-theme");
-          const systemDark = window.matchMedia(
-            "(prefers-color-scheme: dark)",
-          ).matches;
-          const theme =
-            saved === "light" || saved === "dark"
-              ? saved
-              : systemDark
-                ? "dark"
-                : "light";
+          const theme = saved === "light" || saved === "dark" ? saved : "light";
+
           document.documentElement.dataset.theme = theme;
           document
             .querySelector('meta[name="theme-color"]')
