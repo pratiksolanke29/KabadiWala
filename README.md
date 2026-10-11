@@ -51,8 +51,8 @@ Lot statuses: `Draft → Quoted → Paid`, or `Draft → Quoted → HandedOver` 
 
 | Role | Who | Device | Entry |
 |---|---|---|---|
-| **Collector** | Informal scrap collector, low or semi-literate | Entry-level Android phone | Language → mode → phone + 4-digit PIN |
-| **Recycler** | Authorized recycler or aggregator | Phone or laptop | Language → mode → ID/phone + password |
+| **Collector** | Informal scrap collector, low or semi-literate | Entry-level Android phone | Language → mode → email to sign-in |
+| **Recycler** | Authorized recycler or aggregator | Phone or laptop | Language → mode → ID + password |
 | **Admin** | Platform operator | Laptop | API key (see [Status](#status-what-works-and-what-doesnt-yet)) |
 
 ---
