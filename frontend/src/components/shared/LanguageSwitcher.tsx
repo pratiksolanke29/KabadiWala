@@ -1,3 +1,4 @@
+import { ChevronDown } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import i18n from '../../i18n';
 import { useAuthStore } from '../../hooks/useAuthStore';
@@ -13,7 +14,7 @@ export function LanguageSwitcher({ className = '' }: { className?: string }) {
   const { i18n: activeI18n } = useTranslation();
   const setLanguage = useAuthStore((state) => state.setLanguage);
   return (
-    <label className={`inline-flex items-center gap-2 ${className}`}>
+    <label className={`relative inline-flex items-center gap-2 ${className}`}>
       <span className="sr-only">Language</span>
       <select
         aria-label="Language"
@@ -24,10 +25,11 @@ export function LanguageSwitcher({ className = '' }: { className?: string }) {
           void i18n.changeLanguage(language);
           localStorage.setItem('kabadiwala-language', language);
         }}
-        className="min-h-11 max-w-full rounded-lg border border-line bg-panel px-3 text-sm text-foreground focus-visible:ring-2 ring-accent ring-offset-2"
+        className="min-h-11 max-w-full appearance-none rounded-lg border border-line bg-panel py-1.5 pl-3 pr-9 text-sm text-foreground focus-visible:ring-2 ring-accent ring-offset-2"
       >
         {languages.map((language) => <option key={language.code} value={language.code}>{language.label}</option>)}
       </select>
+      <ChevronDown size={16} strokeWidth={1.75} aria-hidden="true" className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-muted" />
     </label>
   );
 }

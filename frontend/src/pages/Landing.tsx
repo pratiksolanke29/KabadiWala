@@ -189,8 +189,8 @@ export function LandingPage() {
                 <h1 id="hero-title" className="mt-3 font-display text-display leading-tight text-foreground">{t('landing.hero.title', { defaultValue: 'Fair value for e-waste' })}</h1>
                 <p className="mt-4 max-w-[60ch] text-sm text-muted md:text-base">{t('landing.hero.subtitle', { defaultValue: 'Photograph, weigh, get quoted, get paid.' })}</p>
                 <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-                  <a href="/collector/signup" className={primaryCta}>{t('landing.hero.collectorCta', { defaultValue: "I'm a collector" })}</a>
-                  <a href="/recycler/signup" className={secondaryCta}>{t('landing.hero.recyclerCta', { defaultValue: "I'm a recycler" })}</a>
+                  <a href="/collector/login" className={primaryCta}>{t('landing.hero.collectorCta', { defaultValue: "I'm a collector" })}</a>
+                  <a href="/recycler/login" className={secondaryCta}>{t('landing.hero.recyclerCta', { defaultValue: "I'm a recycler" })}</a>
                 </div>
               </div>
               <div className="animate-code-reveal min-w-0 lg:justify-self-end">
