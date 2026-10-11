@@ -1,44 +1,74 @@
 <!doctype html>
-<html lang="mr" data-theme="light">
+<html lang="en" data-theme="light">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#fafafa" />
     <meta name="color-scheme" content="light dark" />
-    <title>KabadiWala — ई-कचरा गोळा करा, प्रमाणित रिसायकलरकडे विका</title>
-    <meta name="description" content="ई-कचरा फोटो काढा, वजन काढा, पारदर्शक आकारणी मिळवा, जवळपास प्रमाणित रिसायकलरकडून कोट मिळवा आणि QR-सत्यापित हस्तांतरणानंतर लगेच पैसे मिळवा." />
+    <title>KabadiWala.Connect</title>
+    <meta
+      name="description"
+      content="Take a photo of the e-waste, weigh it, get transparent billing, receive a quote from a nearby certified recycler, and get instant payment after QR-verified transfer."
+    />
     <!-- Open Graph -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="KabadiWala" />
-    <meta property="og:title" content="KabadiWala — ई-कचरा गोळा करा, प्रमाणित रिसायकलरकडे विका" />
-    <meta property="og:description" content="ई-कचरा फोटो काढा, वजन काढा, पारदर्शक आकारणी मिळवा, जवळपास प्रमाणित रिसायकलरकडून कोट मिळवा आणि QR-सत्यापित हस्तांतरणानंतर लगेच पैसे मिळवा." />
+    <meta
+      property="og:title"
+      content="KabadiWala — Take a photo of the e-waste, weigh it, get transparent billing, receive a quote from a nearby certified recycler, and get instant payment after QR-verified transfer."
+    />
+    <meta
+      property="og:description"
+      content="Take a photo of the e-waste, weigh it, get transparent billing, receive a quote from a nearby certified recycler, and get instant payment after QR-verified transfer."
+    />
     <meta property="og:image" content="/og-image.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="KabadiWala — ई-कचऱ्याला मिळवा योग्य भाव" />
+    <meta
+      property="og:image:alt"
+      content="KabadiWala — Get the right value for e-waste"
+    />
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="KabadiWala — ई-कचरा गोळा करा, प्रमाणित रिसायकलरकडे विका" />
-    <meta name="twitter:description" content="ई-कचरा फोटो काढा, वजन काढा, पारदर्शक आकारणी मिळवा, जवळपास प्रमाणित रिसायकलरकडून कोट मिळवा आणि QR-सत्यापित हस्तांतरणानंतर लगेच पैसे मिळवा." />
+    <meta
+      name="twitter:title"
+      content="KabadiWala — Collect e-waste, sell it to a certified recycler"
+    />
+    <meta
+      name="twitter:description"
+      content="Take a photo of the e-waste, weigh it, get transparent billing, receive a quote from a nearby certified recycler, and get instant payment after QR-verified transfer."
+    />
     <meta name="twitter:image" content="/og-image.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Noto+Sans+Devanagari:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Noto+Sans+Devanagari:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
     <script>
       (() => {
         try {
-          const saved = localStorage.getItem('kabadiwala-theme');
-          const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-          const theme = saved === 'light' || saved === 'dark' ? saved : (systemDark ? 'dark' : 'light');
+          const saved = localStorage.getItem("kabadiwala-theme");
+          const systemDark = window.matchMedia(
+            "(prefers-color-scheme: dark)",
+          ).matches;
+          const theme =
+            saved === "light" || saved === "dark"
+              ? saved
+              : systemDark
+                ? "dark"
+                : "light";
           document.documentElement.dataset.theme = theme;
-          document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'dark' ? '#18181b' : '#fafafa');
+          document
+            .querySelector('meta[name="theme-color"]')
+            ?.setAttribute("content", theme === "dark" ? "#18181b" : "#fafafa");
         } catch (_) {
-          document.documentElement.dataset.theme = 'light';
+          document.documentElement.dataset.theme = "light";
         }
         try {
-          const savedLang = localStorage.getItem('kabadiwala-language');
-          if (savedLang === 'mr' || savedLang === 'hi' || savedLang === 'en') {
+          const savedLang = localStorage.getItem("kabadiwala-language");
+          if (savedLang === "mr" || savedLang === "hi" || savedLang === "en") {
             document.documentElement.lang = savedLang;
           }
         } catch (_) {}
