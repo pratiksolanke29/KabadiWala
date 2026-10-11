@@ -3,8 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { ArrowLeft, Shield, AlertTriangle, Info, ChevronRight } from 'lucide-react';
 import i18n from 'i18next';
-import { Modal } from '../../components/shared/Modal';
-import { Button } from '../../components/shared/Button';
+import { SafetyHazardBanner, type HazardConfig } from '../../components/collector/SafetyHazardBanner';
 
 interface SafetyTopic {
   id: string;
@@ -13,7 +12,7 @@ interface SafetyTopic {
   color: string;
   bgColor: string;
   description: { mr: string; hi: string; en: string };
-  detailImage: string;
+  hazard: HazardConfig;
 }
 
 /* SVG icons for safety topics */
@@ -66,7 +65,11 @@ const mockSafetyTopics: SafetyTopic[] = [
       hi: 'कॉपर पाने के लिए केबल्स जलाना पर्यावरण को प्रदूषित करता है और स्वास्थ्य के लिए हानिकारक है।',
       en: 'Burning cables to extract copper pollutes the environment and is harmful to health.'
     },
-    detailImage: 'https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=800'
+    hazard: {
+      kind: 'cables',
+      pill: { mr: 'धोका: विषारी डायऑक्सिन धूर', hi: 'खतरा: जहरीला डाइऑक्सिन धुआं', en: 'HAZARD: TOXIC DIOXIN SMOKE' },
+      cue: { mr: 'तार यांत्रिक पद्धतीने सोला — कधीही जाळू नका.', hi: 'तार मशीन से छीलें — कभी न जलाएं।', en: 'Use mechanical wire stripping — never burn.' },
+    },
   },
   {
     id: 'crt-handling',
@@ -79,7 +82,11 @@ const mockSafetyTopics: SafetyTopic[] = [
       hi: 'CRT मॉनिटर्स में लेड होता है। गलत संचालन विषाक्त हो सकता है।',
       en: 'CRT monitors contain lead. Improper handling can be toxic.'
     },
-    detailImage: 'https://images.unsplash.com/photo-1587202372775-e229f172b9d7?w=800'
+    hazard: {
+      kind: 'crt',
+      pill: { mr: 'धोका: शिशाची धूळ आणि स्फोट', hi: 'खतरा: सीसे की धूल और विस्फोट', en: 'HAZARD: LEAD DUST & IMPLOSION' },
+      cue: { mr: 'काचेची नळी सुरक्षित ठेवा — फोडू नका, चिरडू नका.', hi: 'कांच की ट्यूब साबुत रखें — तोड़ें या कुचलें नहीं।', en: 'Keep glass tube intact — do not break or crush.' },
+    },
   },
   {
     id: 'batteries',
@@ -92,7 +99,11 @@ const mockSafetyTopics: SafetyTopic[] = [
       hi: 'लिथियम आयन बैटरीज दबाने पर या सीधी धूप में रखने पर फट सकती हैं।',
       en: 'Lithium-ion batteries can explode if punctured or exposed to direct sunlight.'
     },
-    detailImage: 'https://images.unsplash.com/photo-1609091839311-d5365f9ff1c5?w=800'
+    hazard: {
+      kind: 'battery',
+      pill: { mr: 'धोका: जास्त तापमान आणि स्फोट', hi: 'खतरा: ज़्यादा गर्मी और विस्फोट', en: 'HAZARD: THERMAL RUNAWAY & EXPLOSION' },
+      cue: { mr: 'बॅटरी टोचू नका, दाबू नका, थेट उन्हात ठेवू नका.', hi: 'बैटरी में छेद न करें, न दबाएं, सीधी धूप में न रखें।', en: 'Do not puncture, crush, or store in direct sunlight.' },
+    },
   },
   {
     id: 'dont-open-pcbs',
@@ -105,7 +116,11 @@ const mockSafetyTopics: SafetyTopic[] = [
       hi: 'PCB खोलने के लिए एसिड का उपयोग करना बेहद खतरनाक है। पेशेवरों की मदद लें।',
       en: 'Using acid to open PCBs is extremely dangerous. Seek professional help.'
     },
-    detailImage: 'https://images.unsplash.com/photo-1610945415295-d9bbf067e59c?w=800'
+    hazard: {
+      kind: 'pcb',
+      pill: { mr: 'धोका: जळजळीत अ‍ॅसिड आणि विषारी वायू', hi: 'खतरा: संक्षारक एसिड और जहरीली गैस', en: 'HAZARD: CORROSIVE ACID & TOXIC GAS' },
+      cue: { mr: 'मदरबोर्ड अखंड द्या — रसायनाने गाळू नका.', hi: 'मदरबोर्ड साबुत सौंपें — रसायन से न गलाएं।', en: 'Hand over motherboards intact — no chemical leaching.' },
+    },
   },
 ];
 
@@ -235,14 +250,9 @@ function SafetyDetailModal({ topic, lang, onClose }: { topic: SafetyTopic; lang:
     <div className="fixed inset-0 z-50 overflow-y-auto" role="dialog" aria-modal="true">
       <div className="flex min-h-full items-center justify-center p-4">
         <div className="fixed inset-0 bg-black/50" onClick={onClose} aria-hidden="true" />
-        <div className="relative w-full max-w-lg surface-card max-h-[90vh] overflow-hidden">
-          <div className="relative h-48">
-            <img
-              src={topic.detailImage}
-              alt={topic.title.en}
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute inset-0 bg-black/50" />
+        <div className="relative w-full max-w-lg rounded-2xl border border-line bg-panel max-h-[90vh] overflow-hidden">
+          <div className="relative overflow-hidden rounded-t-2xl">
+            <SafetyHazardBanner key={topic.id} hazard={topic.hazard} lang={lang} alt={topic.title[lang as keyof typeof topic.title] || topic.title.en} />
             <button onClick={onClose} className="absolute top-4 right-4 p-2 bg-panel/90  rounded-full hover:bg-panel  transition-colors focus-visible:ring-2 ring-accent ring-offset-2" aria-label={t('common.close', { defaultValue: 'Close' })}>
               <svg className="w-5 h-5 text-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
@@ -250,7 +260,7 @@ function SafetyDetailModal({ topic, lang, onClose }: { topic: SafetyTopic; lang:
 
           <div className="p-6 space-y-4">
             <div className={`flex items-center gap-3 ${topic.bgColor} ${topic.color} px-4 py-3 rounded-card`}>
-              <span className="text-2xl">{topic.icon}</span>
+              <span className="h-6 w-6 shrink-0 [&>svg]:h-full [&>svg]:w-full">{topic.icon}</span>
               <h2 className="font-semibold text-base">
                 {topic.title[lang as keyof typeof topic.title] || topic.title.en}
               </h2>
