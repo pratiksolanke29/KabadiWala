@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { Suspense, lazy } from 'react';
+import { Suspense, lazy, useState, useEffect } from 'react';
+import { X } from 'lucide-react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useAuth } from '@clerk/clerk-react';
 import { AuthPage } from './auth/AuthPage';
@@ -50,17 +51,46 @@ function ProtectedRoute({ role, children }: { role: 'collector' | 'recycler'; ch
   const { isLoaded, isSignedIn } = useAuth();
   const hasProfile = useAuthStore((s) => (role === 'collector' ? !!s.collector : !!s.recycler));
   const location = useLocation();
+  const demoToken = useAuthStore((s) => s.demoToken);
+  if (demoToken && hasProfile) return <>{children}</>;
   if (!isLoaded) return null;
   if (!isSignedIn) return <Navigate to={`/${role}/login`} replace />;
   if (!hasProfile) return <Navigate to={`/${role}/setup`} replace state={{ from: location.pathname }} />;
   return <>{children}</>;
 }
 
+function LandingNotice() {
+  const { pathname } = useLocation();
+  const [dismissedPath, setDismissedPath] = useState<string | null>(null);
+  useEffect(() => { setDismissedPath(null); }, [pathname]);
+  if (pathname !== '/' || dismissedPath === pathname) return null;
+  return <aside role="status" aria-label="Full features login notice" className="absolute inset-x-4 top-4 z-50 mx-auto flex max-w-xl items-start gap-3 rounded-xl border border-line bg-panel p-4 text-sm text-foreground shadow-lg">
+    <p className="min-w-0 flex-1">Please sign up with email OTP instead of demo login, as some features may not work in the demo. Sign up or log in to explore all features. Thank you!</p>
+    <button type="button" aria-label="Dismiss login notice" onClick={() => setDismissedPath(pathname)} className="-m-2 inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-lg text-muted hover:bg-surface-alt focus-visible:ring-2 ring-accent">
+      <X size={20} aria-hidden="true" />
+    </button>
+  </aside>;
+}
+
 function App() {
+  const demoToken = useAuthStore((s) => s.demoToken);
+  const hasAccount = useAuthStore((s) => !!s.collector || !!s.recycler);
+  const demoRole = useAuthStore((s) => s.mode);
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <AuthBridge />
+        <LandingNotice />
+        {!demoToken && !hasAccount && <div className="border-b border-line bg-panel px-4 py-2 text-center text-sm text-foreground">
+          Demo: no OTP needed.{' '}
+          <a href="/collector/login" className="inline-block min-h-11 px-3 py-3 font-semibold text-accent underline">Collector demo login</a>
+          <a href="/recycler/login" className="inline-block min-h-11 px-3 py-3 font-semibold text-accent underline">Recycler demo login</a>
+        </div>}
+        {demoToken && <div className="border-b border-line bg-panel px-4 py-3 text-center text-sm text-foreground">
+          <span>Demo: isolated sample data. Resets after 2 hours or a server restart.</span>{' '}
+          <a className="inline-block min-h-11 px-3 py-3 font-semibold text-accent underline" href={demoRole === 'collector' ? '/recycler/login' : '/collector/login'}>Switch to {demoRole === 'collector' ? 'recycler' : 'collector'} demo</a>
+          <button type="button" className="min-h-11 px-3 py-3 font-semibold text-accent underline" onClick={() => { useAuthStore.getState().clearAuth(); localStorage.removeItem('kabadiwala-recycler'); window.location.assign('/'); }}>Exit demo</button>
+        </div>}
         <Suspense fallback={null}>
         <Routes>
           {/* Public landing page; signed-in users with a loaded profile are redirected inside Landing */}

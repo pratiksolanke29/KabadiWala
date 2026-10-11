@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useLotStore } from '../../hooks/useLotStore';
+import { useAuthStore } from '../../hooks/useAuthStore';
 import { CameraCapture } from '../../components/shared/CameraCapture';
 import { Button } from '../../components/shared/Button';
 import { useState } from 'react';
@@ -10,6 +11,7 @@ import { StepProgress } from '../../components/shared/primitives';
 export function CreateLotPhoto() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const isDemo = useAuthStore((s) => !!s.demoToken);
   const { setPhoto, resetDraft } = useLotStore();
   const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null);
   const [showPreview, setShowPreview] = useState(false);
@@ -62,6 +64,10 @@ export function CreateLotPhoto() {
 
       {/* Main Content */}
       <main className="max-w-6xl mx-auto px-4 pb-24">
+        {isDemo && <div role="note" className="mb-4 rounded-card border border-line bg-panel p-4 text-foreground">
+          <p className="font-semibold">AI image verification is disabled in demo login.</p>
+          <p className="mt-1 text-sm">Upload a photo, then pick the category manually on the next step.</p>
+        </div>}
         {showPreview && capturedPhoto ? (
           <PhotoPreview
             dataUrl={capturedPhoto}

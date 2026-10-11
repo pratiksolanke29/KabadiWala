@@ -3,6 +3,9 @@ import { persist } from 'zustand/middleware';
 import type { CollectorAuth, RecyclerAuth, Language } from '../types';
 
 interface AuthState {
+  // Public judge sandbox, separate from real Clerk accounts.
+  demoToken: string | null;
+  setDemoToken: (token: string | null) => void;
   // Collector
   collector: CollectorAuth | null;
   setCollector: (auth: CollectorAuth | null) => void;
@@ -28,6 +31,8 @@ interface AuthState {
 export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
+      demoToken: null,
+      setDemoToken: (demoToken) => set({ demoToken }),
       collector: null,
       setCollector: (collector) => set({ collector, mode: collector ? 'collector' : null }),
       updateCollector: (updates) =>
@@ -48,11 +53,14 @@ export const useAuthStore = create<AuthState>()(
       mode: null,
       setMode: (mode) => set({ mode }),
       
-      clearAuth: () => set({ collector: null, recycler: null, mode: null }),
+      clearAuth: () => set({ collector: null, recycler: null, mode: null, demoToken: null }),
     }),
     {
       name: 'kabadiwala-auth',
       partialize: (state) => ({
+        demoToken: state.demoToken,
+        collector: state.demoToken ? state.collector : null,
+        recycler: state.demoToken ? state.recycler : null,
         language: state.language,
         mode: state.mode,
       }),

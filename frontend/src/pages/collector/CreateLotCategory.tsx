@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { draftRedirect, useLotStore } from '../../hooks/useLotStore';
+import { useAuthStore } from '../../hooks/useAuthStore';
 import { CategoryGrid, CategoryIcon } from '../../components/shared/CategoryIcon';
 import { Button } from '../../components/shared/Button';
 import { CATEGORIES, type Category } from '../../types';
@@ -13,12 +14,14 @@ import { StepProgress } from '../../components/shared/primitives';
 export function CreateLotCategory() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  const isDemo = useAuthStore((s) => !!s.demoToken);
   const { draft, setCategory, setWeight, setEstimate } = useLotStore();
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(draft.category);
   const [result, setResult] = useState<Identification | null>(null);
   const [loading, setLoading] = useState(false);
   const language = i18n.resolvedLanguage === 'hi' ? 'hi' : i18n.resolvedLanguage === 'mr' ? 'mr' : 'en';
   useEffect(() => {
+    if (isDemo) { setResult(null); setLoading(false); return; }
     if (!draft.photoUrl) return;
     let active = true;
     setResult(null);
@@ -27,7 +30,7 @@ export function CreateLotCategory() {
       if (active) { setResult(response); setLoading(false); }
     });
     return () => { active = false; };
-  }, [draft.photoUrl, language]);
+  }, [draft.photoUrl, language, isDemo]);
   const aiSuggestion = result?.available ? result.lotCategory ?? undefined : undefined;
 
   const redirect = draftRedirect(draft, 'category');
@@ -104,7 +107,10 @@ export function CreateLotCategory() {
             <p className="text-muted">{t('createLot.categoryDesc', { defaultValue: 'What type of e-waste are you collecting?' })}</p>
           </div>
 
-          <IdentificationResult result={result} loading={loading} onConfirm={handleCategorySelect} />
+          {isDemo ? <section role="note" className="mb-6 rounded-card border border-line bg-panel p-4 text-foreground">
+            <h3 className="font-semibold">AI image verification is disabled in demo login.</h3>
+            <p className="mt-1 text-sm">Pick the category manually below to continue.</p>
+          </section> : <IdentificationResult result={result} loading={loading} onConfirm={handleCategorySelect} />}
 
           <CategoryGrid
             categories={CATEGORIES.map(c => c.id)}

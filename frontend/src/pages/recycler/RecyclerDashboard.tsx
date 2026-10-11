@@ -343,6 +343,11 @@ export function RecyclerDashboard() {
           )}
         </div>
       </div>
+      {handoverLot && <HandoverModal
+        lot={handoverLot}
+        onClose={() => setHandoverLot(null)}
+        onDone={() => { setHandoverLot(null); void reload(); }}
+      />}
     </div>
   );
 }
