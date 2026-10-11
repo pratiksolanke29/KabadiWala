@@ -1,12 +1,12 @@
-# Kabadiwala
+# KabadiWala
 
-**A vernacular, low-literacy-friendly platform that connects India's informal scrap collectors with authorized e-waste recyclers, with fair prices, verified buyers and a documented handover.**
+**A vernacular, low-literacy-friendly platform that connects India's informal scrap collectors with authorized e-waste recyclers — fair prices, verified buyers, and a documented handover.**
 
-Built for the WeMakeDevs hackathon problem statement *"Kabadiwala"*.
+Built for the WeMakeDevs hackathon problem statement "Kabadiwala."
 
 ---
 
-## The problem
+## The Problem
 
 Most of India's e-waste passes through informal collectors (*kabadiwalas*). They are the backbone of collection, but the system works against them:
 
@@ -15,7 +15,7 @@ Most of India's e-waste passes through informal collectors (*kabadiwalas*). They
 - **No paper trail.** A handover is a handshake and cash. Nothing proves where the material went.
 - **Unsafe leftovers.** Material that doesn't sell is often processed in backyards (burning cables, acid-leaching boards), which harms collectors and neighbourhoods.
 
-## What Kabadiwala does
+## What KabadiWala Does
 
 | For the collector | For the recycler | For the platform |
 |---|---|---|
@@ -28,7 +28,7 @@ Most of India's e-waste passes through informal collectors (*kabadiwalas*). They
 
 The recycler's confirmation is what makes a receipt trustworthy and the material traceable.
 
-## How a lot moves through the system
+## How a Lot Moves Through the System
 
 ```
 Collector                                Recycler
@@ -47,7 +47,7 @@ Collector                                Recycler
 
 Lot statuses: `Draft → Quoted → Paid`, or `Draft → Quoted → HandedOver` when the recycler records the payment as *Pending* (it then shows as pending in the collector's earnings). A recycler declining sends the lot back to the collector as `Draft` and excludes that recycler from the next match.
 
-## Who uses it
+## Who Uses It
 
 | Role | Who | Device | Entry |
 |---|---|---|---|
@@ -62,7 +62,7 @@ Lot statuses: `Draft → Quoted → Paid`, or `Draft → Quoted → HandedOver` 
 - **Node.js 22.5 or newer.** The backend uses Node's built-in `node:sqlite`, so there is no native build step and no database to install.
 - npm
 
-### Run it
+### Run It
 
 Open two terminals.
 
@@ -84,11 +84,11 @@ Open **http://localhost:5173**. The Vite dev server proxies `/api/*` to the back
 
 The database file (`backend/kabadiwala.db`) is created and seeded automatically on first start.
 
-### Try it in two minutes
+### Try It in Two Minutes
 
 Use two browser windows (or one normal and one private window) so both roles stay logged in.
 
-1. Use your email/google acc. to sign in.
+1. Use your email/google account to sign in.
 2. Tap **Create Lot**. Take a photo (or choose one from the gallery if there is no camera), pick a category, enter a weight and review the estimate.
 3. Tap **Find Recycler**, open a recycler's quote and choose it, then generate the **handover code**. Note the 6-character code.
 4. **Window B, recycler.** Pick *Recycler*, log in as `r1` / `password123`. The lot appears under **Incoming Lots**. Open it and **Accept**.
@@ -97,7 +97,7 @@ Use two browser windows (or one normal and one private window) so both roles sta
 
 Things worth trying: enter a final weight above 1.2× the quoted weight, or a rate more than ±10% off the quote, and watch the confirmation get rejected. Decline a lot as the recycler and see it return to the collector.
 
-### Tests and checks
+### Tests and Checks
 
 ```bash
 # Backend: 22 end-to-end smoke tests on an in-memory database
@@ -107,7 +107,7 @@ cd backend && npm test
 cd frontend && npx tsc -b && npm run lint && npm run build
 ```
 
-### Reset the demo data
+### Reset the Demo Data
 
 Stop the backend, delete `backend/kabadiwala.db*`, and start it again.
 
@@ -125,7 +125,7 @@ Stop the backend, delete `backend/kabadiwala.db*`, and start it again.
 
 ---
 
-## Tech stack
+## Tech Stack
 
 | Layer | Technology |
 |---|---|
@@ -140,7 +140,7 @@ Stop the backend, delete `backend/kabadiwala.db*`, and start it again.
 | Tooling | oxlint, TypeScript project references |
 | Tests | Backend smoke tests (22). No frontend test suite yet |
 
-## Project structure
+## Project Structure
 
 ```
 KabadiWala/
@@ -190,5 +190,3 @@ All settings are optional for local use.
 | `VITE_API_URL` | frontend | unset | Point the app at a deployed API instead of the `/api` dev proxy |
 
 > **Before any real deployment:** change `JWT_SECRET` and `ADMIN_KEY`, set `AUTO_APPROVE_RECYCLERS=0`, and serve over HTTPS. The defaults exist only to make the demo run with zero setup.
-
-

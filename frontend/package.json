@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@clerk/clerk-react": "^5.61.10",
+    "@clerk/themes": "^2.4.57",
     "@tanstack/react-query": "^5.104.1",
     "date-fns": "^4.4.0",
     "html5-qrcode": "^2.3.8",
