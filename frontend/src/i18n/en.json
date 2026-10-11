@@ -108,6 +108,8 @@
     "loading": "Loading...",
     "error": "Error occurred",
     "retry": "Retry",
+    "collapseSidebar": "Collapse sidebar",
+    "expandSidebar": "Expand sidebar",
     "search": "Search",
     "filter": "Filter",
     "close": "Close",

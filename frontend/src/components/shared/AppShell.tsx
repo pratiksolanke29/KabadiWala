@@ -1,14 +1,34 @@
 import type { ReactNode } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { History, LayoutDashboard, LogOut, Package, Settings, Wallet, TrendingUp, Recycle } from 'lucide-react';
+import { History, LayoutDashboard, LogOut, Package, PanelLeftClose, PanelLeftOpen, Settings, Wallet, TrendingUp, Recycle } from 'lucide-react';
 import { useAuthStore } from '../../hooks/useAuthStore';
 import { useLogout } from '../../auth/useLogout';
+import { useSidebarCollapsed } from '../../hooks/useSidebarCollapsed';
 
 type Role = 'collector' | 'recycler';
 
-export function AppShell({ role, children }: { role: Role; children: ReactNode }) {
+// Label fades and its max-width goes to 0 (no wrapping while the width animates).
+const labelClass = 'overflow-hidden whitespace-nowrap transition-[opacity,max-width,margin] duration-300 ease-in-out';
+const labelShown = 'ml-3 max-w-[10rem] opacity-100';
+const labelHidden = 'ml-0 max-w-0 opacity-0';
+
+/** Hover/focus tooltip for the icon rail. Only rendered while the sidebar is collapsed. */
+function RailTooltip({ label }: { label: string }) {
+  return (
+    <span
+      role="tooltip"
+      aria-hidden="true"
+      className="pointer-events-none absolute left-full top-1/2 z-50 ml-3 -translate-y-1/2 whitespace-nowrap rounded-md border border-line bg-panel px-2.5 py-1.5 text-xs font-medium text-foreground opacity-0 shadow-md transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100"
+    >
+      {label}
+    </span>
+  );
+}
+
+export function AppShell({ role, children, header }: { role: Role; children: ReactNode; header?: ReactNode }) {
   const { t } = useTranslation();
+  const { collapsed, toggle } = useSidebarCollapsed();
   const { collector, recycler } = useAuthStore();
   const logout = useLogout();
   const navigate = useNavigate();
@@ -33,33 +53,66 @@ export function AppShell({ role, children }: { role: Role; children: ReactNode }
   return (
     <div className="min-h-screen bg-surface text-foreground">
       <div className="min-h-screen lg:flex">
-        {/* Desktop Sidebar for both roles */}
-        <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r border-line bg-panel p-4 lg:flex">
+        {/* Desktop Sidebar for both roles. Width animates between w-60 and the w-16 icon rail. */}
+        <aside
+          id="app-sidebar"
+          data-collapsed={collapsed}
+          className={`sticky top-0 z-50 hidden h-screen shrink-0 flex-col border-r border-line bg-panel p-2 transition-[width] duration-300 ease-in-out lg:flex ${collapsed ? 'w-16' : 'w-60'}`}
+        >
+          <div className="group relative">
+            <button
+              type="button"
+              onClick={toggle}
+              aria-expanded={!collapsed}
+              aria-controls="app-sidebar"
+              aria-label={collapsed ? t('common.expandSidebar', { defaultValue: 'Expand sidebar' }) : t('common.collapseSidebar', { defaultValue: 'Collapse sidebar' })}
+              className="flex min-h-11 w-full items-center rounded-lg px-3.5 text-muted transition-colors duration-150 hover:bg-surface-alt hover:text-foreground"
+            >
+              {collapsed ? <PanelLeftOpen size={18} strokeWidth={1.75} className="shrink-0" /> : <PanelLeftClose size={18} strokeWidth={1.75} className="shrink-0" />}
+              <span className={`${labelClass} ${collapsed ? labelHidden : labelShown}`} aria-hidden={collapsed}>
+                {t('common.collapseSidebar', { defaultValue: 'Collapse sidebar' })}
+              </span>
+            </button>
+            {collapsed && <RailTooltip label={t('common.expandSidebar', { defaultValue: 'Expand sidebar' })} />}
+          </div>
           <button
             type="button"
             onClick={() => navigate(role === 'collector' ? '/collector/home' : '/recycler/dashboard')}
-            className="flex min-h-12 items-center gap-2 rounded-lg px-2 text-left font-semibold text-foreground"
+            className="mt-1 flex min-h-12 items-center rounded-lg px-3.5 text-left font-semibold text-foreground"
           >
             <Recycle size={20} strokeWidth={1.75} className="shrink-0 text-accent" />
-            <span className="min-w-0 break-words">KabadiWala</span>
+            <span className={`${labelClass} ${collapsed ? labelHidden : labelShown}`} aria-hidden={collapsed}>KabadiWala</span>
           </button>
-          <p className="mt-4 break-words px-2 text-sm text-muted">{userId || userName}</p>
-          <nav aria-label={role === 'collector' ? t('collectorPages.navigation', { defaultValue: 'Collector navigation' }) : t('recyclerPages.navigation', { defaultValue: 'Recycler navigation' })} className="mt-6 flex-1 space-y-1">
+          <p className={`mt-3 overflow-hidden whitespace-nowrap px-3.5 text-sm text-muted transition-[opacity,max-height] duration-300 ease-in-out ${collapsed ? 'max-h-0 opacity-0' : 'max-h-10 opacity-100'}`} aria-hidden={collapsed}>
+            {userId || userName}
+          </p>
+          <nav aria-label={role === 'collector' ? t('collectorPages.navigation', { defaultValue: 'Collector navigation' }) : t('recyclerPages.navigation', { defaultValue: 'Recycler navigation' })} className="mt-4 flex-1 space-y-1">
             {items.map(({ path, label, icon: Icon }) => (
-              <NavLink
-                key={path}
-                to={path}
-                className={({ isActive }) => `flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-150 ${isActive ? 'bg-accent-soft text-accent' : 'text-muted hover:bg-surface-alt hover:text-foreground'}`}
-              >
-                <Icon size={18} strokeWidth={1.75} />
-                <span className="min-w-0 break-words">{label}</span>
-              </NavLink>
+              <div key={path} className="group relative">
+                <NavLink
+                  to={path}
+                  aria-label={collapsed ? label : undefined}
+                  className={({ isActive }) => `flex min-h-11 items-center rounded-lg px-3.5 py-2 text-sm font-medium transition-colors duration-150 ${isActive ? 'bg-accent-soft text-accent' : 'text-muted hover:bg-surface-alt hover:text-foreground'}`}
+                >
+                  <Icon size={18} strokeWidth={1.75} className="shrink-0" />
+                  <span className={`${labelClass} ${collapsed ? labelHidden : labelShown}`} aria-hidden={collapsed}>{label}</span>
+                </NavLink>
+                {collapsed && <RailTooltip label={label} />}
+              </div>
             ))}
           </nav>
-          <button type="button" onClick={logout} className="flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm font-medium text-muted hover:bg-surface-alt hover:text-foreground">
-            <LogOut size={18} strokeWidth={1.75} />
-            {t('common.logout', { defaultValue: 'Log out' })}
-          </button>
+          <div className="group relative">
+            <button
+              type="button"
+              onClick={logout}
+              aria-label={collapsed ? t('common.logout', { defaultValue: 'Log out' }) : undefined}
+              className="flex min-h-11 w-full items-center rounded-lg px-3.5 text-sm font-medium text-muted transition-colors duration-150 hover:bg-surface-alt hover:text-foreground"
+            >
+              <LogOut size={18} strokeWidth={1.75} className="shrink-0" />
+              <span className={`${labelClass} ${collapsed ? labelHidden : labelShown}`} aria-hidden={collapsed}>{t('common.logout', { defaultValue: 'Log out' })}</span>
+            </button>
+            {collapsed && <RailTooltip label={t('common.logout', { defaultValue: 'Log out' })} />}
+          </div>
         </aside>
 
         <div className="min-w-0 flex-1">
@@ -81,6 +134,8 @@ export function AppShell({ role, children }: { role: Role; children: ReactNode }
               </button>
             </header>
           )}
+          {/* Full-width slot: sits above the constrained content wrapper so it spans the whole column. */}
+          {header}
           <div className={role === 'collector' ? 'mx-auto w-full max-w-[640px] px-4 pb-28 md:px-6 lg:max-w-[1100px] lg:pb-10' : 'mx-auto w-full max-w-[1200px] px-4 pb-28 md:px-6 lg:pb-8'}>
             {children}
           </div>
