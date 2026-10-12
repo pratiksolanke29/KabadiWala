@@ -14,7 +14,6 @@ app.use('/demo', createDemoRouter());
 app.use('/api/demo', createDemoRouter());
 app.use('/api', createApp());
 app.use(express.static(dist));
-app.use(createApp());
 app.use((req, res, next) => {
   if (req.method !== 'GET' || !req.accepts('html')) return next();
   res.sendFile(path.join(dist, 'index.html'));
